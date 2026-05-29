@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#101010" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Shooting Admin" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Admin · Shooting Timeline</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0f0f0d;
+      --panel: rgba(255,255,255,.07);
+      --panel-strong: rgba(255,255,255,.105);
+      --text: #f7f1e8;
+      --muted: rgba(247,241,232,.66);
+      --soft: rgba(247,241,232,.42);
+      --line: rgba(247,241,232,.16);
+      --accent: #d8b16a;
+      --accent-soft: rgba(216,177,106,.14);
+      --danger: #d96c6c;
+      --success: #8fb5a1;
+      --radius: 24px;
+      --shadow: 0 18px 55px rgba(0,0,0,.32);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: #101010; overflow-x: hidden; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(216,177,106,.18), transparent 32%),
+        radial-gradient(circle at 90% 10%, rgba(143,181,161,.14), transparent 30%),
+        linear-gradient(180deg, #151411, #090907);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .wrap {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding: max(22px, env(safe-area-inset-top)) clamp(14px, 4vw, 30px) max(42px, env(safe-area-inset-bottom));
+    }
+
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: calc(max(22px, env(safe-area-inset-top)) * -1) calc(clamp(14px, 4vw, 30px) * -1) 18px;
+      padding: max(22px, env(safe-area-inset-top)) clamp(14px, 4vw, 30px) 14px;
+      background: linear-gradient(180deg, rgba(15,15,13,.94), rgba(15,15,13,.72));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(247,241,232,.08);
+    }
+
+    .top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-size: .68rem;
+      font-weight: 900;
+    }
+
+    h1 {
+      margin: 6px 0 0;
+      font-size: clamp(2.1rem, 8vw, 4.6rem);
+      line-height: .9;
+      letter-spacing: -.06em;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: .84rem;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px 0 2px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .toolbar::-webkit-scrollbar { display: none; }
+
+    .pill-button {
+      flex: 0 0 auto;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: rgba(247,241,232,.86);
+      padding: 0 13px;
+      font-weight: 850;
+      font-size: .86rem;
+      cursor: pointer;
+    }
+
+    .pill-button.active,
+    .pill-button.primary {
+      border-color: rgba(216,177,106,.38);
+      background: var(--accent-soft);
+      color: var(--text);
+    }
+
+    .card, .login, .spot-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel-strong), var(--panel));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .login { width: min(470px, 100%); padding: 18px; margin-top: 24px; }
+    .card { padding: 16px; }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 900;
+      margin: 0 0 7px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 11px 12px;
+      font: inherit;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    textarea { min-height: 86px; resize: vertical; line-height: 1.35; }
+    input:focus, textarea:focus, select:focus { border-color: rgba(216,177,106,.55); box-shadow: 0 0 0 4px rgba(216,177,106,.08); }
+    select option { background: #171715; color: var(--text); }
+
+    .grid { display: grid; gap: 12px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .field { min-width: 0; }
+    .full { grid-column: 1 / -1; }
+
+    .btn {
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 0 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .btn:active { transform: scale(.985); }
+    .btn.primary { background: linear-gradient(135deg, #f0d596, var(--accent)); color: #17130c; border: 0; }
+    .btn.danger { color: #fff; border-color: rgba(217,108,108,.35); background: rgba(217,108,108,.16); }
+    .btn.ghost { background: transparent; box-shadow: none; }
+    .btnbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    .hidden { display: none !important; }
+
+    .admin-intro {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+    }
+
+    .mini-stat {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.045);
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 72px;
+    }
+
+    .mini-stat strong { display: block; font-size: 1.25rem; line-height: 1; }
+    .mini-stat span { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 850; margin-top: 7px; }
+
+    .search-wrap { position: relative; }
+    .search-wrap input { padding-left: 38px; }
+    .search-wrap::before { content: '⌕'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 900; z-index: 1; }
+
+    .shootings {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .spot-card {
+      overflow: hidden;
+      transition: border-color .2s ease, transform .2s ease;
+    }
+
+    .spot-card[open] { border-color: rgba(216,177,106,.32); }
+
+    summary {
+      cursor: pointer;
+      padding: 15px;
+      display: grid;
+      grid-template-columns: 54px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      list-style: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+
+    .thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(216,177,106,.28), rgba(143,181,161,.20));
+      background-size: cover;
+      background-position: center;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 28px rgba(0,0,0,.18);
+    }
+
+    .summary-main { min-width: 0; }
+    .summary-title { font-weight: 950; font-size: 1.02rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-sub { color: var(--muted); font-size: .84rem; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-day { color: var(--accent); font-weight: 950; white-space: nowrap; font-size: .8rem; text-align: right; }
+
+    .editor { padding: 0 15px 15px; }
+
+    .section-title {
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-size: .68rem;
+      font-weight: 900;
+      margin: 18px 0 10px;
+    }
+
+    .hint { color: var(--muted); font-size: .86rem; line-height: 1.45; }
+    .error-box { border: 1px solid rgba(217,108,108,.35); background: rgba(217,108,108,.12); color: #ffdede; border-radius: 16px; padding: 12px; margin-top: 12px; font-size: .9rem; line-height: 1.45; }
+
+    .badge-tools { display: grid; gap: 10px; }
+    .badge-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge-chip {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.055);
+      color: rgba(247,241,232,.86);
+      border-radius: 999px;
+      min-height: 34px;
+      padding: 0 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .badge-chip.active { background: var(--accent-soft); border-color: rgba(216,177,106,.38); color: var(--text); }
+
+    .link-preview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .preview-button {
+      min-height: 40px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.055);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-weight: 850;
+      font-size: .82rem;
+    }
+    .preview-button.primary { background: linear-gradient(135deg, #f0d596, var(--accent)); color: #17130c; border: 0; }
+    .preview-button.disabled { opacity: .36; }
+
+    .sticky-actions {
+      position: sticky;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      margin: 16px -4px -4px;
+      border: 1px solid rgba(247,241,232,.10);
+      border-radius: 20px;
+      background: rgba(15,15,13,.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 14px 44px rgba(0,0,0,.26);
+    }
+
+    .floating-add {
+      position: fixed;
+      right: max(16px, env(safe-area-inset-right));
+      bottom: max(18px, env(safe-area-inset-bottom));
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      border: 0;
+      background: linear-gradient(135deg, #f0d596, var(--accent));
+      color: #17130c;
+      font-size: 1.45rem;
+      font-weight: 950;
+      box-shadow: 0 18px 48px rgba(0,0,0,.34), 0 0 0 6px rgba(216,177,106,.10);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      z-index: 30;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      max-width: min(420px, calc(100vw - 28px));
+      border-radius: 999px;
+      background: rgba(15,15,13,.88);
+      color: var(--text);
+      border: 1px solid rgba(247,241,232,.12);
+      padding: 12px 16px;
+      box-shadow: 0 16px 44px rgba(0,0,0,.34);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      font-size: .88rem;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .danger-zone { margin-top: 18px; border-top: 1px solid rgba(247,241,232,.10); padding-top: 14px; }
+
+    @media (max-width: 740px) {
+      .wrap { padding-left: 12px; padding-right: 12px; }
+      .top { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; }
+      .grid.two, .grid.three, .mini-grid, .link-preview { grid-template-columns: 1fr; }
+      summary { grid-template-columns: 48px 1fr; }
+      .summary-day { grid-column: 2; text-align: left; }
+      .thumb { width: 48px; height: 48px; border-radius: 16px; }
+      .btnbar .btn { flex: 1 1 100%; }
+      .sticky-actions { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="top">
+      <div class="top-row">
+        <div>
+          <div class="eyebrow">13 Stories Photography</div>
+          <h1>Admin</h1>
+          <div class="status" id="status">Initialisiere…</div>
+        </div>
+        <button class="btn danger hidden" id="logoutBtn">Abmelden</button>
+      </div>
+
+      <div class="toolbar hidden" id="toolbar">
+        <button class="pill-button active" data-filter="all">Alle</button>
+        <button class="pill-button" data-filter="Freitag">Fr</button>
+        <button class="pill-button" data-filter="Samstag">Sa</button>
+        <button class="pill-button" data-filter="Sonntag">So</button>
+        <button class="pill-button primary" id="openPublicBtn" type="button">Timeline öffnen</button>
+      </div>
+    </section>
+
+    <section class="login" id="loginBox">
+      <div class="grid">
+        <div class="field"><label for="email">E-Mail</label><input id="email" type="email" autocomplete="email" inputmode="email" /></div>
+        <div class="field"><label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" /></div>
+        <button class="btn primary" id="loginBtn">Einloggen</button>
+        <div class="hint">Für Änderungen unterwegs optimiert: große Felder, schnelle Karten, direkte Speicherung in Supabase.</div>
+        <div class="error-box hidden" id="errorBox"></div>
+      </div>
+    </section>
+
+    <section id="adminBox" class="hidden">
+      <div class="admin-intro">
+        <div class="card">
+          <div class="eyebrow">Live Daten</div>
+          <div class="hint" style="margin-top:8px;">Wetter wird automatisch aus Titel, Treffpunkt oder Location erkannt. Du pflegst nur Inhalte, Zeiten, Links, Bilder und Badges.</div>
+          <div class="btnbar">
+            <button class="btn primary" id="reloadBtn">Daten neu laden</button>
+            <button class="btn" id="collapseBtn" type="button">Alle zuklappen</button>
+          </div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-stat"><strong id="statCount">–</strong><span>Shootings</span></div>
+          <div class="mini-stat"><strong id="statNext">–</strong><span>Nächster Tag</span></div>
+          <div class="mini-stat"><strong id="statUpdated">–</strong><span>Aktualisiert</span></div>
+        </div>
+
+        <div class="search-wrap">
+          <input id="searchInput" type="search" placeholder="Shooting, Ort, Badge suchen…" />
+        </div>
+      </div>
+
+      <div class="shootings" id="shootings"></div>
+    </section>
+  </main>
+
+  <button class="floating-add hidden" id="addBtn" type="button" aria-label="Neues Shooting">+</button>
+  <div class="toast" id="toast">Gespeichert</div>
+
+  <script>
+    const SUPABASE_URL = 'https://hidqxungaqlzyzsxjfqb.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_sbU-WVaWQh4x_vC14dnd6w_otutO8f8';
+
+    const statusEl = document.getElementById('status');
+    const errorBox = document.getElementById('errorBox');
+    const loginBox = document.getElementById('loginBox');
+    const adminBox = document.getElementById('adminBox');
+    const toolbar = document.getElementById('toolbar');
+    const shootingsEl = document.getElementById('shootings');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const collapseBtn = document.getElementById('collapseBtn');
+    const openPublicBtn = document.getElementById('openPublicBtn');
+    const addBtn = document.getElementById('addBtn');
+    const toast = document.getElementById('toast');
+    const searchInput = document.getElementById('searchInput');
+    const statCount = document.getElementById('statCount');
+    const statNext = document.getElementById('statNext');
+    const statUpdated = document.getElementById('statUpdated');
+
+    let db = null;
+    let rows = [];
+    let currentRowsById = {};
+    let activeFilter = 'all';
+    let toastTimer = null;
+
+    const badgePresets = [
+      'Goldene Stunde', 'Picknick', 'Sonnenaufgang', 'Farben', 'Paar-Momente', 'Kreativ',
+      'Aussicht', 'Gitarre', 'Goldenes Licht', 'Spaziergang', 'Ruhe', 'Portraits',
+      'Perspektiven', 'Gemeinsame Bilder', 'Dolomiten', 'Natur', 'Abenteuer'
+    ];
+
+    const dayOptions = ['Freitag', 'Samstag', 'Sonntag'];
+
+    const spotPresets = {
+      'Val di Funes': {
+        image_url: 'https://www.montagnaestate.it/wp-content/uploads/val-di-funes-al-tramonto-in-estate-890x593.jpg',
+        location_name: 'Val di Funes',
+        title: 'Shooting „Val di Funes“'
+      },
+      'Seiser-Alm-Panorama': {
+        image_url: 'https://mountainmoments.de/wp-content/uploads/2021/06/mountainmoments-95.jpg',
+        location_name: 'Seiser-Alm-Panorama',
+        title: 'Shooting #1 · Seiser-Alm-Panorama'
+      },
+      'Langental': {
+        image_url: 'https://www.val-gardena.com/fileadmin/_processed_/0/9/csm_pra-da-ri-langental-02_de2ca4ac91.jpg',
+        location_name: 'Langental',
+        title: 'Shooting #2 · Langental'
+      },
+      'Grödner Joch': {
+        image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=80',
+        location_name: 'Grödner Joch',
+        title: 'Shooting #1 · Grödner Joch'
+      },
+      'Lago Pian Da Mur': {
+        image_url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1800&q=80',
+        location_name: 'Lago Pian Da Mur',
+        title: 'Shooting #2 · Lago Pian Da Mur'
+      },
+      'Passo Pordoi': {
+        image_url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1800&q=80',
+        location_name: 'Passo Pordoi',
+        title: 'Shooting #3 · Passo Pordoi'
+      }
+    };
+
+    const simpleFields = [
+      ['sort_order', 'Reihenfolge', 'number'],
+      ['day_label', 'Tag', 'select-day'],
+      ['date_label', 'Datum', 'text'],
+      ['title', 'Titel', 'text'],
+      ['subtitle', 'Untertitel / Mood', 'text']
+    ];
+
+    const timeFields = [
+      ['meeting_time', 'Treffzeit', 'text'],
+      ['shooting_time', 'Shootingzeit', 'text'],
+      ['route_after', 'Fahrt danach', 'text']
+    ];
+
+    const placeFields = [
+      ['location_name', 'Location', 'spot-select'],
+      ['meeting_place', 'Treffpunkt', 'text']
+    ];
+
+    const linkFields = [
+      ['meeting_link', 'Treffpunkt Link', 'url'],
+      ['location_link', 'Location Link', 'url'],
+      ['image_url', 'Bild URL', 'url']
+    ];
+
+    const allEditableKeys = [...simpleFields, ...timeFields, ...placeFields, ...linkFields].map(([key]) => key).concat(['badges']);
+
+    function setStatus(message) { statusEl.textContent = message; }
+    function showError(message) { errorBox.textContent = message; errorBox.classList.remove('hidden'); }
+    function clearError() { errorBox.textContent = ''; errorBox.classList.add('hidden'); }
+
+    function showToast(message = 'Gespeichert') {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function formatSupabaseError(error) {
+      if (!error) return 'Unbekannter Fehler';
+      return [error.message, error.code ? 'Code: ' + error.code : '', error.details ? 'Details: ' + error.details : '', error.hint ? 'Hint: ' + error.hint : ''].filter(Boolean).join(' · ');
+    }
+
+    function runSelfTests() {
+      const tests = [
+        { name: 'Supabase SDK geladen', pass: !!window.supabase && typeof window.supabase.createClient === 'function' },
+        { name: 'Supabase URL gesetzt', pass: /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL) },
+        { name: 'Publishable Key gesetzt', pass: SUPABASE_KEY.startsWith('sb_publishable_') || SUPABASE_KEY.startsWith('eyJ') }
+      ];
+      const failed = tests.filter(test => !test.pass);
+      if (failed.length) throw new Error('Admin Selbsttest fehlgeschlagen: ' + failed.map(test => test.name).join(', '));
+    }
+
+    function initSupabase() {
+      runSelfTests();
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    function escapeHtml(value = '') {
+      return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+
+    function valueForInput(row, key) {
+      const value = row[key];
+      if (Array.isArray(value)) return value.join(', ');
+      return value ?? '';
+    }
+
+    function safeId(value = '') {
+      return String(value).replace(/[^a-zA-Z0-9_-]/g, '-');
+    }
+
+    function renderField(row, [key, label, type]) {
+      const value = escapeHtml(valueForInput(row, key));
+
+      if (type === 'select-day') {
+        return `<div class="field"><label>${label}</label><select name="${key}">${dayOptions.map(day => `<option value="${escapeHtml(day)}" ${row[key] === day ? 'selected' : ''}>${escapeHtml(day)}</option>`).join('')}</select></div>`;
+      }
+
+      if (type === 'spot-select') {
+        const current = row[key] || '';
+        const options = Object.keys(spotPresets).map(spot => `<option value="${escapeHtml(spot)}" ${current === spot ? 'selected' : ''}>${escapeHtml(spot)}</option>`).join('');
+        return `<div class="field"><label>${label}</label><select name="${key}" data-spot-select><option value="${value}">${value || 'Eigener Ort'}</option>${options}</select></div>`;
+      }
+
+      return `<div class="field ${key === 'title' || key === 'subtitle' || key === 'image_url' ? 'full' : ''}"><label>${label}</label><input name="${key}" type="${type}" value="${value}" /></div>`;
+    }
+
+    function renderGroup(title, row, fields, columns = 'two') {
+      return `<div class="section-title">${title}</div><div class="grid ${columns}">${fields.map(field => renderField(row, field)).join('')}</div>`;
+    }
+
+    function parseBadges(value) {
+      if (Array.isArray(value)) return value;
+      return String(value || '').split(',').map(x => x.trim()).filter(Boolean);
+    }
+
+    function renderBadgeTools(row) {
+      const activeBadges = parseBadges(row.badges);
+      return `
+        <div class="section-title">Badges</div>
+        <div class="badge-tools">
+          <div class="badge-picker">
+            ${badgePresets.map(badge => `<button type="button" class="badge-chip ${activeBadges.includes(badge) ? 'active' : ''}" data-badge="${escapeHtml(badge)}">${escapeHtml(badge)}</button>`).join('')}
+          </div>
+          <div class="field full"><label>Eigene Badges, kommagetrennt</label><textarea name="badges">${escapeHtml(activeBadges.join(', '))}</textarea></div>
+        </div>
+      `;
+    }
+
+    function renderLinkPreview(row) {
+      return `
+        <div class="link-preview" data-link-preview>
+          <div class="preview-button ${row.meeting_link ? '' : 'disabled'}">Treffpunkt ${row.meeting_link ? 'aktiv' : 'leer'}</div>
+          <div class="preview-button primary ${row.location_link ? '' : 'disabled'}">Location ${row.location_link ? 'aktiv' : 'leer'}</div>
+        </div>
+      `;
+    }
+
+    function fillFormFromRow(form, row) {
+      allEditableKeys.forEach(key => {
+        const field = form.elements[key];
+        if (!field) return;
+        field.value = valueForInput(row, key);
+      });
+      refreshBadgeChips(form);
+      refreshLinkPreview(form);
+    }
+
+    function collectPayload(form) {
+      const formData = new FormData(form);
+      const payload = {};
+
+      allEditableKeys.forEach(key => {
+        const raw = formData.get(key);
+        if (key === 'badges') payload[key] = parseBadges(raw);
+        else if (key === 'sort_order') payload[key] = Number(raw || 0);
+        else payload[key] = raw || null;
+      });
+
+      payload.weather_label = null;
+      payload.weather_id = null;
+      payload.updated_at = new Date().toISOString();
+      return payload;
+    }
+
+    function filteredRows() {
+      const search = searchInput.value.trim().toLowerCase();
+      return rows.filter(row => {
+        const matchesFilter = activeFilter === 'all' || row.day_label === activeFilter;
+        const haystack = [row.title, row.subtitle, row.day_label, row.date_label, row.meeting_place, row.location_name, ...(row.badges || [])].filter(Boolean).join(' ').toLowerCase();
+        return matchesFilter && (!search || haystack.includes(search));
+      });
+    }
+
+    async function loadShootings() {
+      clearError();
+      setStatus('Daten werden geladen…');
+      const { data, error } = await db.from('shootings').select('*').order('sort_order', { ascending: true });
+      if (error) { setStatus('Fehler beim Laden'); showError('Fehler beim Laden: ' + formatSupabaseError(error)); return; }
+      rows = data || [];
+      currentRowsById = Object.fromEntries(rows.map(row => [row.id, row]));
+      renderAll();
+      setStatus(rows.length + ' Einträge geladen');
+    }
+
+    function updateStats() {
+      statCount.textContent = rows.length;
+      const next = rows.find(row => row.meeting_time && row.meeting_time !== 'TBA');
+      statNext.textContent = next ? String(next.day_label || '–').slice(0, 2) : '–';
+      statUpdated.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderAll() {
+      updateStats();
+      const visibleRows = filteredRows();
+      shootingsEl.innerHTML = visibleRows.length ? visibleRows.map(renderEditor).join('') : `<div class="card hint">Keine passenden Shootings gefunden.</div>`;
+      bindEditors();
+    }
+
+    function renderEditor(row) {
+      const thumbStyle = row.image_url ? `style="background-image: url('${escapeHtml(row.image_url)}')"` : '';
+      return `
+        <details class="spot-card" data-id="${escapeHtml(row.id)}">
+          <summary>
+            <div class="thumb" ${thumbStyle}></div>
+            <div class="summary-main">
+              <div class="summary-title">${escapeHtml(row.title)}</div>
+              <div class="summary-sub">${escapeHtml(row.meeting_time || 'TBA')} · ${escapeHtml(row.meeting_place || row.location_name || 'TBA')}</div>
+            </div>
+            <div class="summary-day">${escapeHtml(row.day_label || '')}<br>${escapeHtml(row.date_label || '')}</div>
+          </summary>
+          <div class="editor">
+            <form data-id="${escapeHtml(row.id)}">
+              ${renderGroup('Basis', row, simpleFields, 'two')}
+              ${renderGroup('Zeiten', row, timeFields, 'three')}
+              ${renderGroup('Orte', row, placeFields, 'two')}
+              ${renderGroup('Links & Bild', row, linkFields, 'two')}
+              ${renderLinkPreview(row)}
+              ${renderBadgeTools(row)}
+              <div class="sticky-actions">
+                <button class="btn" type="button" data-cancel="${escapeHtml(row.id)}">Abbrechen</button>
+                <button class="btn primary" type="submit">Speichern</button>
+              </div>
+              <div class="danger-zone">
+                <div class="btnbar">
+                  <button class="btn" type="button" data-duplicate="${escapeHtml(row.id)}">Duplizieren</button>
+                  <button class="btn danger" type="button" data-delete="${escapeHtml(row.id)}">Löschen</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </details>
+      `;
+    }
+
+    function bindEditors() {
+      shootingsEl.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', saveForm);
+        form.addEventListener('input', () => refreshLinkPreview(form));
+      });
+      shootingsEl.querySelectorAll('[data-cancel]').forEach(button => button.addEventListener('click', cancelForm));
+      shootingsEl.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', deleteRow));
+      shootingsEl.querySelectorAll('[data-duplicate]').forEach(button => button.addEventListener('click', duplicateRow));
+      shootingsEl.querySelectorAll('[data-badge]').forEach(button => button.addEventListener('click', toggleBadge));
+      shootingsEl.querySelectorAll('[data-spot-select]').forEach(select => select.addEventListener('change', applySpotPreset));
+    }
+
+    function refreshBadgeChips(form) {
+      const badges = parseBadges(form.elements.badges?.value);
+      form.querySelectorAll('[data-badge]').forEach(chip => chip.classList.toggle('active', badges.includes(chip.dataset.badge)));
+    }
+
+    function toggleBadge(event) {
+      const chip = event.currentTarget;
+      const form = chip.closest('form');
+      const textarea = form.elements.badges;
+      const badges = parseBadges(textarea.value);
+      const badge = chip.dataset.badge;
+      const nextBadges = badges.includes(badge) ? badges.filter(item => item !== badge) : [...badges, badge];
+      textarea.value = nextBadges.join(', ');
+      refreshBadgeChips(form);
+    }
+
+    function refreshLinkPreview(form) {
+      const preview = form.querySelector('[data-link-preview]');
+      if (!preview) return;
+      const meeting = form.elements.meeting_link?.value;
+      const location = form.elements.location_link?.value;
+      preview.innerHTML = `
+        <div class="preview-button ${meeting ? '' : 'disabled'}">Treffpunkt ${meeting ? 'aktiv' : 'leer'}</div>
+        <div class="preview-button primary ${location ? '' : 'disabled'}">Location ${location ? 'aktiv' : 'leer'}</div>
+      `;
+    }
+
+    function applySpotPreset(event) {
+      const select = event.currentTarget;
+      const preset = spotPresets[select.value];
+      if (!preset) return;
+      const form = select.closest('form');
+      if (form.elements.location_name) form.elements.location_name.value = preset.location_name;
+      if (form.elements.title && !form.elements.title.value.trim()) form.elements.title.value = preset.title;
+      if (form.elements.image_url && !form.elements.image_url.value.trim()) form.elements.image_url.value = preset.image_url;
+    }
+
+    function cancelForm(event) {
+      const id = event.currentTarget.dataset.cancel;
+      const form = event.currentTarget.closest('form');
+      const row = currentRowsById[id];
+      if (!form || !row) return;
+      fillFormFromRow(form, row);
+      form.closest('details').open = false;
+      setStatus('Änderungen verworfen: ' + id);
+      showToast('Änderungen verworfen');
+    }
+
+    async function saveForm(event) {
+      event.preventDefault();
+      clearError();
+      const form = event.currentTarget;
+      const id = form.dataset.id;
+      const payload = collectPayload(form);
+
+      setStatus('Speichere ' + id + '…');
+      const { error } = await db.from('shootings').update(payload).eq('id', id);
+      if (error) { setStatus('Fehler beim Speichern'); showError('Fehler beim Speichern: ' + formatSupabaseError(error)); return; }
+      setStatus('Gespeichert: ' + id);
+      showToast('Gespeichert');
+      await loadShootings();
+    }
+
+    async function duplicateRow(event) {
+      const id = event.currentTarget.dataset.duplicate;
+      const source = currentRowsById[id];
+      if (!source) return;
+      const copy = { ...source };
+      copy.id = `${source.id}-kopie-${Date.now()}`;
+      copy.title = `${source.title || 'Shooting'} · Kopie`;
+      copy.sort_order = Number(source.sort_order || rows.length) + 1;
+      copy.updated_at = new Date().toISOString();
+      delete copy.weather_label;
+      delete copy.weather_id;
+
+      const { error } = await db.from('shootings').insert(copy);
+      if (error) { showError('Duplizieren fehlgeschlagen: ' + formatSupabaseError(error)); return; }
+      showToast('Dupliziert');
+      await loadShootings();
+    }
+
+    async function deleteRow(event) {
+      const id = event.currentTarget.dataset.delete;
+      const row = currentRowsById[id];
+      if (!row) return;
+      const ok = confirm(`Shooting wirklich löschen?\n\n${row.title || id}`);
+      if (!ok) return;
+      const { error } = await db.from('shootings').delete().eq('id', id);
+      if (error) { showError('Löschen fehlgeschlagen: ' + formatSupabaseError(error)); return; }
+      showToast('Gelöscht');
+      await loadShootings();
+    }
+
+    async function createNewRow() {
+      const sortOrder = rows.length ? Math.max(...rows.map(row => Number(row.sort_order || 0))) + 1 : 1;
+      const id = 'shooting-' + Date.now();
+      const row = {
+        id,
+        sort_order: sortOrder,
+        day_label: 'Freitag',
+        date_label: '',
+        title: 'Neues Shooting',
+        subtitle: '',
+        meeting_time: '',
+        meeting_place: '',
+        shooting_time: '',
+        location_name: '',
+        meeting_link: '',
+        location_link: '',
+        image_url: '',
+        badges: [],
+        route_after: '',
+        weather_label: null,
+        weather_id: null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await db.from('shootings').insert(row);
+      if (error) { showError('Neues Shooting konnte nicht erstellt werden: ' + formatSupabaseError(error)); return; }
+      showToast('Neues Shooting erstellt');
+      await loadShootings();
+      const card = shootingsEl.querySelector(`[data-id="${id}"]`);
+      if (card) {
+        card.open = true;
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function setFilter(filter) {
+      activeFilter = filter;
+      document.querySelectorAll('[data-filter]').forEach(button => button.classList.toggle('active', button.dataset.filter === filter));
+      renderAll();
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      clearError();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email || !password) { showError('Bitte E-Mail und Passwort eingeben.'); return; }
+      setStatus('Login läuft…');
+      loginBtn.disabled = true;
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      loginBtn.disabled = false;
+      if (error) { setStatus('Login fehlgeschlagen'); showError('Login fehlgeschlagen: ' + error.message); return; }
+      await boot();
+    });
+
+    logoutBtn.addEventListener('click', async () => { await db.auth.signOut(); await boot(); });
+    reloadBtn.addEventListener('click', loadShootings);
+    collapseBtn.addEventListener('click', () => document.querySelectorAll('details').forEach(details => details.open = false));
+    addBtn.addEventListener('click', createNewRow);
+    searchInput.addEventListener('input', renderAll);
+    openPublicBtn.addEventListener('click', () => window.open('./', '_blank'));
+    document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => setFilter(button.dataset.filter)));
+
+    async function boot() {
+      clearError();
+      const { data, error } = await db.auth.getSession();
+      if (error) { setStatus('Session Fehler'); showError('Session Fehler: ' + error.message); return; }
+      const session = data.session;
+      loginBox.classList.toggle('hidden', !!session);
+      adminBox.classList.toggle('hidden', !session);
+      toolbar.classList.toggle('hidden', !session);
+      logoutBtn.classList.toggle('hidden', !session);
+      addBtn.classList.toggle('hidden', !session);
+      if (!session) { setStatus('Nicht angemeldet'); return; }
+      setStatus('Angemeldet als ' + session.user.email);
+      await loadShootings();
+    }
+
+    try { initSupabase(); boot(); }
+    catch (error) { setStatus('Admin konnte nicht starten'); showError(error.message + ' · Prüfe, ob der Supabase Script-Tag korrekt geladen wird.'); console.error(error); }
+  </script>
+</body>
+</html>
