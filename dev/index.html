@@ -40,17 +40,21 @@
     <div class="admin-link-footer"><a href="./admin.html" aria-label="Admin öffnen">Admin</a></div>
   </main>
 
-  <div class="install-tip" id="installTip" aria-hidden="true">
-    <div>
-      <div class="install-tip-title">App auf den Homescreen legen?</div>
-      <div class="install-tip-text">schneller Zugriff · offline verfügbar.</div>
-    </div>
-    <div class="install-tip-actions">
-      <button class="install-tip-button" id="installButton" type="button">So geht’s</button>
-      <button class="install-tip-close" id="installTipClose" type="button" aria-label="Hinweis ausblenden">×</button>
-    </div>
+  <div class="install-fab" id="installFab" aria-hidden="true">
+    <button class="install-fab-main" id="installButton" type="button" aria-label="App speichern" title="App speichern">↗</button>
+    <button class="install-fab-close" id="installFabClose" type="button" aria-label="Hinweis ausblenden">×</button>
   </div>
-  <div class="weather-modal" id="weatherModal" aria-hidden="true"><div class="weather-sheet"><button class="weather-close" id="weatherClose" aria-label="Schließen">✕</button><div class="next-label">Wetter Details</div><div class="next-title" id="weatherTitle">Wetter</div><div class="next-meta" id="weatherSummary">Wetter wird geladen…</div><div class="weather-grid"><div class="info"><span class="label">Temperatur</span><span class="value" id="weatherTemp">–</span></div><div class="info"><span class="label">Zustand</span><span class="value" id="weatherCondition">–</span></div><div class="info"><span class="label">Wind</span><span class="value" id="weatherWind">–</span></div><div class="info"><span class="label">Regen</span><span class="value" id="weatherRain">–</span></div></div><div class="light-window"><strong id="weatherLightTitle">✨ Beste Lichtstimmung</strong><span id="weatherLightText">Zeitfenster wird geladen…</span></div></div></div><div class="install-modal" id="installModal" aria-hidden="true"><div class="install-sheet"><button class="install-close" id="installClose" aria-label="Schließen">✕</button><div class="next-label">Homescreen App</div><div class="next-title">Zum Home-Bildschirm hinzufügen</div><div class="next-meta">Auf dem iPhone geht das über das Teilen-Menü.</div><div class="install-steps"><div class="install-step">1. Unten in Safari auf das <strong>Teilen-Symbol</strong> tippen.</div><div class="install-step">2. <strong>„Zum Home-Bildschirm“</strong> auswählen.</div><div class="install-step">3. Oben rechts <strong>„Hinzufügen“</strong> tippen.</div></div></div></div>
+<div class="install-modal" id="installModal" aria-hidden="true"><div class="install-sheet"><button class="install-close" id="installClose" aria-label="Schließen">✕</button><div class="next-label">Homescreen App</div><div class="next-title">Als App speichern</div>
+      <div class="next-meta">Für schnellen Zugriff und damit der letzte geladene Stand offline verfügbar bleibt.</div>
+      <div class="install-steps">
+        <div class="install-step"><strong>Vorteile:</strong><br>schneller Zugriff · offline verfügbar.</div>
+        <div class="install-step">1. In Safari unten rechts auf <strong>…</strong> tippen.</div>
+        <div class="install-step">2. <strong>Teilen</strong> auswählen.</div>
+        <div class="install-step">3. Unten rechts auf <strong>„Mehr anzeigen“</strong> tippen.</div>
+        <div class="install-step">4. <strong>„+ Zum Home-Bildschirm“</strong> auswählen und hinzufügen.</div>
+      </div>
+    </div>
+  </div></div>
 <script>
 const SUPABASE_URL='https://hidqxungaqlzyzsxjfqb.supabase.co';const SUPABASE_KEY='sb_publishable_sbU-WVaWQh4x_vC14dnd6w_otutO8f8';const CACHE_KEY='dolomiten.timeline.cache.v2';const CACHE_TIME_KEY='dolomiten.timeline.cache.time.v2';const WEATHER_CACHE_KEY='dolomiten.weather.cache.v2';
 const root=document.documentElement,hero=document.querySelector('.hero'),topbar=document.querySelector('.topbar'),topbarSpacer=document.querySelector('.topbar-spacer'),tabs=document.getElementById('tabs'),timelineRoot=document.getElementById('timelineRoot'),liveStatus=document.getElementById('liveStatus'),heroLocations=document.getElementById('heroLocations'),syncStatus=document.getElementById('syncStatus'),nextPanel=document.getElementById('nextPanel'),nextLabel=document.getElementById('nextLabel'),nextTitle=document.getElementById('nextTitle'),nextMeta=document.getElementById('nextMeta'),countDays=document.getElementById('countDays'),countHours=document.getElementById('countHours'),countMinutes=document.getElementById('countMinutes'),nextMetaActions=document.getElementById('nextMetaActions'),nextMeetingLink=document.getElementById('nextMeetingLink'),nextShootingLink=document.getElementById('nextShootingLink'),weatherModal=document.getElementById('weatherModal'),weatherTitle=document.getElementById('weatherTitle'),weatherSummary=document.getElementById('weatherSummary'),weatherTemp=document.getElementById('weatherTemp'),weatherCondition=document.getElementById('weatherCondition'),weatherWind=document.getElementById('weatherWind'),weatherRain=document.getElementById('weatherRain'),weatherLightTitle=document.getElementById('weatherLightTitle'),weatherLightText=document.getElementById('weatherLightText'),weatherClose=document.getElementById('weatherClose'),installButton=document.getElementById('installButton'),installCard=document.getElementById('installCard'),installModal=document.getElementById('installModal'),installClose=document.getElementById('installClose');
