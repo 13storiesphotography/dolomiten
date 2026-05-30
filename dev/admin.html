@@ -45,7 +45,44 @@
     .unsaved-bar.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
     .unsaved-bar .btn{min-height:34px;border-radius:999px;padding:0 12px;font-size:.78rem}
 
-    @media(max-width:740px){.wrap{padding-left:12px;padding-right:12px}.top{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}.grid.two,.grid.three,.mini-grid,.link-preview{grid-template-columns:1fr}summary{grid-template-columns:38px 48px 1fr}.summary-day{grid-column:3;text-align:left}.thumb{width:48px;height:48px;border-radius:16px}.drag-handle{width:34px;height:38px}.btnbar .btn{flex:1 1 100%}.sticky-actions{grid-template-columns:1fr 1fr}}
+
+    .view-tabs{display:flex;gap:8px;padding:10px 0 0;overflow-x:auto;scrollbar-width:none}.view-tabs::-webkit-scrollbar{display:none}.view-tab{min-height:36px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.045);color:rgba(247,241,232,.72);padding:0 13px;font-weight:900;font-size:.84rem;cursor:pointer}.view-tab.active{background:var(--accent-soft);border-color:rgba(216,177,106,.38);color:var(--text)}
+    .location-toolbar{display:grid;grid-template-columns:1fr repeat(3,minmax(120px,160px));gap:10px;margin:14px 0 0}.location-card{overflow:hidden}.location-summary{cursor:pointer;padding:15px;display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;list-style:none}.location-summary::-webkit-details-marker{display:none}.location-thumb{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,rgba(216,177,106,.28),rgba(143,181,161,.20));background-size:cover;background-position:center;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 28px rgba(0,0,0,.18)}.location-title{font-weight:950;font-size:1.02rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.location-meta{color:var(--muted);font-size:.84rem;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.location-category{color:var(--accent);font-weight:950;white-space:nowrap;font-size:.8rem;text-align:right}.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tiny-chip{border:1px solid var(--line);background:rgba(255,255,255,.045);border-radius:999px;padding:6px 9px;color:rgba(247,241,232,.72);font-size:.76rem;font-weight:850}.location-editor{padding:0 15px 15px}.location-empty{margin-top:16px}
+
+
+
+
+    .location-picker{border:1px solid rgba(247,241,232,.12);background:rgba(255,255,255,.035);border-radius:18px;padding:12px;display:grid;gap:10px}
+    .location-picker-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .location-picker-search{flex:1 1 220px}
+    .location-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:290px;overflow:auto;padding-right:2px;-webkit-overflow-scrolling:touch}
+    .location-option{border:1px solid rgba(247,241,232,.12);background:rgba(255,255,255,.045);border-radius:16px;padding:10px;display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;text-align:left;color:var(--text);cursor:pointer}
+    .location-option.active{border-color:rgba(216,177,106,.45);background:rgba(216,177,106,.12)}
+    .location-option-thumb{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,rgba(216,177,106,.28),rgba(143,181,161,.20));background-size:cover;background-position:center;border:1px solid rgba(255,255,255,.10)}
+    .location-option-title{font-weight:950;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .location-option-meta{color:var(--muted);font-size:.76rem;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .location-picker-empty{color:var(--muted);border:1px dashed rgba(247,241,232,.16);border-radius:16px;padding:12px;font-size:.84rem;line-height:1.4}
+
+    .location-picker-section-title{grid-column:1/-1;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;font-size:.66rem;font-weight:950;margin:4px 2px 0}
+    .location-option-star{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.22);color:rgba(247,241,232,.55);display:grid;place-items:center;font-size:.82rem;cursor:pointer}
+    .location-option-star.active{color:var(--accent);background:rgba(216,177,106,.14);border-color:rgba(216,177,106,.32)}
+    .location-option{position:relative}
+
+    @media(max-width:740px){.location-picker-grid{grid-template-columns:1fr;max-height:360px}}
+
+    .maps-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    .maps-tools .btn{min-height:36px;border-radius:999px;font-size:.78rem;padding:0 12px}
+    .maps-status{color:var(--muted);font-size:.78rem;font-weight:800}
+
+    .location-actions{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
+    .location-actions .btn{min-height:40px;border-radius:14px;font-size:.82rem}
+    .location-convert-panel{display:none;margin-top:12px;border:1px solid rgba(216,177,106,.22);background:rgba(216,177,106,.07);border-radius:18px;padding:12px}
+    .location-convert-panel.open{display:block}
+    .location-convert-title{font-weight:950;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;font-size:.68rem;margin-bottom:10px}
+    .location-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media(max-width:740px){.location-mini-grid{grid-template-columns:1fr}}
+
+    @media(max-width:740px){.wrap{padding-left:12px;padding-right:12px}.top{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}.grid.two,.grid.three,.mini-grid,.link-preview,.location-toolbar{grid-template-columns:1fr}summary{grid-template-columns:38px 48px 1fr}.summary-day{grid-column:3;text-align:left}.thumb{width:48px;height:48px;border-radius:16px}.drag-handle{width:34px;height:38px}.btnbar .btn{flex:1 1 100%}.sticky-actions{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
@@ -54,6 +91,10 @@
       <div class="top-row">
         <div><div class="eyebrow">13 Stories Photography</div><h1>Admin</h1><div class="status" id="status">Initialisiere…</div></div>
         <button class="btn danger hidden" id="logoutBtn">Abmelden</button>
+      </div>
+      <div class="view-tabs hidden" id="viewTabs">
+        <button class="view-tab active" id="timelineTab" type="button">Timeline</button>
+        <button class="view-tab" id="locationsTab" type="button">Locations</button>
       </div>
       <div class="toolbar hidden" id="toolbar">
         <button class="pill-button active" data-filter="all">Alle</button>
@@ -95,19 +136,42 @@
       </div>
       <div class="shootings" id="shootings"></div>
     </section>
+
+    <section id="locationsBox" class="hidden">
+      <div class="admin-intro">
+        <div class="card">
+          <div class="eyebrow">Location Bibliothek</div>
+          <div class="hint" style="margin-top:8px;">Wiederverwendbare Orte nach Land, Region, Gebiet, Kategorie, Tags und Jahreszeiten.</div>
+          <div class="btnbar">
+            <button class="btn primary" id="newLocationBtn" type="button">Neue Location</button>
+            <button class="btn" id="reloadLocationsBtn" type="button">Locations neu laden</button>
+          </div>
+        </div>
+        <div class="location-toolbar">
+          <div class="search-wrap"><input id="locationSearchInput" type="search" placeholder="Location, Region, Tag suchen…" /></div>
+          <select id="countryFilter"><option value="all">Alle Länder</option></select>
+          <select id="regionFilter"><option value="all">Alle Regionen</option></select>
+          <select id="categoryFilter"><option value="all">Alle Kategorien</option></select>
+        </div>
+      </div>
+      <div class="shootings" id="locationsList"></div>
+    </section>
   </main>
   <button class="floating-add hidden" id="addBtn" type="button" aria-label="Neues Shooting">+</button>
   <div class="toast" id="toast">Gespeichert</div>
+  <datalist id="countrySuggestions"><option value="Deutschland"></option><option value="Italien"></option><option value="Österreich"></option><option value="Schweiz"></option></datalist>
+  <datalist id="categorySuggestions"><option value="Berge"></option><option value="See"></option><option value="Wald"></option><option value="Wiese"></option><option value="Stadt"></option><option value="Altstadt"></option><option value="Dorf"></option><option value="Indoor"></option><option value="Hotel"></option><option value="Roadtrip"></option><option value="Aussichtspunkt"></option><option value="Passstraße"></option></datalist>
   <div class="unsaved-bar" id="unsavedBar"><span id="unsavedText">Ungespeicherte Änderungen</span><button class="btn primary" id="saveOpenBtn" type="button">Offene speichern</button></div>
 
   <script>
     const SUPABASE_URL='https://hidqxungaqlzyzsxjfqb.supabase.co';
     const SUPABASE_KEY='sb_publishable_sbU-WVaWQh4x_vC14dnd6w_otutO8f8';
+    const MAPS_RESOLVER_URL='https://maps-resolveryournameworkersdev.florian-e6d.workers.dev';
 
     const $=id=>document.getElementById(id);
-    const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),reloadBtn=$('reloadBtn'),collapseBtn=$('collapseBtn'),openPublicBtn=$('openPublicBtn'),addBtn=$('addBtn'),toast=$('toast'),searchInput=$('searchInput'),statCount=$('statCount'),statNext=$('statNext'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),sortHint=$('sortHint'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn');
+    const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),reloadBtn=$('reloadBtn'),collapseBtn=$('collapseBtn'),openPublicBtn=$('openPublicBtn'),addBtn=$('addBtn'),toast=$('toast'),searchInput=$('searchInput'),statCount=$('statCount'),statNext=$('statNext'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),sortHint=$('sortHint'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn'),viewTabs=$('viewTabs'),timelineTab=$('timelineTab'),locationsTab=$('locationsTab'),locationsBox=$('locationsBox'),locationsList=$('locationsList'),newLocationBtn=$('newLocationBtn'),reloadLocationsBtn=$('reloadLocationsBtn'),locationSearchInput=$('locationSearchInput'),countryFilter=$('countryFilter'),regionFilter=$('regionFilter'),categoryFilter=$('categoryFilter');
 
-    let db=null,rows=[],currentRowsById={},activeFilter='all',toastTimer=null,draggedCard=null,orderDirty=false,dirtyForms=new Set();
+    let db=null,rows=[],locations=[],currentRowsById={},currentLocationsById={},activeFilter='all',currentView='timeline',toastTimer=null,draggedCard=null,orderDirty=false,dirtyForms=new Set();
 
     const badgePresets=['Goldene Stunde','Picknick','Sonnenaufgang','Farben','Paar-Momente','Kreativ','Aussicht','Gitarre','Goldenes Licht','Spaziergang','Ruhe','Portraits','Perspektiven','Gemeinsame Bilder','Dolomiten','Natur','Abenteuer'];
     const dayOptions=['Freitag','Samstag','Sonntag'];
@@ -122,7 +186,7 @@
 
     const simpleFields=[['day_label','Tag','select-day'],['date_label','Datum','date'],['title','Titel','text'],['subtitle','Untertitel / Mood','text']];
     const timeFields=[['meeting_time','Treffzeit','time'],['shooting_time','Shootingzeit','time'],['route_after','Fahrt danach','text']];
-    const placeFields=[['location_name','Location','spot-select'],['meeting_place','Treffpunkt / Adresse','text']];
+    const placeFields=[['location_id','Location-Bibliothek','location-select'],['location_name','Location','spot-select'],['meeting_place','Treffpunkt / Adresse','text']];
     const linkFields=[['meeting_link','Treffpunkt Maps-Link','url'],['location_link','Location Maps-Link','url'],['image_url','Bild URL','url']];
     const allFieldGroups=[...simpleFields,...timeFields,...placeFields,...linkFields];
 
@@ -154,10 +218,93 @@
     function refreshFormDirtyState(form){if(!form.dataset.baseline)setFormBaseline(form);setFormDirty(form,snapshotForm(form)!==form.dataset.baseline)}
     function updateSortHint(){sortHint.textContent=canSortNow()?'Drag & Drop ist aktiv. Ziehe Karten am Griff ☰ und speichere danach die Reihenfolge.':'Sortierung ist deaktiviert, solange ein Tagesfilter oder eine Suche aktiv ist.'}
 
+    function locationSearchHaystack(location){
+      return [location.name,location.country,location.region,location.area,location.category,location.address,location.meeting_place,...(location.tags||[]),...(location.seasons||[])].filter(Boolean).join(' ').toLowerCase();
+    }
+
+    function renderLocationPicker(row,key,label){
+      const current=row[key]||'';
+      const currentLocation=currentLocationsById[current];
+      const countryOptions=[...new Set(locations.map(l=>l.country).filter(Boolean))].sort();
+      const categoryOptions=[...new Set(locations.map(l=>l.category).filter(Boolean))].sort();
+      return `<div class="field full">
+        <label>${label}</label>
+        <input type="hidden" name="${key}" value="${escapeHtml(current)}" data-location-hidden>
+        <div class="location-picker" data-location-picker>
+          <div class="location-picker-head">
+            <input class="location-picker-search" type="search" placeholder="Location suchen…" data-location-picker-search>
+            <select data-location-picker-country><option value="all">Alle Länder</option>${countryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+            <select data-location-picker-category><option value="all">Alle Kategorien</option>${categoryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+          </div>
+          <div class="hint" data-location-current>${currentLocation ? 'Ausgewählt: '+escapeHtml(currentLocation.name) : 'Keine Bibliotheks-Location ausgewählt'}</div>
+          <div class="location-picker-grid" data-location-picker-grid>${renderLocationPickerOptions('', 'all', 'all', current)}</div>
+        </div>
+      </div>`;
+    }
+
+    function renderLocationPickerOptions(search='',country='all',category='all',current=''){
+      const term=String(search||'').trim().toLowerCase();
+      const hasSearch=term.length>0||country!=='all'||category!=='all';
+
+      const base=locations.filter(location=>{
+        const okCountry=country==='all'||location.country===country;
+        const okCategory=category==='all'||location.category===category;
+        const okSearch=!term||locationSearchHaystack(location).includes(term);
+        return okCountry&&okCategory&&okSearch;
+      });
+
+      const bySmartScore=(a,b)=>{
+        const fav=(b.is_favorite?1:0)-(a.is_favorite?1:0);
+        if(fav)return fav;
+        const last=new Date(b.last_used_at||0)-new Date(a.last_used_at||0);
+        if(last)return last;
+        return Number(b.usage_count||0)-Number(a.usage_count||0);
+      };
+
+      const renderOption=location=>{
+        const meta=[location.country,location.region,location.area,location.category].filter(Boolean).join(' · ');
+        const image=location.image_url?`style="background-image:url('${escapeHtml(location.image_url)}')"`:'';
+        return `<button class="location-option ${current===location.id?'active':''}" type="button" data-pick-location="${escapeHtml(location.id)}">
+          <div class="location-option-thumb" ${image}></div>
+          <div><div class="location-option-title">${escapeHtml(location.name)}</div><div class="location-option-meta">${escapeHtml(meta||'Noch nicht kategorisiert')}</div></div>
+          <span class="location-option-star ${location.is_favorite?'active':''}" data-toggle-location-favorite="${escapeHtml(location.id)}" title="Favorit">★</span>
+        </button>`;
+      };
+
+      const clearOption=`<button class="location-option ${!current?'active':''}" type="button" data-pick-location="">
+        <div class="location-option-thumb"></div>
+        <div><div class="location-option-title">Keine Bibliotheks-Location</div><div class="location-option-meta">Manuelle Location verwenden</div></div>
+      </button>`;
+
+      if(hasSearch){
+        const results=[...base].sort(bySmartScore).slice(0,14);
+        if(!results.length){
+          return clearOption+`<div class="location-picker-empty">Keine passende Location gefunden. Du kannst die Location manuell eintragen und anschließend „Als Location speichern“ nutzen.</div>`;
+        }
+        return clearOption+`<div class="location-picker-section-title">Suchergebnisse (${base.length})</div>`+results.map(renderOption).join('');
+      }
+
+      const favorites=[...locations].filter(l=>l.is_favorite).sort(bySmartScore).slice(0,6);
+      const recent=[...locations].filter(l=>l.last_used_at&&!favorites.some(f=>f.id===l.id)).sort(bySmartScore).slice(0,6);
+      const frequent=[...locations].filter(l=>Number(l.usage_count||0)>0&&!favorites.some(f=>f.id===l.id)&&!recent.some(r=>r.id===l.id)).sort(bySmartScore).slice(0,6);
+
+      let output=clearOption;
+      if(favorites.length)output+=`<div class="location-picker-section-title">⭐ Favoriten</div>`+favorites.map(renderOption).join('');
+      if(recent.length)output+=`<div class="location-picker-section-title">🕒 Zuletzt verwendet</div>`+recent.map(renderOption).join('');
+      if(frequent.length)output+=`<div class="location-picker-section-title">Häufig verwendet</div>`+frequent.map(renderOption).join('');
+
+      if(!favorites.length&&!recent.length&&!frequent.length){
+        const starter=[...locations].sort(bySmartScore).slice(0,10);
+        output+=`<div class="location-picker-section-title">Erste Locations</div>`+starter.map(renderOption).join('');
+      }
+
+      return output;
+    }
+
     function renderField(row,[key,label,type]){
       const value=escapeHtml(valueForInput(row,key,type));
       if(type==='select-day')return `<div class="field"><label>${label}</label><select name="${key}">${dayOptions.map(day=>`<option value="${escapeHtml(day)}" ${row[key]===day?'selected':''}>${escapeHtml(day)}</option>`).join('')}</select></div>`;
-      if(type==='spot-select'){
+      if(type==='location-select'){return renderLocationPicker(row,key,label)}if(type==='spot-select'){
         const current=row[key]||'',names=Object.keys(spotPresets),hasPreset=names.includes(current);
         return `<div class="field"><label>${label}</label><select name="${key}" data-spot-select><option value="${escapeHtml(current)}">${hasPreset?'Preset wählen…':(escapeHtml(current)||'Eigener Ort')}</option>${names.map(spot=>`<option value="${escapeHtml(spot)}" ${current===spot?'selected':''}>${escapeHtml(spot)}</option>`).join('')}</select></div>`;
       }
@@ -166,6 +313,32 @@
     function renderGroup(title,row,fields,cols='two'){return `<div class="section-title">${title}</div><div class="grid ${cols}">${fields.map(f=>renderField(row,f)).join('')}</div>`}
     function renderBadges(row){const active=parseBadges(row.badges);return `<div class="section-title">Badges</div><div class="badge-tools"><div class="badge-picker">${badgePresets.map(b=>`<button type="button" class="badge-chip ${active.includes(b)?'active':''}" data-badge="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join('')}</div><div class="field full"><label>Eigene Badges, kommagetrennt</label><textarea name="badges">${escapeHtml(active.join(', '))}</textarea></div></div>`}
     function renderPreview(row){const image=row.image_url?`url('${escapeHtml(row.image_url)}')`:'';return `<div class="link-preview" data-link-preview><a class="preview-button ${row.meeting_link?'':'disabled'}" ${row.meeting_link?`href="${escapeHtml(row.meeting_link)}" target="_blank" rel="noopener"`:''}>Treffpunkt ${row.meeting_link?'öffnen':'leer'}</a><a class="preview-button primary ${row.location_link?'':'disabled'}" ${row.location_link?`href="${escapeHtml(row.location_link)}" target="_blank" rel="noopener"`:''}>Location ${row.location_link?'öffnen':'leer'}</a></div><div class="image-preview" data-image-preview style="--preview-image:${image};">${row.image_url?'Bildvorschau':'Keine Bild-URL gesetzt'}</div>`}
+
+    function renderLocationConvertTools(row){
+      const hasLocation = !!row.location_id;
+      return `<div class="location-actions">
+        <button class="btn" type="button" data-open-location-panel="${escapeHtml(row.id)}">${hasLocation ? 'Location aktualisieren' : 'Als Location speichern'}</button>
+      </div>
+      <div class="location-convert-panel" data-location-panel="${escapeHtml(row.id)}">
+        <div class="location-convert-title">${hasLocation ? 'Bibliotheks-Location aktualisieren' : 'Neue Location aus Shooting erstellen'}</div>
+        <div class="location-mini-grid">
+          <div class="field"><label>Name</label><input name="location_meta_name" type="text" value="${escapeHtml(row.location_name || row.title || 'Neue Location')}" /></div>
+          <div class="field"><label>Land</label><input name="location_meta_country" type="text" list="countrySuggestions" value="" placeholder="Deutschland, Italien…" /></div>
+          <div class="field"><label>Region</label><input name="location_meta_region" type="text" placeholder="Bayern, Südtirol…" /></div>
+          <div class="field"><label>Gebiet</label><input name="location_meta_area" type="text" placeholder="Dolomiten, Allgäu…" /></div>
+          <div class="field"><label>Kategorie</label><input name="location_meta_category" type="text" list="categorySuggestions" placeholder="Berge, See, Stadt…" /></div>
+          <div class="field"><label>Tags</label><input name="location_meta_tags" type="text" value="${escapeHtml(parseBadges(row.badges).join(', '))}" placeholder="Sonnenaufgang, Paarshooting…" /></div>
+          <div class="field full"><label>Jahreszeiten</label><input name="location_meta_seasons" type="text" placeholder="Sommer, Herbst…" /></div><div class="field full"><div class="maps-tools"><button class="btn" type="button" data-detect-shooting-location>Infos aus Maps-Link erkennen</button><span class="maps-status" data-maps-status></span></div></div>
+        </div>
+        <div class="btnbar">
+          <button class="btn primary" type="button" data-save-as-location="${escapeHtml(row.id)}">${hasLocation ? 'Location aktualisieren' : 'Location speichern & verknüpfen'}</button>
+          <button class="btn" type="button" data-close-location-panel="${escapeHtml(row.id)}">Abbrechen</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">Übernommen werden Name, Treffpunkt, Maps-Link und Bild aus diesem Shooting. Zusatzinfos füllst du nur aus, wenn die Location wiederverwendbar werden soll.</div>
+      </div>`;
+    }
+
+
 
     function filteredRows(){
       const search=searchInput.value.trim().toLowerCase();
@@ -180,7 +353,7 @@
       clearError();orderDirty=false;dirtyForms.clear();updateOrderButton();updateUnsavedBar();setStatus('Daten werden geladen…');
       const {data,error}=await db.from('shootings').select('*').order('sort_order',{ascending:true});
       if(error){setStatus('Fehler beim Laden');showError('Fehler beim Laden: '+formatError(error));return}
-      rows=data||[];currentRowsById=Object.fromEntries(rows.map(r=>[r.id,r]));renderAll();setStatus(rows.length+' Einträge geladen');
+      rows=data||[];if(!locations.length)await loadLocations();currentRowsById=Object.fromEntries(rows.map(r=>[r.id,r]));renderAll();setStatus(rows.length+' Einträge geladen');
     }
 
     function updateStats(){
@@ -200,7 +373,7 @@
     function renderEditor(row){
       const thumb=row.image_url?`style="background-image:url('${escapeHtml(row.image_url)}')"`:'';
       const sortable=canSortNow();
-      return `<details class="spot-card" data-id="${escapeHtml(row.id)}" ${sortable?'draggable="true"':''}><summary><div class="drag-handle ${sortable?'':'disabled'}" title="${sortable?'Ziehen zum Sortieren':'Sortierung nur in Alle ohne Suche'}">☰</div><div class="thumb" ${thumb}></div><div class="summary-main"><div class="summary-title">${escapeHtml(row.title)}</div><div class="summary-sub"><span class="order-badge">#${Number(row.sort_order||0)}</span>${escapeHtml(row.meeting_time||'TBA')} · ${escapeHtml(row.meeting_place||row.location_name||'TBA')}</div><div class="dirty-badge">Nicht gespeichert</div></div><div class="summary-day">${escapeHtml(row.day_label||'')}<br>${escapeHtml(row.date_label||'')}</div></summary><div class="editor"><form data-id="${escapeHtml(row.id)}">${renderGroup('Basis',row,simpleFields,'two')}${renderGroup('Zeiten',row,timeFields,'three')}${renderGroup('Orte',row,placeFields,'two')}${renderGroup('Links & Bild',row,linkFields,'two')}${renderPreview(row)}${renderBadges(row)}<div class="sticky-actions"><button class="btn" type="button" data-cancel="${escapeHtml(row.id)}">Abbrechen</button><button class="btn primary form-save-btn" type="submit">Speichern</button><div class="save-state" data-save-state>Gespeichert</div></div><div class="danger-zone"><div class="btnbar"><button class="btn" type="button" data-duplicate="${escapeHtml(row.id)}">Duplizieren</button><button class="btn danger" type="button" data-delete="${escapeHtml(row.id)}">Löschen</button></div></div></form></div></details>`;
+      return `<details class="spot-card" data-id="${escapeHtml(row.id)}" ${sortable?'draggable="true"':''}><summary><div class="drag-handle ${sortable?'':'disabled'}" title="${sortable?'Ziehen zum Sortieren':'Sortierung nur in Alle ohne Suche'}">☰</div><div class="thumb" ${thumb}></div><div class="summary-main"><div class="summary-title">${escapeHtml(row.title)}</div><div class="summary-sub"><span class="order-badge">#${Number(row.sort_order||0)}</span>${escapeHtml(row.meeting_time||'TBA')} · ${escapeHtml(row.meeting_place||row.location_name||'TBA')}</div><div class="dirty-badge">Nicht gespeichert</div></div><div class="summary-day">${escapeHtml(row.day_label||'')}<br>${escapeHtml(row.date_label||'')}</div></summary><div class="editor"><form data-id="${escapeHtml(row.id)}">${renderGroup('Basis',row,simpleFields,'two')}${renderGroup('Zeiten',row,timeFields,'three')}${renderGroup('Orte',row,placeFields,'two')}${renderGroup('Links & Bild',row,linkFields,'two')}${renderPreview(row)}${renderLocationConvertTools(row)}${renderBadges(row)}<div class="sticky-actions"><button class="btn" type="button" data-cancel="${escapeHtml(row.id)}">Abbrechen</button><button class="btn primary form-save-btn" type="submit">Speichern</button><div class="save-state" data-save-state>Gespeichert</div></div><div class="danger-zone"><div class="btnbar"><button class="btn" type="button" data-duplicate="${escapeHtml(row.id)}">Duplizieren</button><button class="btn danger" type="button" data-delete="${escapeHtml(row.id)}">Löschen</button></div></div></form></div></details>`;
     }
 
     function bindEditors(){
@@ -209,7 +382,7 @@
       shootingsEl.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',deleteRow));
       shootingsEl.querySelectorAll('[data-duplicate]').forEach(b=>b.addEventListener('click',duplicateRow));
       shootingsEl.querySelectorAll('[data-badge]').forEach(b=>b.addEventListener('click',toggleBadge));
-      shootingsEl.querySelectorAll('[data-spot-select]').forEach(s=>s.addEventListener('change',applySpotPreset));
+      shootingsEl.querySelectorAll('[data-spot-select]').forEach(s=>s.addEventListener('change',applySpotPreset));bindLocationPickers();shootingsEl.querySelectorAll('[data-open-location-panel]').forEach(b=>b.addEventListener('click',openLocationPanel));shootingsEl.querySelectorAll('[data-close-location-panel]').forEach(b=>b.addEventListener('click',closeLocationPanel));shootingsEl.querySelectorAll('[data-save-as-location]').forEach(b=>b.addEventListener('click',saveShootingAsLocation));shootingsEl.querySelectorAll('[data-detect-shooting-location]').forEach(b=>b.addEventListener('click',detectShootingLocationFromMaps));
       if(canSortNow())bindDragAndDrop();
     }
 
@@ -317,13 +490,416 @@
         addBtn.textContent='+';
       }
     }
+    function parseCsv(value){if(Array.isArray(value))return value;return String(value||'').split(',').map(x=>x.trim()).filter(Boolean)}
+    function csv(value){return Array.isArray(value)?value.join(', '):(value||'')}
+    function locationMeta(l){return [l.country,l.region,l.area].filter(Boolean).join(' · ')}
+    async function loadLocations(){const {data,error}=await db.from('locations').select('*').order('country',{ascending:true}).order('region',{ascending:true}).order('name',{ascending:true});if(error){showError('Locations konnten nicht geladen werden: '+formatError(error));return}locations=data||[];currentLocationsById=Object.fromEntries(locations.map(l=>[l.id,l]));renderLocationFilters();renderLocations()}
+    function renderLocationFilters(){const fill=(select,values,label)=>{const current=select.value;select.innerHTML=`<option value="all">${label}</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');if([...select.options].some(o=>o.value===current))select.value=current};fill(countryFilter,[...new Set(locations.map(l=>l.country).filter(Boolean))].sort(),'Alle Länder');fill(regionFilter,[...new Set(locations.map(l=>l.region).filter(Boolean))].sort(),'Alle Regionen');fill(categoryFilter,[...new Set(locations.map(l=>l.category).filter(Boolean))].sort(),'Alle Kategorien')}
+    function filteredLocations(){const search=locationSearchInput.value.trim().toLowerCase();return locations.filter(l=>{const okCountry=countryFilter.value==='all'||l.country===countryFilter.value,okRegion=regionFilter.value==='all'||l.region===regionFilter.value,okCategory=categoryFilter.value==='all'||l.category===categoryFilter.value;const haystack=[l.name,l.country,l.region,l.area,l.category,l.address,l.meeting_place,l.description,...(l.tags||[]),...(l.seasons||[])].filter(Boolean).join(' ').toLowerCase();return okCountry&&okRegion&&okCategory&&(!search||haystack.includes(search))})}
+    function renderLocations(){const visible=filteredLocations();locationsList.innerHTML=visible.length?visible.map(renderLocationEditor).join(''):`<div class="card hint location-empty">Keine Location gefunden. Lege über „Neue Location“ deine erste Location an.</div>`;bindLocationEditors()}
+    function renderLocationEditor(l){const image=l.image_url?`style="background-image:url('${escapeHtml(l.image_url)}')"`:'';const tags=[...(l.tags||[]),...(l.seasons||[])].filter(Boolean);return `<details class="spot-card location-card" data-location-id="${escapeHtml(l.id)}"><summary class="location-summary"><div class="location-thumb" ${image}></div><div><div class="location-title">${escapeHtml(l.name||'Neue Location')}</div><div class="location-meta">${escapeHtml(locationMeta(l)||'Noch nicht kategorisiert')}</div>${tags.length?`<div class="tag-row">${tags.slice(0,6).map(t=>`<span class="tiny-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}</div><div class="location-category">${escapeHtml(l.category||'')}</div></summary><div class="location-editor"><form data-location-form="${escapeHtml(l.id)}"><div class="section-title">Basis</div><div class="grid two"><div class="field"><label>Name</label><input name="name" type="text" value="${escapeHtml(l.name||'')}" required></div><div class="field"><label>Kategorie</label><input name="category" type="text" list="categorySuggestions" value="${escapeHtml(l.category||'')}" placeholder="Berge, See, Stadt…"></div><div class="field"><label>Land</label><input name="country" type="text" list="countrySuggestions" value="${escapeHtml(l.country||'')}" placeholder="Deutschland, Italien…"></div><div class="field"><label>Region</label><input name="region" type="text" value="${escapeHtml(l.region||'')}" placeholder="Bayern, Südtirol…"></div><div class="field"><label>Gebiet</label><input name="area" type="text" value="${escapeHtml(l.area||'')}" placeholder="Dolomiten, Allgäu…"></div><div class="field"><label>Aktiv</label><select name="active"><option value="true" ${l.active!==false?'selected':''}>Aktiv</option><option value="false" ${l.active===false?'selected':''}>Archiviert</option></select></div></div><div class="section-title">Ort & Links</div><div class="grid two"><div class="field full"><label>Adresse</label><input name="address" type="text" value="${escapeHtml(l.address||'')}"></div><div class="field"><label>Google Maps Link</label><input name="maps_link" type="url" inputmode="url" value="${escapeHtml(l.maps_link||'')}"><div class="maps-tools"><button class="btn" type="button" data-detect-location-from-maps>Infos erkennen</button><span class="maps-status" data-maps-status></span></div></div><div class="field"><label>Treffpunkt</label><input name="meeting_place" type="text" value="${escapeHtml(l.meeting_place||'')}"></div><div class="field full"><label>Bild URL</label><input name="image_url" type="url" inputmode="url" value="${escapeHtml(l.image_url||'')}"></div></div><div class="image-preview" data-location-image-preview style="--preview-image:${l.image_url?`url('${escapeHtml(l.image_url)}')`:''};">${l.image_url?'Bildvorschau':'Keine Bild-URL gesetzt'}</div><div class="section-title">Beschreibung & Tags</div><div class="grid two"><div class="field full"><label>Beschreibung</label><textarea name="description">${escapeHtml(l.description||'')}</textarea></div><div class="field"><label>Tags, kommagetrennt</label><textarea name="tags">${escapeHtml(csv(l.tags))}</textarea></div><div class="field"><label>Jahreszeiten, kommagetrennt</label><textarea name="seasons">${escapeHtml(csv(l.seasons))}</textarea></div></div><div class="sticky-actions"><button class="btn" type="button" data-location-cancel="${escapeHtml(l.id)}">Abbrechen</button><button class="btn primary" type="submit">Location speichern</button></div><div class="danger-zone"><div class="btnbar"><button class="btn danger" type="button" data-location-delete="${escapeHtml(l.id)}">Location löschen</button></div></div></form></div></details>`}
+    function collectLocationPayload(form){const d=new FormData(form);return{name:d.get('name')||'Neue Location',country:d.get('country')||null,region:d.get('region')||null,area:d.get('area')||null,category:d.get('category')||null,address:d.get('address')||null,maps_link:d.get('maps_link')||null,meeting_place:d.get('meeting_place')||null,image_url:d.get('image_url')||null,description:d.get('description')||null,tags:parseCsv(d.get('tags')),seasons:parseCsv(d.get('seasons')),active:d.get('active')!=='false',updated_at:new Date().toISOString()}}
+    function bindLocationEditors(){locationsList.querySelectorAll('form[data-location-form]').forEach(form=>{form.addEventListener('submit',saveLocationForm);form.addEventListener('input',()=>refreshLocationImagePreview(form))});locationsList.querySelectorAll('[data-detect-location-from-maps]').forEach(b=>b.addEventListener('click',detectLocationFromMaps));locationsList.querySelectorAll('[data-location-delete]').forEach(b=>b.addEventListener('click',deleteLocation));locationsList.querySelectorAll('[data-location-cancel]').forEach(b=>b.addEventListener('click',renderLocations))}
+    function refreshLocationImagePreview(form){const p=form.querySelector('[data-location-image-preview]');if(!p)return;const url=form.elements.image_url?.value||'';p.style.setProperty('--preview-image',url?`url('${url.replaceAll("'","%27")}')`:'linear-gradient(135deg,rgba(216,177,106,.18),rgba(143,181,161,.12))');p.textContent=url?'Bildvorschau':'Keine Bild-URL gesetzt'}
+    async function saveLocationForm(e){e.preventDefault();clearError();const form=e.currentTarget,id=form.dataset.locationForm,payload=collectLocationPayload(form);setStatus('Speichere Location…');const {error}=await db.from('locations').update(payload).eq('id',id);if(error){showError('Location konnte nicht gespeichert werden: '+formatError(error));setStatus('Fehler beim Speichern');return}showToast('Location gespeichert');await loadLocations();setStatus('Location gespeichert')}
+    async function createNewLocation(){clearError();const payload={name:'Neue Location',country:'Deutschland',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',image_url:'',description:'',tags:[],seasons:[],active:true,updated_at:new Date().toISOString()};const {data,error}=await db.from('locations').insert(payload).select('*').single();if(error){showError('Location konnte nicht erstellt werden: '+formatError(error));return}showToast('Location erstellt');await loadLocations();const card=locationsList.querySelector(`[data-location-id="${data.id}"]`);if(card){card.open=true;card.scrollIntoView({behavior:'smooth',block:'center'});const input=card.querySelector('input[name="name"]');if(input)setTimeout(()=>input.focus(),350)}}
+    async function deleteLocation(e){const id=e.currentTarget.dataset.locationDelete,l=currentLocationsById[id];if(!l)return;if(!confirm(`Location wirklich löschen?\n\n${l.name}`))return;const {error}=await db.from('locations').delete().eq('id',id);if(error){showError('Location konnte nicht gelöscht werden: '+formatError(error));return}showToast('Location gelöscht');await loadLocations()}
+    function applyLocationToForm(e){const location=currentLocationsById[e.currentTarget.value];if(!location)return;const form=e.currentTarget.closest('form');if(form.elements.location_name)form.elements.location_name.value=location.name||'';if(form.elements.meeting_place&&!form.elements.meeting_place.value.trim())form.elements.meeting_place.value=location.meeting_place||location.address||'';if(form.elements.meeting_link&&!form.elements.meeting_link.value.trim())form.elements.meeting_link.value=location.maps_link||'';if(form.elements.location_link&&!form.elements.location_link.value.trim())form.elements.location_link.value=location.maps_link||'';if(form.elements.image_url&&!form.elements.image_url.value.trim())form.elements.image_url.value=location.image_url||'';refreshLivePreview(form);showToast('Location übernommen')}
+
+    function extractCoordsFromMapsLink(url){
+      const value=String(url||'').trim();
+      if(!value)return null;
+
+      const patterns=[
+        /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+        /[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+        /[?&]ll=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+        /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+        /!2d(-?\d+(?:\.\d+)?)!3d(-?\d+(?:\.\d+)?)/
+      ];
+
+      for(const pattern of patterns){
+        const match=value.match(pattern);
+        if(match){
+          if(pattern.source.includes('!2d')){
+            return {lat:Number(match[2]),lon:Number(match[1])};
+          }
+          return {lat:Number(match[1]),lon:Number(match[2])};
+        }
+      }
+
+      const decoded=decodeURIComponent(value);
+      const coordMatch=decoded.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
+      if(coordMatch)return {lat:Number(coordMatch[1]),lon:Number(coordMatch[2])};
+
+      return null;
+    }
+
+    function extractStreetWithNumber(address,displayName=''){
+      const street =
+        address.road ||
+        address.pedestrian ||
+        address.footway ||
+        address.path ||
+        address.cycleway ||
+        address.residential ||
+        address.neighbourhood ||
+        '';
+
+      const houseNumber =
+        address.house_number ||
+        address.housenumber ||
+        address['addr:housenumber'] ||
+        '';
+
+      if(street && houseNumber){
+        return `${street} ${houseNumber}`;
+      }
+
+      if(street && displayName){
+        const parts=String(displayName).split(',').map(part=>part.trim()).filter(Boolean);
+        const streetPart=parts.find(part=>part.toLowerCase().includes(String(street).toLowerCase()));
+        if(streetPart){
+          const numberMatch=streetPart.match(new RegExp(`${street.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s+([0-9]+[a-zA-Z]?(?:\\/[0-9]+[a-zA-Z]?)?)`,'i'));
+          if(numberMatch){
+            return `${street} ${numberMatch[1]}`;
+          }
+          const trailingNumber=streetPart.match(/(.+?)\s+([0-9]+[a-zA-Z]?(?:\/[0-9]+[a-zA-Z]?)?)$/);
+          if(trailingNumber){
+            return streetPart;
+          }
+        }
+      }
+
+      if(displayName){
+        const firstPart=String(displayName).split(',').map(part=>part.trim()).filter(Boolean)[0]||'';
+        if(firstPart && /\d/.test(firstPart)){
+          return firstPart;
+        }
+      }
+
+      return street;
+    }
+
+    function mapAddressToMeta(address,displayName=''){
+      const country=address.country||'';
+      const region=address.state||address.region||address.province||address.county||'';
+      const area=address.city||address.town||address.village||address.municipality||address.hamlet||address.suburb||address.county||'';
+      const streetWithNumber=extractStreetWithNumber(address,displayName);
+      const postcodeCity=[address.postcode,area].filter(Boolean).join(' ');
+      const fullAddress=[streetWithNumber,postcodeCity,region,country].filter(Boolean).join(', ');
+      return {country,region,area,address:fullAddress};
+    }
+
+    async function reverseGeocodeCoords(coords){
+      const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(coords.lat)}&lon=${encodeURIComponent(coords.lon)}&zoom=16&addressdetails=1`;
+      const response=await fetch(url,{headers:{'Accept':'application/json'}});
+      if(!response.ok)throw new Error('Geocoding fehlgeschlagen: '+response.status);
+      return await response.json();
+    }
+
+    function setMapsStatus(form,message){
+      const status=form.querySelector('[data-maps-status]');
+      if(status)status.textContent=message||'';
+    }
+
+    async function resolveMapsLinkIfNeeded(link,form){
+      const value=String(link||'').trim();
+      if(!value)return value;
+
+      const isShort=value.includes('maps.app.goo.gl')||value.includes('goo.gl/maps');
+      if(!isShort)return value;
+
+      setMapsStatus(form,'Kurzlink wird aufgelöst…');
+
+      const response=await fetch(`${MAPS_RESOLVER_URL}?url=${encodeURIComponent(value)}`);
+      const result=await response.json();
+
+      if(!response.ok||result.error){
+        throw new Error(result.error||'Kurzlink konnte nicht aufgelöst werden');
+      }
+
+      return result.resolvedUrl||value;
+    }
+
+    async function detectMetaFromMapsLink(link,form){
+      const resolvedLink=await resolveMapsLinkIfNeeded(link,form);
+      const coords=extractCoordsFromMapsLink(resolvedLink);
+      if(!coords){
+        setMapsStatus(form,'Keine Koordinaten gefunden. Der Link wurde gelesen, enthält aber keine eindeutig erkennbaren Koordinaten.');
+        return null;
+      }
+
+      setMapsStatus(form,'Erkenne Ort…');
+      const result=await reverseGeocodeCoords(coords);
+      const meta=mapAddressToMeta(result.address||{},result.display_name||'');
+      meta.display_name=result.display_name||'';
+      meta.lat=coords.lat;
+      meta.lon=coords.lon;
+      setMapsStatus(form,'Infos erkannt');
+      window.setTimeout(()=>setMapsStatus(form,''),2200);
+      return meta;
+    }
+
+    async function detectLocationFromMaps(event){
+      const form=event.currentTarget.closest('form');
+      if(!form)return;
+      const link=form.elements.maps_link?.value;
+      try{
+        const meta=await detectMetaFromMapsLink(link,form);
+        if(!meta)return;
+        if(form.elements.country)form.elements.country.value=meta.country||form.elements.country.value;
+        if(form.elements.region)form.elements.region.value=meta.region||form.elements.region.value;
+        if(form.elements.area)form.elements.area.value=meta.area||form.elements.area.value;
+        if(form.elements.address)form.elements.address.value=meta.address||meta.display_name||form.elements.address.value;
+        showToast('Maps-Infos übernommen');
+      }catch(error){
+        console.error(error);
+        setMapsStatus(form,'Konnte Infos nicht erkennen');
+        showError('Maps-Infos konnten nicht erkannt werden: '+(error.message||error));
+      }
+    }
+
+    async function detectShootingLocationFromMaps(event){
+      const form=event.currentTarget.closest('form');
+      if(!form)return;
+      const link=form.elements.location_link?.value||form.elements.meeting_link?.value;
+      try{
+        const meta=await detectMetaFromMapsLink(link,form);
+        if(!meta)return;
+        if(form.elements.location_meta_country)form.elements.location_meta_country.value=meta.country||form.elements.location_meta_country.value;
+        if(form.elements.location_meta_region)form.elements.location_meta_region.value=meta.region||form.elements.location_meta_region.value;
+        if(form.elements.location_meta_area)form.elements.location_meta_area.value=meta.area||form.elements.location_meta_area.value;
+        if(form.elements.meeting_place)form.elements.meeting_place.value=meta.address||meta.display_name||form.elements.meeting_place.value;
+        showToast('Maps-Infos übernommen');
+        refreshFormDirtyState(form);
+      }catch(error){
+        console.error(error);
+        setMapsStatus(form,'Konnte Infos nicht erkennen');
+        showError('Maps-Infos konnten nicht erkannt werden: '+(error.message||error));
+      }
+    }
+
+    function openLocationPanel(e){
+      const id=e.currentTarget.dataset.openLocationPanel;
+      const panel=shootingsEl.querySelector(`[data-location-panel="${id}"]`);
+      if(panel)panel.classList.add('open');
+    }
+
+    function closeLocationPanel(e){
+      const id=e.currentTarget.dataset.closeLocationPanel;
+      const panel=shootingsEl.querySelector(`[data-location-panel="${id}"]`);
+      if(panel)panel.classList.remove('open');
+    }
+
+    function locationPayloadFromShootingForm(form){
+      const fd=new FormData(form);
+      const mapsLink=fd.get('location_link')||fd.get('meeting_link')||null;
+      return {
+        name:fd.get('location_meta_name')||fd.get('location_name')||fd.get('title')||'Neue Location',
+        country:fd.get('location_meta_country')||null,
+        region:fd.get('location_meta_region')||null,
+        area:fd.get('location_meta_area')||null,
+        category:fd.get('location_meta_category')||null,
+        address:fd.get('meeting_place')||null,
+        maps_link:mapsLink,
+        meeting_place:fd.get('meeting_place')||null,
+        image_url:fd.get('image_url')||null,
+        description:fd.get('subtitle')||null,
+        tags:parseCsv(fd.get('location_meta_tags')),
+        seasons:parseCsv(fd.get('location_meta_seasons')),
+        active:true,
+        updated_at:new Date().toISOString()
+      };
+    }
+
+    async function saveShootingAsLocation(e){
+      clearError();
+      const button=e.currentTarget;
+      const id=button.dataset.saveAsLocation;
+      const form=button.closest('form');
+      if(!form)return;
+
+      const existingLocationId=form.elements.location_id?.value;
+      const payload=locationPayloadFromShootingForm(form);
+
+      button.disabled=true;
+      const oldText=button.textContent;
+      button.textContent=existingLocationId?'Aktualisiere…':'Speichere…';
+
+      try{
+        let locationId=existingLocationId;
+
+        if(existingLocationId){
+          const {error}=await db.from('locations').update(payload).eq('id',existingLocationId);
+          if(error){showError('Location konnte nicht aktualisiert werden: '+formatError(error));return}
+          showToast('Location aktualisiert');
+        }else{
+          const {data,error}=await db.from('locations').insert(payload).select('*').single();
+          if(error){showError('Location konnte nicht gespeichert werden: '+formatError(error));return}
+          locationId=data.id;
+          if(form.elements.location_id)form.elements.location_id.value=locationId;
+
+          const {error:updateError}=await db.from('shootings').update({location_id:locationId,updated_at:new Date().toISOString()}).eq('id',id);
+          if(updateError){showError('Location erstellt, aber Shooting konnte nicht verknüpft werden: '+formatError(updateError));return}
+
+          showToast('Location gespeichert & verknüpft');
+        }
+
+        await loadLocations();
+
+        const row=currentRowsById[id]||{};
+        currentRowsById[id]={...row,location_id:locationId};
+        const index=rows.findIndex(r=>r.id===id);
+        if(index>=0)rows[index]={...rows[index],location_id:locationId};
+
+        setFormBaseline(form);
+        refreshFormDirtyState(form);
+
+        const panel=form.querySelector(`[data-location-panel="${id}"]`);
+        if(panel)panel.classList.remove('open');
+
+        await loadShootings();
+        const card=shootingsEl.querySelector(`[data-id="${id}"]`);
+        if(card){
+          card.open=true;
+          card.scrollIntoView({behavior:'smooth',block:'center'});
+        }
+      }catch(error){
+        console.error(error);
+        showError('Location konnte nicht gespeichert werden: '+(error.message||error));
+      }finally{
+        button.disabled=false;
+        button.textContent=oldText;
+      }
+    }
+
+
+    function bindLocationPickers(){
+      shootingsEl.querySelectorAll('[data-location-picker]').forEach(picker=>{
+        const form=picker.closest('form');
+        const grid=picker.querySelector('[data-location-picker-grid]');
+        const search=picker.querySelector('[data-location-picker-search]');
+        const country=picker.querySelector('[data-location-picker-country]');
+        const category=picker.querySelector('[data-location-picker-category]');
+        const hidden=form?.elements.location_id;
+
+        const refresh=()=>{
+          grid.innerHTML=renderLocationPickerOptions(search.value,country.value,category.value,hidden?.value||'');
+          bindLocationPickerOptions(picker);
+        };
+
+        search.addEventListener('input',refresh);
+        country.addEventListener('change',refresh);
+        category.addEventListener('change',refresh);
+        bindLocationPickerOptions(picker);
+      });
+    }
+
+    
+    async function toggleLocationFavorite(id){
+      const location=currentLocationsById[id];
+      if(!location)return;
+      const next=!location.is_favorite;
+      const {error}=await db.from('locations').update({is_favorite:next,updated_at:new Date().toISOString()}).eq('id',id);
+      if(error){showError('Favorit konnte nicht gespeichert werden: '+formatError(error));return}
+      location.is_favorite=next;
+      currentLocationsById[id]=location;
+      locations=locations.map(item=>item.id===id?{...item,is_favorite:next}:item);
+    }
+
+    async function markLocationUsed(id){
+      const location=currentLocationsById[id];
+      if(!location)return;
+      const usage=Number(location.usage_count||0)+1;
+      const now=new Date().toISOString();
+      location.usage_count=usage;
+      location.last_used_at=now;
+      currentLocationsById[id]=location;
+      locations=locations.map(item=>item.id===id?{...item,usage_count:usage,last_used_at:now}:item);
+      await db.from('locations').update({usage_count:usage,last_used_at:now,updated_at:now}).eq('id',id);
+    }
+
+function bindLocationPickerOptions(picker){
+      picker.querySelectorAll('[data-toggle-location-favorite]').forEach(star=>{
+        star.addEventListener('click',async event=>{
+          event.preventDefault();
+          event.stopPropagation();
+          const id=star.dataset.toggleLocationFavorite;
+          await toggleLocationFavorite(id);
+          const form=picker.closest('form');
+          const hidden=form?.elements.location_id;
+          const grid=picker.querySelector('[data-location-picker-grid]');
+          const search=picker.querySelector('[data-location-picker-search]');
+          const country=picker.querySelector('[data-location-picker-country]');
+          const category=picker.querySelector('[data-location-picker-category]');
+          grid.innerHTML=renderLocationPickerOptions(search.value,country.value,category.value,hidden?.value||'');
+          bindLocationPickerOptions(picker);
+        });
+      });
+
+      picker.querySelectorAll('[data-pick-location]').forEach(button=>{
+        button.addEventListener('click',()=>{
+          const form=button.closest('form');
+          const id=button.dataset.pickLocation||'';
+          if(form?.elements.location_id)form.elements.location_id.value=id;
+          picker.querySelectorAll('.location-option').forEach(option=>option.classList.toggle('active',option===button));
+          const label=picker.querySelector('[data-location-current]');
+          const location=currentLocationsById[id];
+          if(label)label.textContent=location?'Ausgewählt: '+location.name:'Keine Bibliotheks-Location ausgewählt';
+          if(location){
+            applyPickedLocationToForm(form,location);
+            markLocationUsed(location.id);
+          }else{
+            refreshLivePreview(form);
+            refreshFormDirtyState(form);
+          }
+        });
+      });
+    }
+
+    function applyPickedLocationToForm(form,location){
+      if(!form||!location)return;
+      if(form.elements.location_name)form.elements.location_name.value=location.name||'';
+      if(form.elements.meeting_place&&!form.elements.meeting_place.value.trim())form.elements.meeting_place.value=location.meeting_place||location.address||'';
+      if(form.elements.meeting_link&&!form.elements.meeting_link.value.trim())form.elements.meeting_link.value=location.maps_link||'';
+      if(form.elements.location_link&&!form.elements.location_link.value.trim())form.elements.location_link.value=location.maps_link||'';
+      if(form.elements.image_url&&!form.elements.image_url.value.trim())form.elements.image_url.value=location.image_url||'';
+      refreshLivePreview(form);
+      refreshFormDirtyState(form);
+      showToast('Location übernommen');
+    }
+
+    function setView(view){currentView=view;const isTimeline=view==='timeline';adminBox.classList.toggle('hidden',!isTimeline);locationsBox.classList.toggle('hidden',isTimeline);toolbar.classList.toggle('hidden',!isTimeline);timelineTab.classList.toggle('active',isTimeline);locationsTab.classList.toggle('active',!isTimeline);addBtn.setAttribute('aria-label',isTimeline?'Neues Shooting':'Neue Location');addBtn.textContent='+';if(!isTimeline)loadLocations()}
+    
     function setFilter(filter){if(dirtyForms.size&&!confirm('Du hast ungespeicherte Änderungen. Filter trotzdem wechseln?'))return;activeFilter=filter;orderDirty=false;updateOrderButton();updateUnsavedBar();document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===filter));renderAll()}
 
-    loginBtn.addEventListener('click',async()=>{clearError();const email=$('email').value.trim(),password=$('password').value;if(!email||!password){showError('Bitte E-Mail und Passwort eingeben.');return}setStatus('Login läuft…');loginBtn.disabled=true;const {error}=await db.auth.signInWithPassword({email,password});loginBtn.disabled=false;if(error){setStatus('Login fehlgeschlagen');showError('Login fehlgeschlagen: '+error.message);return}await boot()});
+    async function handleLogin(){
+      clearError();
+      const email=$('email').value.trim(),password=$('password').value;
+      if(!email||!password){showError('Bitte E-Mail und Passwort eingeben.');return}
+      setStatus('Login läuft…');
+      loginBtn.disabled=true;
+      try{
+        const loginPromise=db.auth.signInWithPassword({email,password});
+        const timeoutPromise=new Promise(resolve=>setTimeout(()=>resolve({error:{message:'Login dauert ungewöhnlich lange. Bitte Internet/Supabase prüfen.'}}),15000));
+        const {error}=await Promise.race([loginPromise,timeoutPromise]);
+        if(error){setStatus('Login fehlgeschlagen');showError('Login fehlgeschlagen: '+error.message);return}
+        setStatus('Login erfolgreich · lade Daten…');
+        await boot();
+      }catch(error){
+        setStatus('Login fehlgeschlagen');
+        showError('Login fehlgeschlagen: '+(error.message||error));
+      }finally{
+        loginBtn.disabled=false;
+      }
+    }
+    loginBtn.addEventListener('click',handleLogin);
+    ['email','password'].forEach(id=>$(id).addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();handleLogin()}}));
     logoutBtn.addEventListener('click',async()=>{await db.auth.signOut();await boot()});
-    reloadBtn.addEventListener('click',loadShootings);collapseBtn.addEventListener('click',()=>document.querySelectorAll('details').forEach(d=>d.open=false));addBtn.addEventListener('click',event=>{event.preventDefault();createNewRow()});addBtn.addEventListener('touchend',event=>{event.preventDefault();createNewRow()},{passive:false});searchInput.addEventListener('input',()=>{orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll()});openPublicBtn.addEventListener('click',()=>window.open('./','_blank'));saveOrderBtn.addEventListener('click',saveOrder);saveOpenBtn.addEventListener('click',async()=>{const dirtyIds=[...dirtyForms];const forms=dirtyIds.map(id=>shootingsEl.querySelector(`form[data-id="${id}"]`)).filter(Boolean);for(const form of forms){await saveForm({preventDefault(){},currentTarget:form})}if(orderDirty)await saveOrder()});window.addEventListener('beforeunload',e=>{if(!hasUnsavedChanges())return;e.preventDefault();e.returnValue=''});document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>setFilter(b.dataset.filter)));
+    reloadBtn.addEventListener('click',loadShootings);collapseBtn.addEventListener('click',()=>document.querySelectorAll('details').forEach(d=>d.open=false));addBtn.addEventListener('click',event=>{event.preventDefault();currentView==='locations'?createNewLocation():createNewRow()});addBtn.addEventListener('touchend',event=>{event.preventDefault();currentView==='locations'?createNewLocation():createNewRow()},{passive:false});searchInput.addEventListener('input',()=>{orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll()});locationSearchInput.addEventListener('input',renderLocations);countryFilter.addEventListener('change',renderLocations);regionFilter.addEventListener('change',renderLocations);categoryFilter.addEventListener('change',renderLocations);newLocationBtn.addEventListener('click',createNewLocation);reloadLocationsBtn.addEventListener('click',loadLocations);timelineTab.addEventListener('click',()=>setView('timeline'));locationsTab.addEventListener('click',()=>setView('locations'));openPublicBtn.addEventListener('click',()=>window.open('./','_blank'));saveOrderBtn.addEventListener('click',saveOrder);saveOpenBtn.addEventListener('click',async()=>{const dirtyIds=[...dirtyForms];const forms=dirtyIds.map(id=>shootingsEl.querySelector(`form[data-id="${id}"]`)).filter(Boolean);for(const form of forms){await saveForm({preventDefault(){},currentTarget:form})}if(orderDirty)await saveOrder()});window.addEventListener('beforeunload',e=>{if(!hasUnsavedChanges())return;e.preventDefault();e.returnValue=''});document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>setFilter(b.dataset.filter)));
 
-    async function boot(){clearError();const {data,error}=await db.auth.getSession();if(error){setStatus('Session Fehler');showError('Session Fehler: '+error.message);return}const session=data.session;loginBox.classList.toggle('hidden',!!session);adminBox.classList.toggle('hidden',!session);toolbar.classList.toggle('hidden',!session);logoutBtn.classList.toggle('hidden',!session);addBtn.classList.toggle('hidden',!session);if(!session){setStatus('Nicht angemeldet');return}setStatus('Angemeldet als '+session.user.email);await loadShootings()}
+    async function boot(){clearError();const {data,error}=await db.auth.getSession();if(error){setStatus('Session Fehler');showError('Session Fehler: '+error.message);return}const session=data.session;loginBox.classList.toggle('hidden',!!session);adminBox.classList.toggle('hidden',!session);toolbar.classList.toggle('hidden',!session||currentView!=='timeline');viewTabs.classList.toggle('hidden',!session);locationsBox.classList.toggle('hidden',!session||currentView!=='locations');logoutBtn.classList.toggle('hidden',!session);addBtn.classList.toggle('hidden',!session);if(!session){setStatus('Nicht angemeldet');return}setStatus('Angemeldet als '+session.user.email);await loadShootings()}
     try{initSupabase();boot()}catch(error){setStatus('Admin konnte nicht starten');showError(error.message+' · Prüfe, ob der Supabase Script-Tag korrekt geladen wird.');console.error(error)}
   </script>
 </body>
