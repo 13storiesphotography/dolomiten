@@ -14,8 +14,8 @@
     :root{--bg:#0f0f0d;--panel:rgba(255,255,255,.07);--panel2:rgba(255,255,255,.105);--text:#f7f1e8;--muted:rgba(247,241,232,.66);--line:rgba(247,241,232,.16);--accent:#d8b16a;--accent-soft:rgba(216,177,106,.14);--danger:#d96c6c;--success:#8fb5a1;--radius:24px;--shadow:0 18px 55px rgba(0,0,0,.32)}
     *{box-sizing:border-box}html{background:#101010;overflow-x:hidden}body{margin:0;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 18% 0%,rgba(216,177,106,.18),transparent 32%),radial-gradient(circle at 90% 10%,rgba(143,181,161,.14),transparent 30%),linear-gradient(180deg,#151411,#090907);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
     .wrap{width:min(1040px,100%);margin:0 auto;padding:max(22px,env(safe-area-inset-top)) clamp(14px,4vw,30px) max(42px,env(safe-area-inset-bottom))}
-    .top{position:sticky;top:0;z-index:20;margin:calc(max(22px,env(safe-area-inset-top))*-1) calc(clamp(14px,4vw,30px)*-1) 18px;padding:max(22px,env(safe-area-inset-top)) clamp(14px,4vw,30px) 14px;background:linear-gradient(180deg,rgba(15,15,13,.94),rgba(15,15,13,.72));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(247,241,232,.08)}
-    .top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;position:relative;z-index:80}.top-actions .btn{min-height:36px;border-radius:999px;padding:0 12px;font-size:.8rem}.top-actions #logoutBtn{transition:opacity .18s ease,transform .18s ease}.top-actions.news-open #logoutBtn{opacity:0;pointer-events:none;transform:translateY(-4px)}.top-actions.news-open:before{content:'';width:106px;min-width:106px;height:36px}.news-toggle{width:106px;min-width:106px;gap:0;overflow:hidden;transition:width .22s ease,min-width .22s ease,padding .22s ease,background .18s ease,border-color .18s ease,left .24s cubic-bezier(.2,.8,.2,1),top .24s cubic-bezier(.2,.8,.2,1),opacity .12s ease}.news-toggle.is-settling{opacity:0;transition:none!important}.news-toggle .news-label{display:inline-block;white-space:nowrap;transition:opacity .16s ease,width .22s ease}.news-icon{width:0;height:16px;opacity:0;position:relative;flex:0 0 auto;transition:width .22s ease,opacity .16s ease}.news-icon span{position:absolute;left:50%;top:50%;width:14px;height:2px;border-radius:999px;background:currentColor;transition:transform .24s ease}.news-icon span:first-child{transform:translate(-50%,calc(-50% - 4px))}.news-icon span:last-child{transform:translate(-50%,calc(-50% + 4px))}.news-toggle.is-open{position:fixed;left:var(--news-x,calc(100vw - 48px));top:var(--news-y,72px);transform:translate(-50%,-50%);z-index:90;width:36px;min-width:36px;padding:0;background:rgba(15,15,13,.92);border-color:rgba(247,241,232,.24);color:var(--text);box-shadow:none}.news-toggle.is-open.is-returning{left:var(--news-home-x);top:var(--news-home-y);width:106px;min-width:106px;padding:0 12px}.news-toggle.is-open:active{transform:translate(-50%,-50%)}.news-toggle.is-open .news-label{opacity:0;width:0;overflow:hidden}.news-toggle.is-open.is-returning .news-label{opacity:1;width:72px}.news-toggle.is-open .news-icon{width:16px;opacity:1}.news-toggle.is-open.is-returning .news-icon{width:0;opacity:0}.news-toggle.is-open .news-icon span:first-child{transform:translate(-50%,-50%) rotate(45deg)}.news-toggle.is-open .news-icon span:last-child{transform:translate(-50%,-50%) rotate(-45deg)}.news-toggle.is-open.is-returning .news-icon span:first-child{transform:translate(-50%,calc(-50% - 4px))}.news-toggle.is-open.is-returning .news-icon span:last-child{transform:translate(-50%,calc(-50% + 4px))}.eyebrow{color:var(--accent);letter-spacing:.16em;text-transform:uppercase;font-size:.68rem;font-weight:900}h1{margin:6px 0 0;font-size:clamp(2.1rem,8vw,4.6rem);line-height:.9;letter-spacing:-.06em}.status{color:var(--muted);font-size:.84rem;margin-top:10px;line-height:1.4}
+    .top{position:sticky;top:0;z-index:20;margin:calc(max(22px,env(safe-area-inset-top))*-1) calc(clamp(14px,4vw,30px)*-1) 18px;padding:max(22px,env(safe-area-inset-top)) clamp(14px,4vw,30px) 14px;background:linear-gradient(180deg,rgba(15,15,13,.94),rgba(15,15,13,.72));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(247,241,232,.08)}body.news-panel-open .top{z-index:101}
+    .top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;position:relative;z-index:80}.top-actions .btn{min-height:36px;border-radius:999px;padding:0 12px;font-size:.8rem}.top-actions #logoutBtn{transition:opacity .18s ease,transform .18s ease}.top-actions.news-open #logoutBtn{opacity:0;pointer-events:none;transform:translateY(-4px)}.top-actions.news-open:before{content:'';width:106px;min-width:106px;height:36px}.news-toggle{width:106px;min-width:106px;gap:0;overflow:hidden;line-height:1;transition:width .22s ease,min-width .22s ease,padding .22s ease,background .18s ease,border-color .18s ease,left .24s cubic-bezier(.2,.8,.2,1),top .24s cubic-bezier(.2,.8,.2,1),opacity .12s ease}.news-toggle.is-settling{opacity:0;transition:none!important}.news-toggle .news-label{display:inline-block;white-space:nowrap;transition:opacity .16s ease,width .22s ease}.news-icon{width:0;height:16px;opacity:0;position:relative;flex:0 0 auto;transition:width .22s ease,opacity .16s ease}.news-icon span{position:absolute;left:50%;top:50%;width:14px;height:2px;border-radius:999px;background:currentColor;transition:transform .24s ease}.news-icon span:first-child{transform:translate(-50%,calc(-50% - 4px))}.news-icon span:last-child{transform:translate(-50%,calc(-50% + 4px))}.news-toggle.is-open{position:fixed;left:var(--news-x,calc(100vw - 48px));top:var(--news-y,72px);transform:translate(-50%,-50%);z-index:102;width:36px;min-width:36px;padding:0;background:rgba(15,15,13,.92);border-color:rgba(247,241,232,.24);color:var(--text);box-shadow:none}.news-toggle.is-open.is-returning{left:var(--news-home-x);top:var(--news-home-y);width:106px;min-width:106px;padding:0 12px}.news-toggle.is-open:active{transform:translate(-50%,-50%)}.news-toggle.is-open .news-label{opacity:0;width:0;overflow:hidden}.news-toggle.is-open.is-returning .news-label{opacity:1;width:72px}.news-toggle.is-open .news-icon{position:absolute;left:50%;top:50%;width:16px;opacity:1;transform:translate(-50%,-50%)}.news-toggle.is-open.is-returning .news-icon{width:0;opacity:0}.news-toggle.is-open .news-icon span:first-child{transform:translate(-50%,-50%) rotate(45deg)}.news-toggle.is-open .news-icon span:last-child{transform:translate(-50%,-50%) rotate(-45deg)}.news-toggle.is-open.is-returning .news-icon span:first-child{transform:translate(-50%,calc(-50% - 4px))}.news-toggle.is-open.is-returning .news-icon span:last-child{transform:translate(-50%,calc(-50% + 4px))}.eyebrow{color:var(--accent);letter-spacing:.16em;text-transform:uppercase;font-size:.68rem;font-weight:900}h1{margin:6px 0 0;font-size:clamp(2.1rem,8vw,4.6rem);line-height:.9;letter-spacing:-.06em}.status{color:var(--muted);font-size:.84rem;margin-top:10px;line-height:1.4}
     .toolbar{display:flex;gap:10px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-wrap:wrap}.toolbar::-webkit-scrollbar{display:none}
     .status-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .toolbar select{min-width:180px;max-width:240px;border-radius:999px;border:1px solid var(--line);background-color:rgba(255,255,255,.08);color:var(--text);padding:0 38px 0 14px;min-height:38px;cursor:pointer}
@@ -76,7 +76,7 @@
     }
     .btn:focus-visible,.pill-button:focus-visible,.view-tab:focus-visible,.project-summary:focus-visible,.location-admin-star:focus-visible,.location-option:focus-visible,.badge-chip:focus-visible{outline:2px solid rgba(216,177,106,.58);outline-offset:3px}
     .admin-intro{display:grid;gap:10px;margin-bottom:16px}.admin-meta{color:rgba(247,241,232,.46);font-size:.76rem;font-weight:400;text-align:right;margin-top:-2px}
-    .hint{color:var(--muted);font-size:.86rem;line-height:1.45}.release-panel{position:absolute;left:clamp(14px,4vw,30px);right:clamp(14px,4vw,30px);top:calc(max(22px,env(safe-area-inset-top)) + 24px);z-index:50;border:1px solid rgba(247,241,232,.20);background:linear-gradient(180deg,rgba(15,15,13,.44),rgba(15,15,13,.34));backdrop-filter:blur(72px) saturate(1.5) contrast(1.12);-webkit-backdrop-filter:blur(72px) saturate(1.5) contrast(1.12);will-change:backdrop-filter;isolation:isolate;border-radius:20px;padding:18px 16px 15px;color:rgba(247,241,232,.90);font-size:.86rem;line-height:1.45;box-shadow:0 26px 80px rgba(0,0,0,.50),inset 0 1px 0 rgba(255,255,255,.12)}.release-panel strong{display:block;color:var(--text);font-size:.9rem;margin-bottom:8px}.release-panel ul{margin:0;padding-left:18px}.release-panel li+li{margin-top:5px}.error-box{border:1px solid rgba(217,108,108,.35);background:rgba(217,108,108,.12);color:#ffdede;border-radius:16px;padding:12px;margin-top:12px;font-size:.9rem;line-height:1.45}
+    .hint{color:var(--muted);font-size:.86rem;line-height:1.45}.release-panel{position:fixed;left:max(14px,calc((100vw - 1040px)/2 + 30px));right:max(14px,calc((100vw - 1040px)/2 + 30px));top:calc(max(14px,env(safe-area-inset-top)) + 16px);z-index:101;border:1px solid rgba(247,241,232,.20);background:linear-gradient(180deg,rgba(15,15,13,.44),rgba(15,15,13,.34));backdrop-filter:blur(72px) saturate(1.5) contrast(1.12);-webkit-backdrop-filter:blur(72px) saturate(1.5) contrast(1.12);will-change:backdrop-filter;isolation:isolate;border-radius:20px;padding:18px 16px 15px;color:rgba(247,241,232,.90);font-size:.86rem;line-height:1.45;box-shadow:0 26px 80px rgba(0,0,0,.50),inset 0 1px 0 rgba(255,255,255,.12)}.release-panel strong{display:block;color:var(--text);font-size:.9rem;margin-bottom:8px}.release-panel ul{margin:0;padding-left:18px}.release-panel li+li{margin-top:5px}.error-box{border:1px solid rgba(217,108,108,.35);background:rgba(217,108,108,.12);color:#ffdede;border-radius:16px;padding:12px;margin-top:12px;font-size:.9rem;line-height:1.45}
     .search-wrap{position:relative}.search-wrap input{padding-left:38px}.search-wrap:before{content:'⌕';position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:900;z-index:1}
     .shootings{display:grid;gap:14px;margin-top:16px}.spot-card{overflow:hidden;transition:border-color .2s ease,transform .2s ease,opacity .2s ease}.spot-card[open]{border-color:rgba(216,177,106,.32)}.spot-card.dragging{opacity:.55;transform:scale(.992);border-color:rgba(216,177,106,.42)}.spot-card.drop-target{outline:2px solid rgba(216,177,106,.34);outline-offset:4px}
     summary{cursor:pointer;padding:15px;display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;list-style:none}summary::-webkit-details-marker{display:none}.drag-handle{width:38px;height:42px;border:1px solid rgba(255,255,255,.10);border-radius:14px;display:grid;place-items:center;color:rgba(247,241,232,.55);background:rgba(255,255,255,.045);cursor:grab;user-select:none;touch-action:none;font-weight:950}.drag-handle.disabled{opacity:.28;cursor:not-allowed}
@@ -86,7 +86,7 @@
     .link-preview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.preview-button{min-height:40px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.055);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:850;font-size:.82rem}.preview-button.primary{background:linear-gradient(135deg,#f0d596,var(--accent));color:#17130c;border:0}.preview-button.disabled{opacity:.36}
     .image-preview{margin-top:10px;min-height:170px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.46)),var(--preview-image,linear-gradient(135deg,rgba(216,177,106,.18),rgba(143,181,161,.12)));background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:12px;color:rgba(247,241,232,.72);font-size:.84rem;font-weight:800;overflow:hidden}
     .sticky-actions{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:10;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;margin:16px -4px -4px;border:1px solid rgba(247,241,232,.10);border-radius:20px;background:rgba(15,15,13,.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 14px 44px rgba(0,0,0,.26)}.danger-zone{margin-top:18px;border-top:1px solid rgba(247,241,232,.10);padding-top:14px}.form-meta-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .floating-add{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:56px;height:56px;border-radius:999px;border:1px solid rgba(216,177,106,.38);background:rgba(15,15,13,.86);color:var(--accent);font-size:1.45rem;font-weight:950;box-shadow:0 18px 44px rgba(0,0,0,.22);display:grid;place-items:center;cursor:pointer;z-index:82;-webkit-tap-highlight-color:transparent;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease,color .18s ease}.floating-add:hover,.floating-add.is-open{background:linear-gradient(135deg,#f0d596,var(--accent));border-color:transparent;color:#17130c;box-shadow:0 18px 48px rgba(0,0,0,.34),0 0 0 6px rgba(216,177,106,.10)}.floating-add.is-open{transform:rotate(45deg)}.floating-add.is-busy{opacity:.62;pointer-events:none}.add-menu{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(max(18px,env(safe-area-inset-bottom)) + 68px);z-index:81;display:grid;gap:10px;justify-items:end;pointer-events:none}.add-menu-item{min-height:42px;border-radius:999px;border:1px solid rgba(247,241,232,.16);background:rgba(15,15,13,.86);color:var(--text);padding:0 14px;display:inline-flex;align-items:center;gap:9px;font-weight:900;font-size:.86rem;box-shadow:0 14px 34px rgba(0,0,0,.30);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);cursor:pointer;opacity:0;transform:translate(14px,46px) scale(.76);transition:opacity .18s ease,transform .25s cubic-bezier(.18,.9,.22,1.18),background .18s ease,border-color .18s ease}.add-menu-item:before{content:'+';width:22px;height:22px;border-radius:999px;display:grid;place-items:center;background:rgba(216,177,106,.14);color:var(--accent);font-size:.88rem;line-height:1}.add-menu.is-open{pointer-events:auto}.add-menu.is-open .add-menu-item{opacity:1;transform:translate(0,0) scale(1)}.add-menu.is-open .add-menu-item:nth-child(1){transition-delay:.02s}.add-menu.is-open .add-menu-item:nth-child(2){transition-delay:.06s}.add-menu.is-open .add-menu-item:nth-child(3){transition-delay:.10s}.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%) translateY(18px);opacity:0;pointer-events:none;z-index:50;max-width:min(420px,calc(100vw - 28px));border-radius:999px;background:rgba(15,15,13,.88);color:var(--text);border:1px solid rgba(247,241,232,.12);padding:12px 16px;box-shadow:0 16px 44px rgba(0,0,0,.34);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:.88rem;transition:opacity .22s ease,transform .22s ease}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .floating-add{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:56px;height:56px;border-radius:999px;border:1px solid rgba(216,177,106,.38);background:rgba(15,15,13,.86);color:var(--accent);font-size:1.45rem;font-weight:950;box-shadow:0 18px 44px rgba(0,0,0,.22);display:grid;place-items:center;cursor:pointer;z-index:82;-webkit-tap-highlight-color:transparent;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease,color .18s ease}.floating-add:hover,.floating-add.is-open{background:linear-gradient(135deg,#f0d596,var(--accent));border-color:transparent;color:#17130c;box-shadow:0 18px 48px rgba(0,0,0,.34),0 0 0 6px rgba(216,177,106,.10)}.floating-add.is-open{transform:rotate(45deg)}.floating-add.is-busy{opacity:.62;pointer-events:none}body.news-panel-open .floating-add{z-index:70}body:after{content:'';position:fixed;inset:0;background:rgba(4,4,3,.34);opacity:0;pointer-events:none;z-index:80;transition:opacity .2s ease;backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px)}body.add-menu-open:after,body.news-panel-open:after,body.event-dialog-open:after{opacity:1}.add-menu{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(max(18px,env(safe-area-inset-bottom)) + 68px);z-index:81;display:flex;flex-direction:column;gap:12px;align-items:flex-end;pointer-events:none}.add-menu-item{min-height:44px;border-radius:999px;border:1px solid rgba(247,241,232,.26);background:rgba(15,15,13,.94);color:var(--text);padding:0 16px;display:inline-flex;align-items:center;gap:9px;font-weight:950;font-size:.88rem;box-shadow:0 18px 46px rgba(0,0,0,.48),0 0 0 1px rgba(216,177,106,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);cursor:pointer;opacity:0;transform:translate(14px,46px) scale(.76);transition:opacity .18s ease,transform .25s cubic-bezier(.18,.9,.22,1.18),background .18s ease,border-color .18s ease,box-shadow .18s ease}.add-menu-item:before{content:'+';width:22px;height:22px;border-radius:999px;display:grid;place-items:center;background:rgba(216,177,106,.18);color:var(--accent);font-size:.88rem;line-height:1}.add-menu-item:hover{background:rgba(28,27,23,.98);border-color:rgba(216,177,106,.34);box-shadow:0 20px 54px rgba(0,0,0,.54),0 0 0 4px rgba(216,177,106,.08)}.add-menu.is-open{pointer-events:auto}.add-menu.is-open .add-menu-item{opacity:1;transform:translate(0,0) scale(1)}.add-menu.is-open .add-menu-item:nth-child(1){transition-delay:.02s}.add-menu.is-open .add-menu-item:nth-child(2){transition-delay:.06s}.add-menu.is-open .add-menu-item:nth-child(3){transition-delay:.10s}.event-dialog{position:fixed;inset:0;z-index:92;display:grid;place-items:center;padding:18px;pointer-events:none;opacity:0;transition:opacity .18s ease}.event-dialog:not(.hidden){pointer-events:auto;opacity:1}.event-dialog-box{width:min(420px,calc(100vw - 32px));border:1px solid rgba(247,241,232,.22);border-radius:22px;background:rgba(15,15,13,.94);box-shadow:0 28px 90px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.10);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:18px;display:grid;gap:14px;transform:translateY(10px) scale(.98);transition:transform .18s ease}.event-dialog:not(.hidden) .event-dialog-box{transform:translateY(0) scale(1)}.event-dialog-title{font-weight:950;color:var(--text);font-size:1rem}.event-dialog-actions{display:flex;justify-content:flex-end;gap:8px}.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%) translateY(18px);opacity:0;pointer-events:none;z-index:50;max-width:min(420px,calc(100vw - 28px));border-radius:999px;background:rgba(15,15,13,.88);color:var(--text);border:1px solid rgba(247,241,232,.12);padding:12px 16px;box-shadow:0 16px 44px rgba(0,0,0,.34);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:.88rem;transition:opacity .22s ease,transform .22s ease}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
     .order-badge{width:32px;height:32px;border-radius:999px;display:inline-grid;place-items:center;background:rgba(216,177,106,.14);color:var(--accent);font-weight:950;font-size:.78rem;border:1px solid rgba(216,177,106,.22);margin-right:7px}
     .dirty-badge{display:none;width:fit-content;margin-top:7px;border:1px solid rgba(216,177,106,.28);background:rgba(216,177,106,.12);color:rgba(247,241,232,.88);border-radius:999px;padding:5px 8px;font-size:.7rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
@@ -109,16 +109,19 @@
     .project-summary{cursor:pointer;list-style:none;transition:background .18s ease,border-color .18s ease}
     .project-summary::-webkit-details-marker{display:none}
     .project-summary:hover{transform:none}
-    .project-title{min-width:0;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .project-name-wrap{position:relative;display:inline-flex;align-items:center;padding-right:24px}
+    .project-title{min-width:0;display:inline-flex;align-items:center;gap:0;flex-wrap:wrap}
+    .project-name-wrap{position:relative;display:inline-flex;align-items:center;padding-right:0;transition:padding-right .18s ease}
+    .project-name-wrap:hover,.project-name-wrap:focus-within{padding-right:28px}
     .project-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
     .project-edit{position:absolute;right:0;top:-12px;width:24px;height:24px;border:0;background:rgba(15,15,13,.86);color:rgba(247,241,232,.68);display:grid;place-items:center;border-radius:999px;cursor:pointer;opacity:0;box-shadow:0 10px 24px rgba(0,0,0,.22);transition:opacity .18s ease,background .18s ease,color .18s ease}
     .event-name-input{width:min(260px,70vw);min-height:30px;border-radius:10px;padding:4px 8px;font-weight:950;font-size:.95rem}
     .event-name-actions{display:inline-flex;gap:4px;margin-left:6px}
     .event-name-action{width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:var(--text);display:grid;place-items:center;cursor:pointer;font-weight:950}
     .event-name-action:hover{background:rgba(255,255,255,.12)}
+    .project-count{color:var(--muted);font-weight:800;font-size:.82rem;margin-left:6px;transition:margin-left .18s ease}
+    .project-summary:hover .project-count{margin-left:8px}
     .project-delete{width:26px;height:26px;border:0;background:transparent;color:rgba(247,241,232,.58);display:grid;place-items:center;border-radius:999px;cursor:pointer;opacity:0;transition:opacity .18s ease,background .18s ease,color .18s ease}
-    .project-summary:hover .project-edit,.project-summary:hover .project-delete{opacity:1}.project-edit:hover,.project-delete:hover{background:rgba(255,255,255,.10);color:var(--text)}
+    .project-name-wrap:hover .project-edit,.project-name-wrap:focus-within .project-edit,.project-summary:hover .project-delete{opacity:1}.project-edit:hover,.project-delete:hover{background:rgba(255,255,255,.10);color:var(--text)}
     .project-chevron{width:18px;height:18px;display:grid;place-items:center;color:rgba(247,241,232,.66);flex:0 0 auto}
     .project-chevron:before{content:'';width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-1px);opacity:.82;transition:transform .2s ease}
     .project-group[open] .project-chevron:before{transform:rotate(-135deg) translateY(-1px)}
@@ -492,6 +495,13 @@
     <button class="add-menu-item" type="button" data-add-action="location">Neue Location</button>
   </div>
   <button class="floating-add hidden" id="addBtn" type="button" aria-label="Neu erstellen" aria-expanded="false" aria-controls="addMenu">+</button>
+  <div class="event-dialog hidden" id="eventNameDialog" aria-hidden="true">
+    <form class="event-dialog-box" id="eventNameForm">
+      <div class="event-dialog-title">Neues Event</div>
+      <div class="field"><label for="eventNameInput">Name</label><input id="eventNameInput" type="text" autocomplete="off" placeholder="Eventname" required /></div>
+      <div class="event-dialog-actions"><button class="btn" type="button" id="eventNameCancel">Abbrechen</button><button class="btn primary" type="submit">Erstellen</button></div>
+    </form>
+  </div>
   <div class="toast" id="toast">Gespeichert</div>
   <datalist id="countrySuggestions"><option value="Deutschland"></option><option value="Italien"></option><option value="Österreich"></option><option value="Schweiz"></option></datalist>
   <datalist id="categorySuggestions"><option value="Berge"></option><option value="See"></option><option value="Wald"></option><option value="Wiese"></option><option value="Stadt"></option><option value="Altstadt"></option><option value="Dorf"></option><option value="Indoor"></option><option value="Hotel"></option><option value="Roadtrip"></option><option value="Aussichtspunkt"></option><option value="Passstraße"></option></datalist>
@@ -503,9 +513,10 @@
     const MAPS_RESOLVER_URL='https://maps-resolveryournameworkersdev.florian-e6d.workers.dev';
 
     const $=id=>document.getElementById(id);
-    const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),addBtn=$('addBtn'),addMenu=$('addMenu'),toast=$('toast'),searchInput=$('searchInput'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),whatsNewBtn=$('whatsNewBtn'),featurePanel=$('featurePanel'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn'),discardOpenBtn=$('discardOpenBtn'),viewTabs=$('viewTabs'),timelineTab=$('timelineTab'),locationsTab=$('locationsTab'),locationsBox=$('locationsBox'),locationsList=$('locationsList'),newLocationBtn=$('newLocationBtn'),reloadLocationsBtn=$('reloadLocationsBtn'),favoriteLocationsBtn=$('favoriteLocationsBtn'),locationSearchInput=$('locationSearchInput'),countryFilter=$('countryFilter'),regionFilter=$('regionFilter'),categoryFilter=$('categoryFilter'),projectFilter=$('projectFilter');
+    const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),addBtn=$('addBtn'),addMenu=$('addMenu'),eventNameDialog=$('eventNameDialog'),eventNameForm=$('eventNameForm'),eventNameInput=$('eventNameInput'),eventNameCancel=$('eventNameCancel'),toast=$('toast'),searchInput=$('searchInput'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),whatsNewBtn=$('whatsNewBtn'),featurePanel=$('featurePanel'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn'),discardOpenBtn=$('discardOpenBtn'),viewTabs=$('viewTabs'),timelineTab=$('timelineTab'),locationsTab=$('locationsTab'),locationsBox=$('locationsBox'),locationsList=$('locationsList'),newLocationBtn=$('newLocationBtn'),reloadLocationsBtn=$('reloadLocationsBtn'),favoriteLocationsBtn=$('favoriteLocationsBtn'),locationSearchInput=$('locationSearchInput'),countryFilter=$('countryFilter'),regionFilter=$('regionFilter'),categoryFilter=$('categoryFilter'),projectFilter=$('projectFilter');
 
     let db=null,rows=[],events=[],locations=[],currentRowsById={},currentEventsById={},currentLocationsById={},activeStatus='all',activeProject='all',currentView='timeline',locationFavoritesOnly=false,toastTimer=null,draggedCard=null,orderDirty=false,dirtyForms=new Set();
+    let pendingEventNameResolve=null;
 
     const badgePresets=['Goldene Stunde','Picknick','Sonnenaufgang','Farben','Paar-Momente','Kreativ','Aussicht','Gitarre','Goldenes Licht','Spaziergang','Ruhe','Portraits','Perspektiven','Gemeinsame Bilder','Dolomiten','Natur','Abenteuer'];
     const projectStatusLabels={aktiv:'Aktiv',abgeschlossen:'Abgeschlossen',archiviert:'Archiv'};
@@ -520,7 +531,7 @@
     };
 
     const simpleFields=[['title','Titel','text'],['date_label','Datum','date'],['subtitle','Untertitel / Mood','text']];
-    const projectFields=[['project_name','Event / Projekt','text']];
+    const projectFields=[['project_name','Event / Projekt','event-select']];
     const timeFields=[['meeting_time','Treffzeit','time'],['shooting_time','Shootingzeit','time']];
     const placeFields=[['location_id','Location-Bibliothek','location-select']];
     const manualPlaceFields=[['location_name','Location','text'],['meeting_place','Treffpunkt / Adresse','text']];
@@ -548,6 +559,11 @@
     function updateOrderButton(){saveOrderBtn.disabled=!orderDirty;saveOrderBtn.classList.toggle('primary',orderDirty)}
     function hasUnsavedChanges(){return orderDirty||dirtyForms.size>0}
     function updateUnsavedBar(){if(!unsavedBar)return;const total=dirtyForms.size+(orderDirty?1:0);unsavedText.textContent=orderDirty&&dirtyForms.size?'Reihenfolge + '+dirtyForms.size+' Shooting(s) ungespeichert':orderDirty?'Reihenfolge ungespeichert':dirtyForms.size?dirtyForms.size+' Shooting(s) ungespeichert':'Alles gespeichert';unsavedBar.classList.toggle('show',total>0)}
+    function readProjectGroupState(){try{return JSON.parse(localStorage.getItem('adminProjectGroups')||'{}')}catch{return {}}}
+    function writeProjectGroupState(state){try{localStorage.setItem('adminProjectGroups',JSON.stringify(state))}catch{}}
+    function projectGroupKey(group){return group.eventId?`event:${group.eventId}`:`project:${group.project||'__unassigned__'}`}
+    function isProjectGroupOpen(group){return readProjectGroupState()[projectGroupKey(group)]===true}
+    function setProjectGroupOpen(key,open){const state=readProjectGroupState();state[key]=open;writeProjectGroupState(state)}
     function setFormDirty(form,dirty=true){const id=form?.dataset?.id;if(!id)return;const card=form.closest('.spot-card'),btn=form.querySelector('.form-save-btn'),state=form.querySelector('[data-save-state]');if(dirty){dirtyForms.add(id);card?.classList.add('is-dirty');btn?.classList.add('is-dirty');if(state)state.textContent='Nicht gespeichert'}else{dirtyForms.delete(id);card?.classList.remove('is-dirty');btn?.classList.remove('is-dirty');if(state)state.textContent='Gespeichert'}updateUnsavedBar()}
     function normalizeForCompare(value){return String(value??'').trim()}
     function snapshotForm(form){const payload=collectPayload(form);delete payload.updated_at;delete payload.weather_label;delete payload.weather_id;if(Array.isArray(payload.badges))payload.badges=[...payload.badges].map(normalizeForCompare).filter(Boolean).sort();Object.keys(payload).forEach(key=>{if(key!=='badges')payload[key]=normalizeForCompare(payload[key])});return JSON.stringify(payload)}
@@ -595,6 +611,7 @@
     }
     function setFeaturePanelOpen(open){
       if(open){
+        document.body.classList.add('news-panel-open');
         setNewsHomePosition();
         featurePanel.classList.remove('hidden');
         whatsNewBtn.setAttribute('aria-expanded','true');
@@ -606,6 +623,7 @@
         return;
       }
       if(whatsNewBtn.classList.contains('is-open')){
+        document.body.classList.remove('news-panel-open');
         featurePanel.classList.add('hidden');
         whatsNewBtn.setAttribute('aria-expanded','false');
         whatsNewBtn.setAttribute('aria-label','Neuigkeiten öffnen');
@@ -614,6 +632,7 @@
         return;
       }
       featurePanel.classList.add('hidden');
+      document.body.classList.remove('news-panel-open');
       whatsNewBtn.setAttribute('aria-expanded','false');
       whatsNewBtn.setAttribute('aria-label','Neuigkeiten öffnen');
       whatsNewBtn.closest('.top-actions')?.classList.remove('news-open');
@@ -770,6 +789,11 @@
     function renderField(row,[key,label,type]){
       const value=escapeHtml(valueForInput(row,key,type));
       if(type==='select-day')return `<div class="field"><label>${label}</label><select name="${key}">${dayOptions.map(day=>`<option value="${escapeHtml(day)}" ${row[key]===day?'selected':''}>${escapeHtml(day)}</option>`).join('')}</select></div>`;
+      if(type==='event-select'){
+        const current=String(row[key]||'').trim();
+        const names=[...new Set([...events.map(event=>String(event.name||'').trim()),...rows.map(item=>String(item.project_name||'').trim()),current].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
+        return `<div class="field"><label>${label}</label><select name="${key}"><option value="" ${!current?'selected':''}>Keine Projektzuordnung</option>${names.map(name=>`<option value="${escapeHtml(name)}" ${current===name?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></div>`;
+      }
       if(type==='select-status'){
         const options=[['aktiv','Aktiv'],['abgeschlossen','Abgeschlossen'],['archiviert','Archiv']];
         return `<div class="field"><label>${label}</label><select name="${key}">${options.map(([value,label])=>`<option value="${escapeHtml(value)}" ${String(row[key]||'aktiv')===value?'selected':''}>${escapeHtml(label)}</option>`).join('')}</select></div>`;
@@ -894,7 +918,8 @@
       const statusLabel=projectStatusLabels[projectStatus]||String(projectStatus||'Aktiv');
       const canDelete=group.eventId&&group.rows.length===0;
       const body=group.rows.length?groupRowsByDay(group.rows).map(renderDayGroup).join(''):`<div class="project-empty">Noch keine Shootings in diesem Event.</div>`;
-      return `<details class="project-group" open data-event-id="${escapeHtml(group.eventId||'')}" data-project-name="${escapeHtml(title)}"><summary class="project-summary"><div class="project-title"><span class="project-name-wrap"><strong>${escapeHtml(title)}</strong><button class="project-edit" type="button" data-edit-event title="Event umbenennen" aria-label="Event umbenennen">✎</button></span><span class="project-count">(${group.rows.length} Shooting${group.rows.length===1?'':'s'})</span></div><div class="project-actions"><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span>${canDelete?'<button class="project-delete" type="button" data-delete-event title="Leeres Event löschen" aria-label="Leeres Event löschen">×</button>':''}<span class="project-chevron" aria-hidden="true"></span></div></summary><div class="project-days">${body}</div></details>`;
+      const key=projectGroupKey(group);
+      return `<details class="project-group" ${isProjectGroupOpen(group)?'open':''} data-project-key="${escapeHtml(key)}" data-event-id="${escapeHtml(group.eventId||'')}" data-project-name="${escapeHtml(title)}"><summary class="project-summary"><div class="project-title"><span class="project-name-wrap"><strong>${escapeHtml(title)}</strong><button class="project-edit" type="button" data-edit-event title="Event umbenennen" aria-label="Event umbenennen">✎</button></span><span class="project-count">(${group.rows.length} Shooting${group.rows.length===1?'':'s'})</span></div><div class="project-actions"><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span>${canDelete?'<button class="project-delete" type="button" data-delete-event title="Leeres Event löschen" aria-label="Leeres Event löschen">×</button>':''}<span class="project-chevron" aria-hidden="true"></span></div></summary><div class="project-days">${body}</div></details>`;
     }
 
     function updateProjectFilter(){
@@ -931,7 +956,7 @@
     function renderAll(){
       const visible=sortRowsByDateAndTime(filteredRows());
       const groups=groupRowsByProject(visible);
-      shootingsEl.innerHTML=visible.length?groups.map(renderProjectGroup).join(''):`<div class="card hint">Keine passenden Shootings gefunden.</div>`;
+      shootingsEl.innerHTML=groups.length?groups.map(renderProjectGroup).join(''):`<div class="card hint">Keine passenden Shootings gefunden.</div>`;
       bindEditors();
     }
 
@@ -1006,6 +1031,7 @@
 
     function bindEditors(){
       shootingsEl.querySelectorAll('form').forEach(form=>{setFormBaseline(form);if(form.dataset.draft==='true')setFormDirty(form,true);form.addEventListener('submit',saveForm);form.addEventListener('input',()=>{refreshLivePreview(form);refreshFormDirtyState(form)});form.addEventListener('change',()=>{refreshLivePreview(form);refreshFormDirtyState(form)})});
+      shootingsEl.querySelectorAll('.project-group').forEach(group=>group.addEventListener('toggle',event=>{if(event.target===group)setProjectGroupOpen(group.dataset.projectKey,group.open)}));
       shootingsEl.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',cancelForm));
       shootingsEl.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',deleteRow));
       shootingsEl.querySelectorAll('[data-duplicate]').forEach(b=>b.addEventListener('click',duplicateRow));
@@ -1145,23 +1171,32 @@
       events=[...events,payload];currentEventsById[payload.id]=payload;
     }
     async function deleteRow(e){const id=e.currentTarget.dataset.delete,row=currentRowsById[id];if(!row)return;if(row.__draft){if(!confirm('Diesen Entwurf verwerfen?'))return;rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);renderAll();updateUnsavedBar();showToast('Entwurf verworfen');return}if(!confirm(`Shooting wirklich löschen?\n\n${row.title||id}`))return;const projectName=String(row.project_name||'').trim(),isLastInProject=projectName&&rows.filter(r=>String(r.project_name||'').trim()===projectName).length===1;try{if(isLastInProject)await ensureEventForProject(projectName,autoStatusForRow(row))}catch(error){showError('Event konnte nicht erhalten bleiben: '+formatError(error));return}const {error}=await db.from('shootings').delete().eq('id',id);if(error){showError('Löschen fehlgeschlagen: '+formatError(error));return}showToast('Gelöscht');await loadShootings()}
+    function setEventNameDialogOpen(open){eventNameDialog.classList.toggle('hidden',!open);eventNameDialog.setAttribute('aria-hidden',open?'false':'true');document.body.classList.toggle('event-dialog-open',open);if(open)setTimeout(()=>eventNameInput.focus(),30)}
+    function resolveEventName(value){if(!pendingEventNameResolve)return;const resolve=pendingEventNameResolve;pendingEventNameResolve=null;setEventNameDialogOpen(false);resolve(value)}
+    function askEventName(){return new Promise(resolve=>{pendingEventNameResolve=resolve;eventNameInput.value='';setEventNameDialogOpen(true)})}
     async function createNewEvent(){
       clearError();
-      const name='Neues Event';
+      const requestedName=await askEventName();
+      const name=String(requestedName||'').trim();
+      if(!name)return;
+      if(events.some(event=>String(event.name||'').trim()===name)){showError('Ein Event mit diesem Namen gibt es schon.');return}
       const id='event-'+Date.now();
       const payload={id,name,status:'aktiv',updated_at:new Date().toISOString()};
-      events=[...events,{...payload,__pending:true}];currentEventsById[id]=payload;activeProject=name;activeStatus='all';syncStatusButtons();updateProjectFilter();projectFilter.value=name;renderAll();showToast('Event vorbereitet');
-      const first=await db.from('events').insert(payload).select('*').single();
-      let saved=first.data,error=first.error;
+      setStatus('Event wird erstellt…');
+      const first=await db.from('events').insert(payload);
+      let saved=payload,error=first.error;
       if(error){
-        const retry=await db.from('events').insert({name,status:'aktiv',updated_at:payload.updated_at}).select('*').single();
-        saved=retry.data;error=retry.error;
+        const retryPayload={name,status:'aktiv',updated_at:payload.updated_at};
+        const retry=await db.from('events').insert(retryPayload);
+        saved={...retryPayload,id:name};
+        error=retry.error;
       }
-      if(error){showError('Event konnte nicht gespeichert werden: '+formatError(error));return}
-      events=events.map(event=>event.id===id?{...saved,status:saved.status||'aktiv'}:event);
-      delete currentEventsById[id];currentEventsById[saved.id]={...saved,status:saved.status||'aktiv'};
-      updateProjectFilter();projectFilter.value=name;renderAll();
-      setTimeout(()=>{const button=shootingsEl.querySelector(`[data-event-id="${saved.id}"] [data-edit-event]`);if(button)renameEvent({currentTarget:button,preventDefault(){},stopPropagation(){}})},120);
+      if(error){setStatus('Fehler beim Erstellen');showError('Event konnte nicht gespeichert werden: '+formatError(error));return}
+      await loadEvents();
+      saved=events.find(event=>String(event.name||'').trim()===name)||saved;
+      const normalizedEvent={...saved,status:saved.status||'aktiv'};
+      if(!events.some(event=>event.id===normalizedEvent.id))events=[...events,normalizedEvent];
+      currentEventsById[normalizedEvent.id]=normalizedEvent;activeProject=name;activeStatus='all';syncStatusButtons();updateProjectFilter();projectFilter.value=name;renderAll();setStatus('Event erstellt');showToast('Event erstellt');
     }
 
     async function commitEventRename(group,input,oldName,eventId){
@@ -1174,27 +1209,33 @@
       let savedEvent=null;
       clearError();
       setStatus('Event wird umbenannt…');
-      if(eventId){
-        const {error}=await db.from('events').update({name:newName,updated_at:now}).eq('id',eventId);
-        if(error){showError('Event konnte nicht umbenannt werden: '+formatError(error));return}
-      }else if(isUnassigned&&!events.some(event=>String(event.name||'').trim()===newName)){
-        const payload={id:'event-'+Date.now(),name:newName,status:'aktiv',updated_at:now};
-        const {error}=await db.from('events').insert(payload);
-        savedEvent=payload;
-        if(error){showError('Event konnte nicht erstellt werden: '+formatError(error));return}
+      try{
+        const affected=rows.filter(matchesOldProject);
+        if(affected.length){
+          const {error}=await db.from('shootings').update({project_name:newName,updated_at:now}).in('id',affected.map(row=>row.id));
+          if(error)throw new Error((isUnassigned?'Shootings konnten nicht zugeordnet werden: ':'Shootings konnten nicht umbenannt werden: ')+formatError(error));
+        }
+        if(eventId){
+          const {error}=await db.from('events').update({name:newName,updated_at:now}).eq('id',eventId);
+          if(error)throw new Error('Event konnte nicht umbenannt werden: '+formatError(error));
+        }else if(isUnassigned&&!events.some(event=>String(event.name||'').trim()===newName)){
+          const payload={id:'event-'+Date.now(),name:newName,status:'aktiv',updated_at:now};
+          const {error}=await db.from('events').insert(payload);
+          if(error)console.warn('Event konnte nicht separat angelegt werden:',error);
+          else savedEvent=payload;
+        }
+        if(savedEvent){
+          const normalizedEvent={...savedEvent,status:savedEvent.status||'aktiv'};
+          events=[...events,normalizedEvent];currentEventsById[normalizedEvent.id]=normalizedEvent;
+        }
+        events=events.map(event=>event.id===eventId?{...event,name:newName,updated_at:now}:event);
+        rows=rows.map(row=>matchesOldProject(row)?{...row,project_name:newName,updated_at:now}:row);
+        currentRowsById=Object.fromEntries(rows.map(row=>[row.id,row]));activeProject=(activeProject===oldName||isUnassigned)?newName:activeProject;updateProjectFilter();projectFilter.value=activeProject;renderAll();setStatus(isUnassigned?'Event erstellt':'Event umbenannt');showToast(isUnassigned?'Event erstellt und Shootings zugeordnet':'Event umbenannt');
+      }catch(error){
+        setStatus('Fehler beim Umbenennen');
+        showError(formatError(error));
+        renderAll();
       }
-      const affected=rows.filter(matchesOldProject);
-      if(affected.length){
-        const {error}=await db.from('shootings').update({project_name:newName,updated_at:now}).in('id',affected.map(row=>row.id));
-        if(error){showError((isUnassigned?'Shootings konnten nicht zugeordnet werden: ':'Shootings konnten nicht umbenannt werden: ')+formatError(error));return}
-      }
-      if(savedEvent){
-        const normalizedEvent={...savedEvent,status:savedEvent.status||'aktiv'};
-        events=[...events,normalizedEvent];currentEventsById[normalizedEvent.id]=normalizedEvent;
-      }
-      events=events.map(event=>event.id===eventId?{...event,name:newName,updated_at:now}:event);
-      rows=rows.map(row=>matchesOldProject(row)?{...row,project_name:newName,updated_at:now}:row);
-      currentRowsById=Object.fromEntries(rows.map(row=>[row.id,row]));activeProject=(activeProject===oldName||isUnassigned)?newName:activeProject;updateProjectFilter();projectFilter.value=activeProject;renderAll();showToast(isUnassigned?'Event erstellt und Shootings zugeordnet':'Event umbenannt');
     }
 
     function renameEvent(e){
@@ -1736,17 +1777,17 @@ function bindLocationPickerOptions(picker){
       showToast('Location übernommen');
     }
 
-    function setAddMenuOpen(open){addMenu.classList.toggle('hidden',false);addMenu.classList.toggle('is-open',open);addMenu.setAttribute('aria-hidden',open?'false':'true');addBtn.classList.toggle('is-open',open);addBtn.setAttribute('aria-expanded',open?'true':'false');if(!open)setTimeout(()=>{if(!addMenu.classList.contains('is-open'))addMenu.classList.add('hidden')},260)}
+    function setAddMenuOpen(open){addMenu.classList.toggle('hidden',false);addMenu.classList.toggle('is-open',open);document.body.classList.toggle('add-menu-open',open);addMenu.setAttribute('aria-hidden',open?'false':'true');addBtn.classList.toggle('is-open',open);addBtn.setAttribute('aria-expanded',open?'true':'false');if(!open)setTimeout(()=>{if(!addMenu.classList.contains('is-open'))addMenu.classList.add('hidden')},260)}
 
     function toggleAddMenu(){setAddMenuOpen(!addMenu.classList.contains('is-open'))}
 
     function setView(view){currentView=view;const isTimeline=view==='timeline';adminBox.classList.toggle('hidden',!isTimeline);locationsBox.classList.toggle('hidden',isTimeline);toolbar.classList.toggle('hidden',!isTimeline);viewTabs.classList.toggle('locations-active',!isTimeline);timelineTab.classList.toggle('active',isTimeline);locationsTab.classList.toggle('active',!isTimeline);addBtn.setAttribute('aria-label','Neu erstellen');if(!isTimeline)loadLocations()}
 
     async function runAddAction(action){
-      setAddMenuOpen(false);
-      if(action==='location'){setView('locations');await createNewLocation();return}
+      if(action==='location'){setAddMenuOpen(false);setView('locations');await createNewLocation();return}
       setView('timeline');
-      if(action==='event'){activeProject='all';activeStatus='all';projectFilter.value='all';syncStatusButtons();await createNewEvent();return}
+      if(action==='event'){setAddMenuOpen(false);activeProject='all';activeStatus='all';projectFilter.value='all';syncStatusButtons();await createNewEvent();return}
+      setAddMenuOpen(false);
       await createNewRow(defaultsForCurrentEventFilters());
     }
     
@@ -1779,7 +1820,7 @@ function bindLocationPickerOptions(picker){
     loginBtn.addEventListener('click',handleLogin);
     ['email','password'].forEach(id=>$(id).addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();handleLogin()}}));
     logoutBtn.addEventListener('click',async()=>{await db.auth.signOut();await boot()});
-    whatsNewBtn.addEventListener('click',toggleFeaturePanel);document.addEventListener('pointermove',event=>moveNewsButtonToPanelEdge(event.clientX,event.clientY));window.addEventListener('resize',()=>{if(!featurePanel.classList.contains('hidden'))resetNewsButtonPosition()});addBtn.addEventListener('click',event=>{event.preventDefault();toggleAddMenu()});addMenu.querySelectorAll('[data-add-action]').forEach(button=>button.addEventListener('pointerdown',event=>{event.preventDefault();event.stopPropagation();runAddAction(button.dataset.addAction)}));document.addEventListener('pointerdown',event=>{if(addMenu.classList.contains('is-open')&&!event.target.closest('#addMenu')&&!event.target.closest('#addBtn'))setAddMenuOpen(false)});document.addEventListener('keydown',event=>{if(event.key==='Escape')setAddMenuOpen(false)});searchInput.addEventListener('input',()=>{orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll()});locationSearchInput.addEventListener('input',renderLocations);countryFilter.addEventListener('change',renderLocations);regionFilter.addEventListener('change',renderLocations);categoryFilter.addEventListener('change',renderLocations);newLocationBtn.addEventListener('click',createNewLocation);reloadLocationsBtn.addEventListener('click',loadLocations);favoriteLocationsBtn.addEventListener('click',()=>{locationFavoritesOnly=!locationFavoritesOnly;favoriteLocationsBtn.classList.toggle('primary',locationFavoritesOnly);favoriteLocationsBtn.textContent=locationFavoritesOnly?'★ Favoriten':'☆ Favoriten';renderLocations()});timelineTab.addEventListener('click',()=>setView('timeline'));locationsTab.addEventListener('click',()=>setView('locations'));saveOpenBtn.addEventListener('click',async()=>{const dirtyIds=[...dirtyForms];const forms=dirtyIds.map(id=>shootingsEl.querySelector(`form[data-id="${id}"]`)).filter(Boolean);for(const form of forms){await saveForm({preventDefault(){},currentTarget:form})}});discardOpenBtn.addEventListener('click',discardOpenChanges);window.addEventListener('beforeunload',e=>{if(!hasUnsavedChanges())return;e.preventDefault();e.returnValue=''});document.querySelectorAll('[data-status-filter]').forEach(b=>b.addEventListener('click',()=>setStatusFilter(b.dataset.statusFilter)));projectFilter.addEventListener('change',()=>setProjectFilter(projectFilter.value));
+    whatsNewBtn.addEventListener('click',toggleFeaturePanel);document.addEventListener('pointermove',event=>moveNewsButtonToPanelEdge(event.clientX,event.clientY));window.addEventListener('resize',()=>{if(!featurePanel.classList.contains('hidden'))resetNewsButtonPosition()});eventNameForm.addEventListener('submit',event=>{event.preventDefault();resolveEventName(eventNameInput.value)});eventNameCancel.addEventListener('click',()=>resolveEventName(null));addBtn.addEventListener('click',event=>{event.preventDefault();toggleAddMenu()});addMenu.querySelectorAll('[data-add-action]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();runAddAction(button.dataset.addAction)}));document.addEventListener('pointerdown',event=>{if(addMenu.classList.contains('is-open')&&!event.target.closest('#addMenu')&&!event.target.closest('#addBtn'))setAddMenuOpen(false)});document.addEventListener('keydown',event=>{if(event.key==='Escape'){setAddMenuOpen(false);if(!eventNameDialog.classList.contains('hidden'))resolveEventName(null)}});searchInput.addEventListener('input',()=>{orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll()});locationSearchInput.addEventListener('input',renderLocations);countryFilter.addEventListener('change',renderLocations);regionFilter.addEventListener('change',renderLocations);categoryFilter.addEventListener('change',renderLocations);newLocationBtn.addEventListener('click',createNewLocation);reloadLocationsBtn.addEventListener('click',loadLocations);favoriteLocationsBtn.addEventListener('click',()=>{locationFavoritesOnly=!locationFavoritesOnly;favoriteLocationsBtn.classList.toggle('primary',locationFavoritesOnly);favoriteLocationsBtn.textContent=locationFavoritesOnly?'★ Favoriten':'☆ Favoriten';renderLocations()});timelineTab.addEventListener('click',()=>setView('timeline'));locationsTab.addEventListener('click',()=>setView('locations'));saveOpenBtn.addEventListener('click',async()=>{const dirtyIds=[...dirtyForms];const forms=dirtyIds.map(id=>shootingsEl.querySelector(`form[data-id="${id}"]`)).filter(Boolean);for(const form of forms){await saveForm({preventDefault(){},currentTarget:form})}});discardOpenBtn.addEventListener('click',discardOpenChanges);window.addEventListener('beforeunload',e=>{if(!hasUnsavedChanges())return;e.preventDefault();e.returnValue=''});document.querySelectorAll('[data-status-filter]').forEach(b=>b.addEventListener('click',()=>setStatusFilter(b.dataset.statusFilter)));projectFilter.addEventListener('change',()=>setProjectFilter(projectFilter.value));
 
     async function boot(){clearError();const {data,error}=await db.auth.getSession();if(error){setStatus('Session Fehler');showError('Session Fehler: '+error.message);return}const session=data.session;loginBox.classList.toggle('hidden',!!session);adminBox.classList.toggle('hidden',!session);toolbar.classList.toggle('hidden',!session||currentView!=='timeline');viewTabs.classList.toggle('hidden',!session);locationsBox.classList.toggle('hidden',!session||currentView!=='locations');logoutBtn.classList.toggle('hidden',!session);whatsNewBtn.classList.toggle('hidden',!session);setFeaturePanelOpen(false);setAddMenuOpen(false);addMenu.classList.add('hidden');addBtn.classList.toggle('hidden',!session);if(!session){setStatus('Nicht angemeldet');return}setStatus('Angemeldet als '+session.user.email);await loadShootings()}
     try{initSupabase();boot()}catch(error){setStatus('Admin konnte nicht starten');showError(error.message+' · Prüfe, ob der Supabase Script-Tag korrekt geladen wird.');console.error(error)}
