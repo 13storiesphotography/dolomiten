@@ -1172,32 +1172,21 @@
       const newName=name.trim(),now=new Date().toISOString(),isUnassigned=oldName==='Keine Projektzuordnung';
       const matchesOldProject=row=>isUnassigned?!String(row.project_name||'').trim():String(row.project_name||'').trim()===oldName;
       let savedEvent=null;
+      clearError();
+      setStatus('Event wird umbenannt…');
       if(eventId){
         const {error}=await db.from('events').update({name:newName,updated_at:now}).eq('id',eventId);
         if(error){showError('Event konnte nicht umbenannt werden: '+formatError(error));return}
       }else if(isUnassigned&&!events.some(event=>String(event.name||'').trim()===newName)){
         const payload={id:'event-'+Date.now(),name:newName,status:'aktiv',updated_at:now};
-        const first=await db.from('events').insert(payload).select('*').single();
-        savedEvent=first.data;
-        let error=first.error;
-        if(error){
-          const retry=await db.from('events').insert({name:newName,status:'aktiv',updated_at:now}).select('*').single();
-          savedEvent=retry.data;
-          error=retry.error;
-        }
+        const {error}=await db.from('events').insert(payload);
+        savedEvent=payload;
         if(error){showError('Event konnte nicht erstellt werden: '+formatError(error));return}
       }
       const affected=rows.filter(matchesOldProject);
       if(affected.length){
-        if(isUnassigned){
-          const updateNull=await db.from('shootings').update({project_name:newName,updated_at:now}).is('project_name',null);
-          const updateEmpty=await db.from('shootings').update({project_name:newName,updated_at:now}).eq('project_name','');
-          const error=updateNull.error||updateEmpty.error;
-          if(error){showError('Shootings konnten nicht zugeordnet werden: '+formatError(error));return}
-        }else{
-          const {error}=await db.from('shootings').update({project_name:newName,updated_at:now}).eq('project_name',oldName);
-          if(error){showError('Shootings konnten nicht umbenannt werden: '+formatError(error));return}
-        }
+        const {error}=await db.from('shootings').update({project_name:newName,updated_at:now}).in('id',affected.map(row=>row.id));
+        if(error){showError((isUnassigned?'Shootings konnten nicht zugeordnet werden: ':'Shootings konnten nicht umbenannt werden: ')+formatError(error));return}
       }
       if(savedEvent){
         const normalizedEvent={...savedEvent,status:savedEvent.status||'aktiv'};
