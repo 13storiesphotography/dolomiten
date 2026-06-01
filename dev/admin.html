@@ -114,6 +114,9 @@
     .project-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
     .project-edit{position:absolute;right:0;top:-12px;width:24px;height:24px;border:0;background:rgba(15,15,13,.86);color:rgba(247,241,232,.68);display:grid;place-items:center;border-radius:999px;cursor:pointer;opacity:0;box-shadow:0 10px 24px rgba(0,0,0,.22);transition:opacity .18s ease,background .18s ease,color .18s ease}
     .event-name-input{width:min(260px,70vw);min-height:30px;border-radius:10px;padding:4px 8px;font-weight:950;font-size:.95rem}
+    .event-name-actions{display:inline-flex;gap:4px;margin-left:6px}
+    .event-name-action{width:28px;height:28px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.07);color:var(--text);display:grid;place-items:center;cursor:pointer;font-weight:950}
+    .event-name-action:hover{background:rgba(255,255,255,.12)}
     .project-delete{width:26px;height:26px;border:0;background:transparent;color:rgba(247,241,232,.58);display:grid;place-items:center;border-radius:999px;cursor:pointer;opacity:0;transition:opacity .18s ease,background .18s ease,color .18s ease}
     .project-summary:hover .project-edit,.project-summary:hover .project-delete{opacity:1}.project-edit:hover,.project-delete:hover{background:rgba(255,255,255,.10);color:var(--text)}
     .project-chevron{width:18px;height:18px;display:grid;place-items:center;color:rgba(247,241,232,.66);flex:0 0 auto}
@@ -1207,17 +1210,26 @@
 
     function renameEvent(e){
       e.preventDefault();e.stopPropagation();
-      const group=e.currentTarget.closest('.project-group'),eventId=group?.dataset.eventId||'',oldName=group?.dataset.projectName||'',wrap=e.currentTarget.closest('.project-name-wrap'),strong=wrap?.querySelector('strong');
+      const editButton=e.currentTarget,group=editButton.closest('.project-group'),eventId=group?.dataset.eventId||'',oldName=group?.dataset.projectName||'',wrap=editButton.closest('.project-name-wrap'),strong=wrap?.querySelector('strong');
       if(!group||!wrap||!strong||wrap.querySelector('input'))return;
       const input=document.createElement('input');
       input.className='event-name-input';
       input.value=oldName;
       strong.replaceWith(input);
+      editButton.remove();
+      const actions=document.createElement('span');
+      actions.className='event-name-actions';
+      actions.innerHTML='<button class="event-name-action" type="button" data-confirm-event-rename aria-label="Eventnamen speichern">✓</button><button class="event-name-action" type="button" data-cancel-event-rename aria-label="Abbrechen">×</button>';
+      wrap.appendChild(actions);
       input.focus();
       input.select();
       input.addEventListener('pointerdown',event=>event.stopPropagation());
+      actions.addEventListener('pointerdown',event=>event.stopPropagation());
+      actions.querySelector('[data-confirm-event-rename]').addEventListener('pointerdown',event=>{event.preventDefault();event.stopPropagation();commitEventRename(group,input,oldName,eventId)});
+      actions.querySelector('[data-cancel-event-rename]').addEventListener('pointerdown',event=>{event.preventDefault();event.stopPropagation();renderAll()});
+      actions.querySelectorAll('button').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation()}));
       input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();commitEventRename(group,input,oldName,eventId)}if(event.key==='Escape'){event.preventDefault();renderAll()}});
-      input.addEventListener('blur',()=>commitEventRename(group,input,oldName,eventId));
+      input.addEventListener('blur',()=>setTimeout(()=>{if(input.isConnected)commitEventRename(group,input,oldName,eventId)},80));
     }
 
     async function deleteEmptyEvent(e){
