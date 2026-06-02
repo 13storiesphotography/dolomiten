@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "openai.chatgpt",
-        "continue.continue"
+        "continue.continue",
+        "kiranshah.chatgpt-helper"
     ]
 }
