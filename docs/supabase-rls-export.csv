@@ -1,0 +1,13 @@
+schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check
+public,shootings,Allow authenticated deletes for shootings,PERMISSIVE,{authenticated},DELETE,true,null
+public,shootings,Allow authenticated inserts for shootings,PERMISSIVE,{authenticated},INSERT,null,true
+public,shootings,Authenticated can update shootings,PERMISSIVE,{authenticated},UPDATE,true,true
+public,shootings,Public can read shootings,PERMISSIVE,"{anon,authenticated}",SELECT,true,null
+public,locations,locations_delete,PERMISSIVE,{authenticated},DELETE,true,null
+public,locations,locations_update,PERMISSIVE,{authenticated},UPDATE,true,null
+public,locations,locations_insert,PERMISSIVE,{authenticated},INSERT,null,true
+public,locations,locations_select,PERMISSIVE,{authenticated},SELECT,true,null
+public,events,events_select,PERMISSIVE,{authenticated},SELECT,true,null
+public,events,events_insert,PERMISSIVE,{authenticated},INSERT,null,true
+public,events,events_update,PERMISSIVE,{authenticated},UPDATE,true,true
+public,events,events_delete,PERMISSIVE,{authenticated},DELETE,true,null

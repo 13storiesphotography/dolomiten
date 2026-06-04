@@ -1,0 +1,47 @@
+table_name,column_name,data_type,is_nullable
+events,id,text,NO
+events,name,text,NO
+events,status,text,YES
+events,created_at,timestamp with time zone,YES
+events,updated_at,timestamp with time zone,YES
+locations,id,uuid,NO
+locations,name,text,NO
+locations,country,text,YES
+locations,region,text,YES
+locations,area,text,YES
+locations,category,text,YES
+locations,address,text,YES
+locations,maps_link,text,YES
+locations,meeting_place,text,YES
+locations,image_url,text,YES
+locations,description,text,YES
+locations,tags,ARRAY,YES
+locations,seasons,ARRAY,YES
+locations,active,boolean,YES
+locations,created_at,timestamp with time zone,YES
+locations,updated_at,timestamp with time zone,YES
+locations,is_favorite,boolean,YES
+locations,usage_count,integer,YES
+locations,last_used_at,timestamp with time zone,YES
+shootings,id,text,NO
+shootings,sort_order,integer,NO
+shootings,day_label,text,NO
+shootings,date_label,text,NO
+shootings,title,text,NO
+shootings,subtitle,text,YES
+shootings,meeting_time,text,YES
+shootings,meeting_place,text,YES
+shootings,shooting_time,text,YES
+shootings,location_name,text,YES
+shootings,meeting_link,text,YES
+shootings,location_link,text,YES
+shootings,image_url,text,YES
+shootings,weather_id,text,YES
+shootings,weather_label,text,YES
+shootings,badges,ARRAY,YES
+shootings,route_after,text,YES
+shootings,updated_at,timestamp with time zone,YES
+shootings,location_id,uuid,YES
+shootings,shooting_note,text,YES
+shootings,project_name,text,YES
+shootings,project_status,text,YES

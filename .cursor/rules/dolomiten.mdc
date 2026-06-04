@@ -1,0 +1,16 @@
+---
+description: Shooting Planer — Sprache, Dev-Pfad, Admin-Fokus, Supabase
+alwaysApply: true
+---
+
+# Dolomiten / Shooting Planer
+
+- Antworte dem Nutzer auf **Deutsch**.
+- Entwickle neue Features primär unter **`dev/`** (`dev/admin.html`, `dev/assets/js/`, `dev/index.html`). Root nur syncen, wenn ausdrücklich gewünscht oder Release.
+- **Priorität:** Admin-Bereich für den ersten realen Nutzer (Fotografin) ausreifen, bevor SaaS, Stripe und Multi-Tenant.
+- **Langfristige Vision:** SaaS für Fotografen (Events + Shootings), Share-Link für Models/Kunden, Abo-Stufen mit Feature-Limits, White-Label-Branding pro Fotograf.
+- **Supabase:** Tabellen `shootings`, `events`, `locations` — Details in `docs/SUPABASE.md`. RLS: Shootings öffentlich lesbar (anon); Locations nur `authenticated`. Keine Service-Role-Keys ins Repo oder in Commits.
+- **Kunden-Timeline:** Vorerst sekundär; geplant: schlanke Landing mit Roadmap-Preview + Login statt voller öffentlicher Timeline.
+- Halte Änderungen klein, passend zum bestehenden Vanilla-JS-Stil (kein Framework ohne Absprache).
+- Bei DB-Änderungen: `docs/supabase-schema-export.csv` und `docs/SUPABASE.md` erwähnen oder aktualisieren.
+- **Neuigkeiten:** Bei **nutzerrelevanten** Admin-Änderungen `#featurePanel` in `dev/admin.html` mitpflegen (Deutsch, kurz). Relevant = sichtbarer Workflow/UI/Verhalten für die Fotografin (neue Funktion, geänderte Bedienung, wichtiger Fix). Nicht nötig bei rein internem Refactor, Kommentaren, Docs-only. Neuer Punkt in „Zuletzt“ oder passender Sektion; Datum im Intro. Button `#whatsNewBtn` (Megafon, kein Sonnen-/Theme-Icon).

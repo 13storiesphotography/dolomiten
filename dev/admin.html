@@ -10,6 +10,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Admin · Events</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
 <body>
@@ -18,34 +20,89 @@
       <div class="top-row">
         <div><div class="eyebrow">13 Stories Photography</div><h1>Admin</h1><div class="status" id="status">Initialisiere…</div></div>
         <div class="top-actions">
-          <button class="btn news-toggle hidden" id="whatsNewBtn" type="button" aria-expanded="false" aria-label="Neuigkeiten öffnen">
-            <span class="news-label">Neuigkeiten</span>
-            <span class="news-icon" aria-hidden="true"><span></span><span></span></span>
+          <button class="btn news-toggle hidden" id="whatsNewBtn" type="button" aria-expanded="false" aria-label="Neuigkeiten öffnen" title="Neuigkeiten">
+            <span class="news-glyph-stack" aria-hidden="true">
+              <span class="news-mark">
+                <svg class="news-mark-svg" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 6.5h12.5a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H8l-3.5 3v-12z" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linejoin="round"/>
+                  <path d="M16.5 9.2a3.8 3.8 0 0 1 0 5.6" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="news-glyph-close"><span></span><span></span></span>
+            </span>
           </button>
           <button class="btn danger hidden" id="logoutBtn">Abmelden</button>
         </div>
       </div>
       <div class="release-panel hidden" id="featurePanel">
-        <strong>Neueste größere Änderungen</strong>
-        <ul>
-          <li>Events und Locations sind jetzt als eigene Hauptbereiche per Schiebeschalter erreichbar.</li>
-          <li>Events/Projekte können zugeordnet, gefiltert und als aufklappbare Gruppen genutzt werden.</li>
-          <li>Status-Badges werden automatisch aus dem Datum berechnet; Archiv bleibt manuell steuerbar.</li>
-          <li>Der Plus-Button öffnet ein Schnellmenü für neues Event, neues Shooting und neue Location.</li>
-          <li>Locations lassen sich als wiederverwendbare Bibliothek pflegen und aus Shootings übernehmen.</li>
-        </ul>
+        <div class="release-panel-body">
+        <strong>Neuigkeiten · Admin</strong>
+        <p class="release-panel-intro">Stand <strong>4. Juni 2026</strong> — was sich für dich im Admin geändert hat. Nach Updates einmal <strong>Cmd+Shift+R</strong> (hart neu laden). Schließen: <strong>×</strong> oben rechts an der Ecke (Megafon in der Kopfzeile zum Öffnen).</p>
+        <div class="release-section">
+          <p class="release-section-title">Zuletzt</p>
+          <ul>
+            <li><strong>Locations überall gleich:</strong> Shooting, Kalender-Import und Tab Locations nutzen denselben Ablauf (Name, Karte, Maps, <strong>📍</strong>).</li>
+            <li><strong>Region &amp; Gebiet</strong> füllt das System aus GPS/Maps — du siehst die Felder nur, wenn ein Ort wirklich ohne Standort-Anker angelegt werden muss.</li>
+            <li><strong>Weniger Dubletten:</strong> gleiche Maps-Position verknüpft eine bestehende Bibliothek-Location statt eine zweite anzulegen.</li>
+            <li><strong>Abweichender Treff:</strong> wie Ort erfassen — Kartensuche, Maps-Link, <strong>📍</strong> (ändert die Location nicht).</li>
+            <li><strong>Bildauschnitt:</strong> In der Location-Vorschau ziehen (Doppelklick oder „Ausschnitt zentrieren“) — wird mitgespeichert (Spalte <code>image_focus</code>, Migration in <code>docs/migrations/</code>).</li>
+            <li><strong>Location-Editor:</strong> optionaler <strong>Anzeigename</strong> (z. B. „Grüner Hügel …“), Adresse separat; nach Maps/Karte kein „10“ mehr als Name. Land/Region/Gebiet nur im gelben Block ohne GPS.</li>
+            <li><strong>Location-Tags:</strong> dieselben Begriffe wie Shooting-Badges (Pillen im Editor); alte Jahreszeiten werden beim Laden in Tags übernommen.</li>
+            <li><strong>Bildvorschlag:</strong> Beim Anlegen einer Location (Shooting &amp; Bibliothek) wird nach GPS/Karte/Maps automatisch ein passendes Bild vorgeschlagen — URL im Block <strong>Bild</strong> jederzeit austauschbar.</li>
+            <li>Tab <strong>Locations</strong> aufgeräumt: Favoriten in der Filterzeile, neue Location nur noch über <strong>+</strong>; Tags als Pillen (<strong>+</strong> / <strong>×</strong>, Hinweis wenn ein Tag auch woanders genutzt wird); Jahreszeiten entfernt.</li>
+          </ul>
+        </div>
+        <div class="release-section">
+          <p class="release-section-title">Ort im Shooting</p>
+          <ul>
+            <li><strong>Location-Finder:</strong> Ein Feld — zuerst Bibliothek, sonst Kartensuche (OpenStreetMap).</li>
+            <li><strong>Maps-Link</strong> ins Namensfeld; <strong>📍</strong> für GPS (HTTPS, Browser-Zugriff).</li>
+            <li><strong>Bibliothek beim Speichern:</strong> Orte mit Adresse/Maps landen automatisch in der Bibliothek (Ausnahme: „Nicht in Bibliothek“; reines „Standesamt“ ohne Spot wird übersprungen).</li>
+            <li><strong>Treffpunkt &amp; Bild</strong> optional ausklappbar; leerer Treff = Location.</li>
+            <li>Wochentag aus Datum; neues Shooting ohne vorgefüllten Titel; schlankere Toolbar.</li>
+          </ul>
+        </div>
+        <div class="release-section">
+          <p class="release-section-title">Location-Bibliothek</p>
+          <ul>
+            <li><strong>Spot auf Karte:</strong> Pin verschieben, wenn der sichtbare Ort nicht exakt am GPS liegt.</li>
+            <li>Adresse, Maps, Kategorie, Beschreibung und Tags in übersichtlichen Blöcken; Treffpunkt und Bild wie im Shooting (Bildvorschlag nach Ortserfassung).</li>
+          </ul>
+        </div>
+        <div class="release-section">
+          <p class="release-section-title">Kalender &amp; Import</p>
+          <ul>
+            <li><strong>.ics-Import</strong> mit Vorschau (Zukünftig/Alle/Vergangen) — nur Kalender oder <strong>Shooting-Entwürfe</strong> in der Liste.</li>
+            <li>Import mit Ort aus dem Kalender; optional in die Bibliothek übernehmen.</li>
+            <li>Kalender stabiler auf schmalen Screens.</li>
+          </ul>
+        </div>
+        <div class="release-section">
+          <p class="release-section-title">Planung &amp; Übersicht</p>
+          <ul>
+            <li><strong>Shooting-Status</strong> (Angefragt, Fix, …) für Shootings ohne Event — Filter in der Toolbar.</li>
+            <li>Tabs <strong>Liste · Kalender · Locations</strong>; Events als Gruppen.</li>
+            <li><strong>+</strong> für Event, Shooting oder Location; Entwürfe bleiben erhalten.</li>
+            <li>Termin mit optionalem <strong>Ende</strong> und Dauer in Minuten.</li>
+          </ul>
+        </div>
+        </div>
       </div>
       <div class="view-tabs hidden" id="viewTabs">
-        <button class="view-tab active" id="timelineTab" type="button">Events</button>
+        <button class="view-tab active" id="timelineTab" type="button">Liste</button>
+        <button class="view-tab" id="calendarTab" type="button">Kalender</button>
         <button class="view-tab" id="locationsTab" type="button">Locations</button>
       </div>
       <div class="toolbar hidden" id="toolbar">
-        <div class="status-toolbar">
-          <button class="pill-button" data-status-filter="aktiv">Aktiv</button>
-          <button class="pill-button" data-status-filter="abgeschlossen">Abgeschlossen</button>
-          <button class="pill-button" data-status-filter="archiviert">Archiv</button>
+        <div class="toolbar-filter-groups">
+          <div class="status-toolbar" aria-label="Zeitlicher Status">
+            <span class="toolbar-filter-label">Zeit</span>
+            <button class="pill-button" data-status-filter="aktiv">Aktiv</button>
+            <button class="pill-button" data-status-filter="abgeschlossen">Abgeschlossen</button>
+            <button class="pill-button" data-status-filter="archiviert">Archiv</button>
+          </div>
+          <div class="status-toolbar status-toolbar-workflow" id="workflowStatusToolbar" aria-label="Planungsstatus ohne Event"></div>
         </div>
-        <select id="projectFilter"><option value="all">Alle Events</option></select>
       </div>
     </section>
 
@@ -68,22 +125,41 @@
       <div class="shootings" id="shootings"></div>
     </section>
 
-    <section id="locationsBox" class="hidden">
-      <div class="admin-intro">
-        <div class="card">
-          <div class="eyebrow">Location Bibliothek</div>
-          <div class="hint" style="margin-top:8px;">Wiederverwendbare Orte nach Land, Region, Gebiet, Kategorie, Tags und Jahreszeiten.</div>
-          <div class="btnbar">
-            <button class="btn primary" id="newLocationBtn" type="button">Neue Location</button>
-            <button class="btn" id="reloadLocationsBtn" type="button">Locations neu laden</button>
-            <button class="btn" id="favoriteLocationsBtn" type="button">☆ Favoriten</button>
+    <section id="calendarBox" class="hidden">
+      <div class="cal-shell">
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" type="button" id="calPrev" aria-label="Zurück">‹</button>
+            <button class="cal-nav-title" type="button" id="calTitle" aria-live="polite"></button>
+            <button class="cal-nav-btn" type="button" id="calNext" aria-label="Weiter">›</button>
+          </div>
+          <div class="cal-actions">
+            <button class="btn cal-today-btn" type="button" id="calToday">Heute</button>
+            <button class="btn cal-import-btn" type="button" id="calImportBtn">Kalender importieren (.ics)</button>
+          </div>
+          <div class="cal-scale" id="calScale" role="tablist" aria-label="Kalenderansicht">
+            <button class="cal-scale-btn" type="button" role="tab" data-cal-scale="day">Tag</button>
+            <button class="cal-scale-btn active" type="button" role="tab" data-cal-scale="month">Monat</button>
+            <button class="cal-scale-btn" type="button" role="tab" data-cal-scale="year">Jahr</button>
           </div>
         </div>
+        <div class="cal-layers" id="calLayers" aria-label="Anzeigen">
+          <button class="cal-layer active" type="button" data-cal-layer="shootings">Shootings</button>
+          <button class="cal-layer active" type="button" data-cal-layer="events">Events</button>
+          <button class="cal-layer active" type="button" data-cal-layer="external">Importiert</button>
+        </div>
+        <div class="cal-body" id="calendarRoot"></div>
+      </div>
+    </section>
+
+    <section id="locationsBox" class="hidden">
+      <div class="admin-intro">
         <div class="location-toolbar">
           <div class="search-wrap"><input id="locationSearchInput" type="search" placeholder="Location, Region, Tag suchen…" /></div>
           <select id="countryFilter"><option value="all">Alle Länder</option></select>
           <select id="regionFilter"><option value="all">Alle Regionen</option></select>
           <select id="categoryFilter"><option value="all">Alle Kategorien</option></select>
+          <button class="btn location-toolbar-fav" id="favoriteLocationsBtn" type="button">☆ Favoriten</button>
         </div>
       </div>
       <div class="shootings" id="locationsList"></div>
@@ -95,6 +171,81 @@
     <button class="add-menu-item" type="button" data-add-action="location">Neue Location</button>
   </div>
   <button class="floating-add hidden" id="addBtn" type="button" aria-label="Neu erstellen" aria-expanded="false" aria-controls="addMenu">+</button>
+  <div class="ics-dialog hidden" id="icsImportDialog" aria-hidden="true">
+    <div class="ics-dialog-box">
+      <div class="ics-dialog-title">Kalender importieren (.ics)</div>
+      <p class="hint ics-dialog-hint">Aus <strong>Apple Kalender</strong>: Kalender in der Seitenleiste markieren → Menü <strong>Ablage</strong> → <strong>Exportieren…</strong> → Datei speichern. Dann hier die <code>.ics</code> wählen. Auch Google/Outlook-Exporte funktionieren meist.</p>
+      <div class="btnbar">
+        <button class="btn primary" type="button" id="icsPickFile">Datei wählen…</button>
+        <input type="file" id="icsFileInput" accept=".ics,text/calendar" hidden />
+      </div>
+      <div class="ics-preview hidden" id="icsPreview">
+        <p class="hint ics-preview-hint"><strong>Schritt 2:</strong> Standardmäßig nur <strong>zukünftige</strong> Termine — Filter oben für Alle/Vergangen. Kästchen = Auswahl; Kopfzeile wählt alle <em>sichtbaren</em> ab/an. Optional: Rand zwischen <strong>Titel</strong> und <strong>Ort</strong> ziehen, um mehr Platz zu verteilen.</p>
+        <div class="ics-preview-toolbar">
+          <div class="ics-preview-meta" id="icsPreviewMeta"></div>
+          <div class="ics-preview-filters" role="tablist" aria-label="Zeitraum">
+            <button class="ics-filter-btn active" type="button" data-ics-filter="upcoming" role="tab" aria-selected="true">Zukünftig</button>
+            <button class="ics-filter-btn" type="button" data-ics-filter="all" role="tab" aria-selected="false">Alle</button>
+            <button class="ics-filter-btn" type="button" data-ics-filter="past" role="tab" aria-selected="false">Vergangen</button>
+          </div>
+          <div class="ics-preview-select-actions">
+            <button class="btn" type="button" id="icsColsReset" title="Verteilung zwischen Titel- und Ort-Spalte wieder auf Standard">Breite zurücksetzen</button>
+            <button class="btn" type="button" id="icsSelectAll">Alle an</button>
+            <button class="btn" type="button" id="icsSelectNone">Keine</button>
+          </div>
+        </div>
+        <div class="ics-preview-grid-wrap">
+          <div class="ics-preview-head">
+            <label class="ics-check ics-check-head" id="icsSelectMasterLabel" title="Alle Termine aus- oder abwählen">
+              <input type="checkbox" id="icsSelectMaster" checked aria-label="Alle Termine auswählen" />
+              <span class="ics-check-box" aria-hidden="true"></span>
+            </label>
+            <span class="ics-col-head">Datum</span>
+            <span class="ics-col-head">Zeit</span>
+            <span class="ics-col-head ics-col-head-title">Titel<span class="ics-col-resize" data-resize-col="title" role="separator" aria-orientation="vertical" aria-label="Mehr Platz für Titel" tabindex="0"></span></span>
+            <span class="ics-col-head">Ort<span class="ics-col-resize" data-resize-col="loc" role="separator" aria-orientation="vertical" aria-label="Mehr Platz für Ort" tabindex="0"></span></span>
+            <span class="ics-col-head ics-col-head-status">Status</span>
+          </div>
+          <div class="ics-preview-list" id="icsPreviewList"></div>
+        </div>
+        <p class="hint ics-preview-foot" id="icsPreviewFoot"></p>
+        <div class="ics-step3">
+          <p class="hint ics-step3-title"><strong>Schritt 3:</strong> Was soll mit den <strong>angehakten</strong> Terminen passieren? (Zwei getrennte Wege — du kannst auch nur einen nutzen.)</p>
+          <div class="ics-step3-grid">
+            <div class="ics-step3-option">
+              <div class="ics-step3-option-head">
+                <span class="ics-step3-badge ics-step3-badge-cal">Kalender</span>
+                <span class="ics-step3-option-name">Nur zur Übersicht</span>
+              </div>
+              <p class="ics-step3-option-desc">Blaue Termine im Tab <strong>Kalender</strong>, Ebene <strong>Importiert</strong>. Nur lokal in diesem Browser — kein Shooting, nicht in Supabase.</p>
+              <button class="btn ics-step3-btn is-disabled" type="button" id="icsImportDisplay" aria-disabled="true" title="Ausgewählte Termine blau im Kalender anzeigen (localStorage)">
+                <span class="ics-btn-main">Im Kalender anzeigen</span>
+                <span class="ics-btn-sub" id="icsImportDisplaySub">Bitte Termine auswählen</span>
+              </button>
+            </div>
+            <div class="ics-step3-option ics-step3-option-work">
+              <div class="ics-step3-option-head">
+                <span class="ics-step3-badge ics-step3-badge-work">Liste</span>
+                <span class="ics-step3-option-name">Zum Bearbeiten</span>
+              </div>
+              <p class="ics-step3-option-desc">Legt <strong>Entwürfe</strong> in der Shooting-Liste an (Datum, Ort, Zeiten vorausgefüllt). Erscheint <em>nicht</em> blau im Kalender — danach in der Liste speichern.</p>
+              <button class="btn primary ics-step3-btn is-disabled" type="button" id="icsImportShootings" aria-disabled="true" title="Ausgewählte Termine als Shooting-Entwürfe in der Liste anlegen">
+                <span class="ics-btn-main">Shooting-Entwürfe anlegen</span>
+                <span class="ics-btn-sub" id="icsImportShootingsSub">Bitte Termine auswählen</span>
+              </button>
+            </div>
+          </div>
+          <div class="ics-step3-clear">
+            <button class="btn ics-step3-clear-btn" type="button" id="icsClearImported" disabled title="Entfernt alle blauen Import-Termine aus der Kalenderansicht">Blaue Import-Termine aus Kalender entfernen</button>
+            <span class="hint ics-step3-clear-meta" id="icsClearMeta">Betrifft nur die blaue „Importiert“-Anzeige — nicht deine Shootings in der Liste.</span>
+          </div>
+        </div>
+      </div>
+      <div class="ics-dialog-actions">
+        <button class="btn" type="button" id="icsImportCancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
   <div class="event-dialog hidden" id="eventNameDialog" aria-hidden="true">
     <form class="event-dialog-box" id="eventNameForm">
       <div class="event-dialog-title">Neues Event</div>
@@ -110,6 +261,9 @@
   <script src="assets/js/admin-core.js"></script>
   <script src="assets/js/admin-events.js"></script>
   <script src="assets/js/admin-locations.js"></script>
+  <script src="assets/js/admin-ics.js"></script>
+  <script src="assets/js/admin-calendar-import.js"></script>
+  <script src="assets/js/admin-calendar.js"></script>
   <script src="assets/js/admin-ui.js"></script>
 </body>
 </html>

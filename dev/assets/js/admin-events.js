@@ -2,27 +2,124 @@
       return [location.name,location.country,location.region,location.area,location.category,location.address,location.meeting_place,...(location.tags||[]),...(location.seasons||[])].filter(Boolean).join(' ').toLowerCase();
     }
 
-    function renderLocationPicker(row,key,label){
-      const current=row[key]||'';
-      const currentLocation=currentLocationsById[current];
-      const countryOptions=[...new Set(locations.map(l=>l.country).filter(Boolean))].sort();
-      const categoryOptions=[...new Set(locations.map(l=>l.category).filter(Boolean))].sort();
-      return `<div class="field full">
-        <label>${label}</label>
-        <input type="hidden" name="${key}" value="${escapeHtml(current)}" data-location-hidden>
-        <div class="location-picker" data-location-picker>
-          <div class="location-picker-head">
-            <input class="location-picker-search" type="search" placeholder="Location suchen…" data-location-picker-search>
-            <select data-location-picker-country><option value="all">Alle Länder</option>${countryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
-            <select data-location-picker-category><option value="all">Alle Kategorien</option>${categoryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
-          </div>
-          <div class="hint" data-location-current>${currentLocation ? 'Ausgewählt: '+escapeHtml(currentLocation.name) : 'Keine Bibliotheks-Location ausgewählt'}</div>
-          <div class="location-picker-grid" data-location-picker-grid>${renderLocationPickerOptions('', 'all', 'all', current)}</div>
+    function locationFinderDisplayName(row){
+      const linked=row.location_id?currentLocationsById[row.location_id]:null;
+      const raw=valueForInput(row,'location_name','text');
+      if(linked&&!raw)return linked.name||'';
+      return raw||'';
+    }
+
+    function countLibraryFinderMatches(search='',country='all',category='all'){
+      const term=String(search||'').trim().toLowerCase();
+      return locations.filter(location=>{
+        const okCountry=country==='all'||location.country===country;
+        const okCategory=category==='all'||location.category===category;
+        const okSearch=!term||locationSearchHaystack(location).includes(term);
+        return okCountry&&okCategory&&okSearch;
+      }).length;
+    }
+
+    function locationSetupShouldShow(row){
+      if(row.location_id)return false;
+      const term=String(row.location_name||'').trim();
+      return term.length>=3||!!String(row.location_link||'').trim()||!!String(row.meeting_place||'').trim();
+    }
+
+    function renderLocationFinderStatus(row){
+      const linked=row.location_id?currentLocationsById[row.location_id]:null;
+      if(linked){
+        return `<span class="location-finder-badge is-library">Bibliothek · ${escapeHtml(linked.name)}</span>`;
+      }
+      const name=String(row.location_name||'').trim();
+      if(name){
+        return `<span class="location-finder-badge is-onetime">Neu · Kartentreffer oder Maps — Bibliothek beim Speichern</span>`;
+      }
+      return `<span class="location-finder-hint">Name tippen, Maps-Link einfügen — zuerst Bibliothek, sonst Karte.</span>`;
+    }
+
+    function renderLocationFinderIcsBlock(row){
+      if(!row.__icsImportLocation||row.location_id)return '';
+      const label=String(row.location_name||row.meeting_place||'').trim();
+      if(!label)return '';
+      const match=typeof findSimilarLibraryLocation==='function'?findSimilarLibraryLocation(row):null;
+      const matchBtn=match
+        ?`<button type="button" class="btn" data-import-location-link="${escapeHtml(row.id)}" data-location-id="${escapeHtml(match.id)}">Bestehende: „${escapeHtml(match.name)}“</button>`
+        :'';
+      return `<div class="location-finder-ics import-location-offer" data-import-location-offer="${escapeHtml(row.id)}">
+        <p class="import-location-offer-title">Aus Kalender-Import</p>
+        <p class="import-location-offer-text"><strong>${escapeHtml(label)}</strong> — in die Bibliothek übernehmen?</p>
+        <div class="btnbar import-location-offer-actions">
+          <button type="button" class="btn primary" data-import-location-accept="${escapeHtml(row.id)}">In Bibliothek anlegen</button>
+          ${matchBtn}
+          <button type="button" class="btn" data-import-location-skip="${escapeHtml(row.id)}">Nur dieses Shooting</button>
         </div>
       </div>`;
     }
 
-    function renderLocationPickerOptions(search='',country='all',category='all',current=''){
+    function renderLocationFinderSimilar(term,current){
+      const similar=typeof findSimilarLibraryLocation==='function'
+        ?findSimilarLibraryLocation({location_name:term,meeting_place:term})
+        :null;
+      if(!similar||current)return '';
+      return `<div class="location-finder-similar">
+        <button type="button" class="btn" data-pick-location="${escapeHtml(similar.id)}">Meintest du „${escapeHtml(similar.name)}“ aus der Bibliothek?</button>
+      </div>`;
+    }
+
+    function renderLocationSetupPanel(row){
+      const linkVal=escapeHtml(valueForInput(row,'location_link','url'));
+      const show=locationSetupShouldShow(row);
+      const open=show&&!row.location_id;
+      return `<details class="editor-subpanel location-setup-panel ${show?'':'hidden'}" data-location-setup ${open?'open':''}>
+        <summary class="editor-subpanel-summary">
+          <strong>Maps-Link (Location)</strong>
+          <span>optional bearbeiten</span>
+        </summary>
+        <div class="editor-subpanel-body">
+          <div class="field full">
+            <label>Google-Maps-Link</label>
+            <input name="location_link" type="url" inputmode="url" value="${linkVal}" placeholder="Link einfügen, dann „Erkennen“" data-place-link="location" />
+          </div>
+          <div class="maps-tools">
+            <button class="btn" type="button" data-detect-place="location">Aus Maps-Link erkennen</button>
+            <span class="maps-status" data-maps-status="location"></span>
+          </div>
+        </div>
+      </details>`;
+    }
+
+    function renderLocationFinder(row){
+      const current=row.location_id||'';
+      const displayName=locationFinderDisplayName(row);
+      const countryOptions=[...new Set(locations.map(l=>l.country).filter(Boolean))].sort();
+      const categoryOptions=[...new Set(locations.map(l=>l.category).filter(Boolean))].sort();
+      const mode=current?'library':displayName?'onetime':'';
+      const captureHint=typeof LOCATION_CAPTURE_HINT!=='undefined'?LOCATION_CAPTURE_HINT:'Name tippen (Kartensuche), Maps-Link einfügen oder <strong>📍</strong> am aktuellen Spot.';
+      return `<div class="field full location-finder-field">
+        <label>Location</label>
+        <p class="hint editor-block-hint location-finder-hint-block">${captureHint}</p>
+        <input type="hidden" name="location_id" value="${escapeHtml(current)}" data-location-hidden>
+        <div class="location-finder is-open" data-location-finder data-location-mode="${escapeHtml(mode)}">
+          <div class="location-finder-main-with-gps">
+            <input class="location-finder-input" name="location_name" type="text" value="${escapeHtml(displayName)}" placeholder="Optional: Anzeigename — oder Kartensuche / Maps-Link" data-location-finder-input autocomplete="off" />
+            <button type="button" class="btn location-gps-btn" data-capture-gps-shooting title="Aktuellen Standort" aria-label="Aktuellen Standort">📍</button>
+          </div>
+          <div class="location-finder-status" data-location-finder-status>${renderLocationFinderStatus(row)}</div>
+          <div class="location-finder-results location-picker-grid" data-location-finder-grid>${renderLocationFinderResults(displayName,'all','all',current,row)}</div>
+          <div class="location-finder-results location-picker-grid location-osm-grid" data-osm-results></div>
+          ${renderLocationSetupPanel(row)}
+          <details class="location-finder-filters-wrap">
+            <summary class="location-finder-filters-summary">Bibliothek filtern</summary>
+            <div class="location-finder-filters" data-location-finder-filters>
+              <select data-location-finder-country aria-label="Land filtern"><option value="all">Alle Länder</option>${countryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+              <select data-location-finder-category aria-label="Kategorie filtern"><option value="all">Alle Kategorien</option>${categoryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+            </div>
+          </details>
+        </div>
+      </div>`;
+    }
+
+    function renderLocationFinderResults(search='',country='all',category='all',current='',row={}){
       const term=String(search||'').trim().toLowerCase();
       const hasSearch=term.length>0||country!=='all'||category!=='all';
 
@@ -43,7 +140,8 @@
 
       const renderOption=location=>{
         const meta=[location.country,location.region,location.area,location.category].filter(Boolean).join(' · ');
-        const image=location.image_url?`style="background-image:url('${escapeHtml(location.image_url)}')"`:'';
+        const locFocus=String(location.image_focus||'50% 50%').replace(/"/g,'');
+        const image=location.image_url?`style="background-image:url('${escapeHtml(location.image_url)}');background-position:${escapeHtml(locFocus)};"`:'';
         return `<button class="location-option ${current===location.id?'active':''}" type="button" data-pick-location="${escapeHtml(location.id)}">
           <div class="location-option-thumb" ${image}></div>
           <div><div class="location-option-title">${escapeHtml(location.name)}</div><div class="location-option-meta">${escapeHtml(meta||'Noch nicht kategorisiert')}</div></div>
@@ -51,35 +149,180 @@
         </button>`;
       };
 
-      const clearOption=`<button class="location-option ${!current?'active':''}" type="button" data-pick-location="">
-        <div class="location-option-thumb"></div>
-        <div><div class="location-option-title">Keine Bibliotheks-Location</div><div class="location-option-meta">Manuelle Location verwenden</div></div>
-      </button>`;
+      let output=renderLocationFinderIcsBlock(row);
 
       if(hasSearch){
         const results=[...base].sort(bySmartScore).slice(0,14);
         if(!results.length){
-          return clearOption+`<div class="location-picker-empty">Keine passende Location gefunden. Du kannst die Location manuell eintragen und anschließend „Als Location speichern“ nutzen.</div>`;
+          if(term){
+            return output+renderLocationFinderSimilar(String(search||'').trim(),current)+`<div class="location-picker-section-title">Bibliothek</div><div class="location-picker-empty">Kein Treffer — Kartensuche lädt…</div>`;
+          }
+          return output+`<div class="location-picker-empty">Keine Treffer mit diesen Filtern.</div>`;
         }
-        return clearOption+`<div class="location-picker-section-title">Suchergebnisse (${base.length})</div>`+results.map(renderOption).join('');
+        return output+`<div class="location-picker-section-title">Bibliothek (${base.length})</div>`+results.map(renderOption).join('');
       }
 
       const favorites=[...locations].filter(l=>l.is_favorite).sort(bySmartScore).slice(0,6);
       const recent=[...locations].filter(l=>l.last_used_at&&!favorites.some(f=>f.id===l.id)).sort(bySmartScore).slice(0,6);
       const frequent=[...locations].filter(l=>Number(l.usage_count||0)>0&&!favorites.some(f=>f.id===l.id)&&!recent.some(r=>r.id===l.id)).sort(bySmartScore).slice(0,6);
 
-      let output=clearOption;
       if(favorites.length)output+=`<div class="location-picker-section-title">⭐ Favoriten</div>`+favorites.map(renderOption).join('');
       if(recent.length)output+=`<div class="location-picker-section-title">🕒 Zuletzt verwendet</div>`+recent.map(renderOption).join('');
       if(frequent.length)output+=`<div class="location-picker-section-title">Häufig verwendet</div>`+frequent.map(renderOption).join('');
 
       if(!favorites.length&&!recent.length&&!frequent.length){
         const starter=[...locations].sort(bySmartScore).slice(0,10);
-        output+=`<div class="location-picker-section-title">Erste Locations</div>`+starter.map(renderOption).join('');
+        output+=`<div class="location-picker-section-title">Bibliothek</div>`+starter.map(renderOption).join('');
+      }
+
+      if(!output.replace(renderLocationFinderIcsBlock(row),'').trim()){
+        output+=`<div class="location-finder-hint location-finder-hint-block">Noch keine Locations — Name eingeben, Kartensuche nutzen.</div>`;
       }
 
       return output;
     }
+
+    function rowFromLocationFinderForm(form){
+      const base=currentRowsById[form?.dataset?.id]||{};
+      return {
+        ...base,
+        location_id:form?.elements?.location_id?.value||'',
+        location_name:form?.elements?.location_name?.value||'',
+        __icsImportLocation:base.__icsImportLocation
+      };
+    }
+
+    function refreshLocationFinderUI(form){
+      const finder=form?.querySelector('[data-location-finder]');
+      if(!finder)return;
+      const row=rowFromLocationFinderForm(form);
+      const input=finder.querySelector('[data-location-finder-input]');
+      const grid=finder.querySelector('[data-location-finder-grid]');
+      const country=finder.querySelector('[data-location-finder-country]');
+      const category=finder.querySelector('[data-location-finder-category]');
+      const status=finder.querySelector('[data-location-finder-status]');
+      const hidden=form.elements.location_id;
+      if(status)status.innerHTML=renderLocationFinderStatus(row);
+      if(grid){
+        grid.innerHTML=renderLocationFinderResults(input?.value||'',country?.value||'all',category?.value||'all',hidden?.value||'',row);
+      }
+      finder.dataset.locationMode=row.location_id?'library':String(row.location_name||'').trim()?'onetime':'';
+      if(typeof syncLocationSetupPanel==='function')syncLocationSetupPanel(form);
+      if(typeof refreshLocationFinderOsm==='function')refreshLocationFinderOsm(form);
+    }
+
+    window.countLibraryFinderMatches=countLibraryFinderMatches;
+
+    function maybeUnlinkLibraryOnNameEdit(form){
+      const id=form?.elements?.location_id?.value;
+      if(!id)return;
+      const loc=currentLocationsById[id];
+      const name=String(form?.elements?.location_name?.value||'').trim();
+      if(!loc||!name)return;
+      const needle=typeof normalizeLocationNeedle==='function'?normalizeLocationNeedle: v=>String(v||'').trim().toLowerCase();
+      if(needle(name)!==needle(loc.name)){
+        form.elements.location_id.value='';
+        delete form.dataset.libraryMeetingPlace;
+        delete form.dataset.libraryMeetingLink;
+        if(typeof syncLocationSetupPanel==='function')syncLocationSetupPanel(form);
+        if(typeof syncShootingMeetingLibraryState==='function')syncShootingMeetingLibraryState(form);
+        showToast('Bibliotheks-Verknüpfung gelöst — einmalige Location');
+      }
+    }
+
+    function bindLocationFinders(){
+      shootingsEl.querySelectorAll('[data-location-finder]').forEach(finder=>{
+        if(finder.dataset.bound==='true')return;
+        finder.dataset.bound='true';
+        const form=finder.closest('form');
+        if(typeof bindLocationImageField==='function')bindLocationImageField(form);
+        if(form.dataset.placeAnchorRev==null)form.dataset.placeAnchorRev='0';
+        if(form.dataset.imageSuggestRev==null)form.dataset.imageSuggestRev='0';
+        const input=finder.querySelector('[data-location-finder-input]');
+        const country=finder.querySelector('[data-location-finder-country]');
+        const category=finder.querySelector('[data-location-finder-category]');
+        let osmTimer=null;
+        let imageSuggestTimer=null;
+        const maybeScheduleImageSuggest=()=>{
+          clearTimeout(imageSuggestTimer);
+          imageSuggestTimer=setTimeout(()=>{
+            if(typeof canAutoReplaceLocationImage!=='function'||typeof scheduleLocationImageSuggestion!=='function')return;
+            if(!canAutoReplaceLocationImage(form))return;
+            const meta=typeof readFormRegionArea==='function'?readFormRegionArea(form):{};
+            scheduleLocationImageSuggestion(form,meta,null);
+          },900);
+        };
+
+        const refresh=()=>{
+          maybeUnlinkLibraryOnNameEdit(form);
+          refreshLocationFinderUI(form);
+          if(typeof syncLocationGeoFieldsVisibility==='function')syncLocationGeoFieldsVisibility(form);
+          refreshLivePreview(form);
+          refreshFormDirtyState(form);
+        };
+
+        const refreshWithOsm=()=>{
+          const term=String(input?.value||'').trim();
+          refresh();
+          maybeScheduleImageSuggest();
+          clearTimeout(osmTimer);
+          if(typeof looksLikeMapsLink==='function'&&looksLikeMapsLink(term)){
+            osmTimer=setTimeout(()=>{
+              if(typeof applyMapsLinkFromFinder==='function')applyMapsLinkFromFinder(form,term);
+            },350);
+            return;
+          }
+          osmTimer=setTimeout(()=>{
+            if(typeof refreshLocationFinderOsm==='function')refreshLocationFinderOsm(form);
+          },420);
+        };
+
+        input?.addEventListener('input',refreshWithOsm);
+        country?.addEventListener('change',refreshWithOsm);
+        category?.addEventListener('change',refreshWithOsm);
+        form.querySelector('[data-capture-gps-shooting]')?.addEventListener('click',()=>{
+          if(typeof captureGpsToShootingForm==='function')captureGpsToShootingForm(form);
+        });
+
+        finder.addEventListener('click',async event=>{
+          const star=event.target.closest('[data-toggle-location-favorite]');
+          if(star){
+            event.preventDefault();
+            event.stopPropagation();
+            await toggleLocationFavorite(star.dataset.toggleLocationFavorite);
+            refreshLocationFinderUI(form);
+            return;
+          }
+          const pick=event.target.closest('[data-pick-location]');
+          if(pick){
+            const id=pick.dataset.pickLocation||'';
+            if(form?.elements.location_id)form.elements.location_id.value=id;
+            const location=currentLocationsById[id];
+            if(location&&form?.elements.location_name)form.elements.location_name.value=location.name||'';
+            if(location){
+              applyPickedLocationToForm(form,location);
+              markLocationUsed(location.id);
+              const setup=form?.querySelector('[data-location-setup]');
+              if(setup)setup.classList.add('hidden');
+            }else{
+              refreshLivePreview(form);
+              refreshFormDirtyState(form);
+              refreshLocationFinderUI(form);
+            }
+            return;
+          }
+          const osmPick=event.target.closest('[data-pick-osm]');
+          if(osmPick){
+            const hit=finder._osmResults?.[Number(osmPick.dataset.pickOsm)];
+            if(hit&&typeof applyOsmPickToForm==='function')applyOsmPickToForm(form,hit);
+            return;
+          }
+        });
+      });
+    }
+
+    window.renderLocationFinderResults=renderLocationFinderResults;
+    window.refreshLocationFinderUI=refreshLocationFinderUI;
 
     function renderField(row,[key,label,type]){
       const value=escapeHtml(valueForInput(row,key,type));
@@ -98,39 +341,271 @@
         const options=[['auto','Automatisch'],['archiviert','Archiviert']];
         return `<div class="field"><label>${label}</label><select name="${key}">${options.map(([value,label])=>`<option value="${escapeHtml(value)}" ${current===value?'selected':''}>${escapeHtml(label)}</option>`).join('')}</select></div>`;
       }
-      if(type==='location-select'){return renderLocationPicker(row,key,label)}if(type==='spot-select'){
+      if(type==='location-select'){return renderLocationFinder(row)}if(type==='spot-select'){
         const current=row[key]||'',names=Object.keys(spotPresets),hasPreset=names.includes(current);
         return `<div class="field"><label>${label}</label><select name="${key}" data-spot-select><option value="${escapeHtml(current)}">${hasPreset?'Preset wählen…':(escapeHtml(current)||'Eigener Ort')}</option>${names.map(spot=>`<option value="${escapeHtml(spot)}" ${current===spot?'selected':''}>${escapeHtml(spot)}</option>`).join('')}</select></div>`;
       }
-      const placeholder=key==='location_name'?'Name der Location':key==='meeting_place'?'Adresse oder Treffpunkt eingeben':key==='meeting_link'||key==='location_link'?'Google Maps Link einfügen':key==='image_url'?'Direkte Bild-URL einfügen':key==='subtitle'?'Mood / Beschreibung':key==='title'?'Titel des Shootings':'';return `<div class="field ${key==='title'||key==='subtitle'||key==='image_url'?'full':''}"><label>${label}</label><input name="${key}" type="${type}" value="${value}" placeholder="${escapeHtml(placeholder)}" ${type==='url'?'inputmode="url"':''}/></div>`;
+      const placeholder=key==='location_name'?'Name der Location':key==='meeting_place'?'Adresse manuell oder nach Maps-Erkennung bearbeiten':key==='meeting_link'||key==='location_link'?'Google-Maps-Link einfügen':key==='image_url'?'Direkte Bild-URL einfügen':key==='subtitle'?'Mood / Beschreibung':key==='title'?'z. B. Shooting am Pragser Wildsee':'';const fullWidth=key==='title'||key==='subtitle'||key==='image_url'||key==='location_link'||key==='meeting_link';return `<div class="field ${fullWidth?'full':''}"><label>${label}</label><input name="${key}" type="${type}" value="${value}" placeholder="${escapeHtml(placeholder)}" ${type==='url'?'inputmode="url"':''}/></div>`;
     }
-    function renderGroup(title,row,fields,cols='two'){return `<div class="section-title">${title}</div><div class="grid ${cols}">${fields.map(f=>renderField(row,f)).join('')}</div>`}
-    function renderEventSection(row){const archived=String(row.project_status||'')==='archiviert';return `<div class="event-head"><div class="section-title">Event</div><button class="archive-toggle ${archived?'active':''}" type="button" data-toggle-archive title="${archived?'Archiviert':'Archivieren'}" aria-label="${archived?'Archiviert':'Archivieren'}">${archived?'Archiviert':'Archivieren'}</button></div><input type="hidden" name="project_status" value="${archived?'archiviert':'auto'}"><div class="grid two">${projectFields.map(f=>renderField(row,f)).join('')}</div>`}
-    function renderBadges(row){const active=parseBadges(row.badges),known=[...new Set([...badgePresets,...active])];return `<div class="section-title">Badges</div><div class="badge-tools"><div class="badge-picker">${known.map(b=>`<button type="button" class="badge-chip ${active.includes(b)?'active':''}" data-badge="${escapeHtml(b)}">${escapeHtml(b)}${active.includes(b)?'<span class="badge-chip-remove" data-remove-badge>x</span>':''}</button>`).join('')}<button type="button" class="badge-chip add-badge" data-add-badge aria-label="Badge hinzufügen">+</button></div><textarea name="badges" hidden>${escapeHtml(active.join(', '))}</textarea></div>`}
+    function renderGroup(title,row,fields,cols='two'){
+      const titleHtml=title?`<div class="section-title">${escapeHtml(title)}</div>`:'';
+      return `${titleHtml}<div class="grid ${cols}">${fields.map(f=>renderField(row,f)).join('')}</div>`;
+    }
+    function renderEventSection(row){
+      const archived=String(row.project_status||'')==='archiviert';
+      const bound=isShootingBoundToEvent(row);
+      return `<div class="event-head"><div class="section-title">Event</div><button class="archive-toggle ${archived?'active':''}" type="button" data-toggle-archive title="${archived?'Archiviert':'Archivieren'}" aria-label="${archived?'Archiviert':'Archivieren'}">${archived?'Archiviert':'Archivieren'}</button></div>
+        <input type="hidden" name="project_status" value="${archived?'archiviert':'auto'}" />
+        <p class="hint event-section-hint">${bound?'Status und Gruppierung kommen vom <strong>Event</strong> (Datum, Archiv).':'Ohne Event-Zuordnung legst du den <strong>Shooting-Status</strong> unten selbst fest.'}</p>
+        <div class="grid two">${projectFields.map(f=>renderField(row,f)).join('')}</div>`;
+    }
+
+    function renderWorkflowSection(row){
+      if(isShootingBoundToEvent(row)){
+        return `<div class="workflow-section workflow-section-bound" data-workflow-section>
+          <input type="hidden" name="workflow_status" value="" />
+        </div>`;
+      }
+      const currentSlug=workflowSlug(row.workflow_status||'angefragt');
+      const labels=knownWorkflowStatusLabels(row);
+      return `<div class="workflow-section" data-workflow-section>
+        <div class="section-title">Shooting-Status</div>
+        <p class="hint workflow-section-hint">Nur für Shootings <strong>ohne Event</strong>. Vorgaben oder eigenen Status per <strong>+</strong> hinzufügen.</p>
+        <input type="hidden" name="workflow_status" value="${escapeHtml(currentSlug)}" data-workflow-value />
+        <div class="workflow-picker">${labels.map(label=>{
+          const slug=workflowSlug(label);
+          const active=slug===currentSlug;
+          return `<button type="button" class="workflow-chip ${active?'active':''}" data-workflow-pick="${escapeHtml(slug)}" title="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+        }).join('')}<button type="button" class="workflow-chip workflow-chip-add" data-add-workflow-status aria-label="Eigenen Status hinzufügen">+</button></div>
+      </div>`;
+    }
+
+    function refreshWorkflowChips(form){
+      if(!form?.elements?.workflow_status)return;
+      const current=workflowSlug(form.elements.workflow_status.value);
+      form.querySelectorAll('[data-workflow-pick]').forEach(btn=>{
+        btn.classList.toggle('active',btn.dataset.workflowPick===current);
+      });
+    }
+
+    function refreshWorkflowSectionInForm(form){
+      if(!form)return;
+      const id=form.dataset.id;
+      const row={...(currentRowsById[id]||{}),project_name:form.elements.project_name?.value??''};
+      const section=form.querySelector('[data-workflow-section]');
+      if(!section)return;
+      const wrap=document.createElement('div');
+      wrap.innerHTML=renderWorkflowSection(row);
+      const next=wrap.firstElementChild;
+      section.replaceWith(next);
+      bindWorkflowPickers(form);
+      refreshFormDirtyState(form);
+    }
+
+    function bindWorkflowPickers(root=document){
+      root.querySelectorAll('form[data-id]').forEach(form=>{
+        form.querySelectorAll('[data-workflow-pick]').forEach(btn=>{
+          btn.addEventListener('click',()=>{
+            const input=form.elements.workflow_status;
+            if(!input)return;
+            input.value=btn.dataset.workflowPick;
+            refreshWorkflowChips(form);
+            refreshFormDirtyState(form);
+          });
+        });
+        form.querySelectorAll('[data-add-workflow-status]').forEach(btn=>{
+          btn.addEventListener('click',e=>addCustomWorkflowStatus(e));
+        });
+      });
+    }
+
+    function addCustomWorkflowStatus(e){
+      const btn=e.currentTarget;
+      const section=btn.closest('[data-workflow-section]');
+      const form=btn.closest('form');
+      if(!section||!form)return;
+      if(section.querySelector('.workflow-inline-input'))return;
+      const wrap=document.createElement('span');
+      wrap.className='workflow-chip workflow-chip-inline';
+      wrap.innerHTML='<input class="workflow-inline-input" type="text" placeholder="Neuer Status" maxlength="32" />';
+      btn.replaceWith(wrap);
+      const input=wrap.querySelector('.workflow-inline-input');
+      input.focus();
+      const commit=()=>{
+        const label=String(input.value||'').trim();
+        if(!label){refreshWorkflowSectionInForm(form);return}
+        const custom=readCustomWorkflowStatuses();
+        if(!custom.some(s=>workflowSlug(s)===workflowSlug(label)))writeCustomWorkflowStatuses([...custom,label]);
+        if(form.elements.workflow_status)form.elements.workflow_status.value=workflowSlug(label);
+        refreshWorkflowSectionInForm(form);
+        if(typeof renderWorkflowFilterButtons==='function')renderWorkflowFilterButtons();
+      };
+      input.addEventListener('keydown',ev=>{
+        if(ev.key==='Enter'){ev.preventDefault();commit()}
+        if(ev.key==='Escape'){ev.preventDefault();refreshWorkflowSectionInForm(form)}
+      });
+      input.addEventListener('blur',commit);
+    }
+    function renderBadges(row){
+      const active=parseBadges(row.badges),known=[...new Set([...badgePresets,...active])];
+      const count=active.length;
+      return `<details class="editor-subpanel editor-subpanel-badges">
+        <summary class="editor-subpanel-summary">
+          <strong>Badges</strong>
+          <span>${count?`${count} aktiv`:'optional — Mood & Stimmung'}</span>
+        </summary>
+        <div class="editor-subpanel-body">
+          <div class="badge-tools"><div class="badge-picker">${known.map(b=>`<button type="button" class="badge-chip ${active.includes(b)?'active':''}" data-badge="${escapeHtml(b)}">${escapeHtml(b)}${active.includes(b)?'<span class="badge-chip-remove" data-remove-badge>x</span>':''}</button>`).join('')}<button type="button" class="badge-chip add-badge" data-add-badge aria-label="Badge hinzufügen">+</button></div><textarea name="badges" hidden>${escapeHtml(active.join(', '))}</textarea></div>
+        </div>
+      </details>`;
+    }
+
+    function renderBasicsSection(row){
+      return `<section class="editor-block editor-block-basics">
+        <div class="editor-block-head"><h3 class="editor-block-title">Shooting</h3></div>
+        ${renderGroup('',row,basicsFields,'two')}
+      </section>`;
+    }
+
+    function renderScheduleSection(row){
+      const duration=durationMinutesBetween(row.meeting_time,row.end_time);
+      const dayAuto=dayLabelFromDateLabel(row.date_label)||row.day_label||'';
+      return `<section class="editor-block editor-block-schedule">
+        <div class="editor-block-head"><h3 class="editor-block-title">Termin</h3></div>
+        <input type="hidden" name="day_label" value="${escapeHtml(dayAuto)}" data-day-label-hidden />
+        ${renderGroup('',row,scheduleFields,'two')}
+        <p class="hint-inline schedule-day-hint" data-day-label-hint>${dayAuto?`Wochentag: <strong>${escapeHtml(dayAuto)}</strong> (automatisch aus Datum)`:'Wochentag wird automatisch aus dem Datum gesetzt.'}</p>
+        <div class="field schedule-duration-field">
+          <label>Dauer (Min.)</label>
+          <input name="duration_minutes" type="number" min="15" step="15" placeholder="z. B. 120" value="${escapeHtml(duration)}" data-duration-minutes />
+          <span class="hint-inline">Passt das <strong>Ende</strong> an (ab Beginn / Treff).</span>
+        </div>
+        <p class="hint editor-block-hint">„Shooting ab“ = Start der Session in der Kunden-App. <strong>Ende</strong> ist optional (z. B. aus Kalender-Import).</p>
+      </section>`;
+    }
     function renderPreview(row){const image=row.image_url?`url('${escapeHtml(row.image_url)}')`:'';return `<div class="link-preview" data-link-preview><a class="preview-button ${row.meeting_link?'':'disabled'}" ${row.meeting_link?`href="${escapeHtml(row.meeting_link)}" target="_blank" rel="noopener"`:''}>Treffpunkt ${row.meeting_link?'öffnen':'leer'}</a><a class="preview-button primary ${row.location_link?'':'disabled'}" ${row.location_link?`href="${escapeHtml(row.location_link)}" target="_blank" rel="noopener"`:''}>Location ${row.location_link?'öffnen':'leer'}</a></div><div class="image-preview" data-image-preview style="--preview-image:${image};">${row.image_url?'Bildvorschau':'Keine Bild-URL gesetzt'}</div>`}
 
-    function renderLocationConvertTools(row){
-      const hasLocation = !!row.location_id;
-      return `<div class="location-actions">
-        <button class="btn" type="button" data-open-location-panel="${escapeHtml(row.id)}">${hasLocation ? 'Location aktualisieren' : 'Als Location speichern'}</button>
-      </div>
-      <div class="location-convert-panel" data-location-panel="${escapeHtml(row.id)}">
-        <div class="location-convert-title">${hasLocation ? 'Bibliotheks-Location aktualisieren' : 'Neue Location aus Shooting erstellen'}</div>
-        <div class="location-mini-grid">
-          <div class="field"><label>Name</label><input name="location_meta_name" type="text" value="${escapeHtml(row.location_name || row.title || 'Neue Location')}" /></div>
-          <div class="field"><label>Land</label><input name="location_meta_country" type="text" list="countrySuggestions" value="" placeholder="Deutschland, Italien…" /></div>
-          <div class="field"><label>Region</label><input name="location_meta_region" type="text" placeholder="Bayern, Südtirol…" /></div>
-          <div class="field"><label>Gebiet</label><input name="location_meta_area" type="text" placeholder="Dolomiten, Allgäu…" /></div>
-          <div class="field"><label>Kategorie</label><input name="location_meta_category" type="text" list="categorySuggestions" placeholder="Berge, See, Stadt…" /></div>
-          <div class="field"><label>Tags</label><input name="location_meta_tags" type="text" value="${escapeHtml(parseBadges(row.badges).join(', '))}" placeholder="Sonnenaufgang, Paarshooting…" /></div>
-          <div class="field full"><label>Jahreszeiten</label><input name="location_meta_seasons" type="text" placeholder="Sommer, Herbst…" /></div><div class="field full"><div class="maps-tools"><button class="btn" type="button" data-detect-shooting-location>Infos aus Maps-Link erkennen</button><span class="maps-status" data-maps-status></span></div></div>
+    function renderImportLocationOffer(row){
+      if(!row.__icsImportLocation||row.location_id)return '';
+      const label=String(row.location_name||row.meeting_place||'').trim();
+      if(!label)return '';
+      const match=typeof findSimilarLibraryLocation==='function'?findSimilarLibraryLocation(row):null;
+      const matchBtn=match
+        ?`<button type="button" class="btn" data-import-location-link="${escapeHtml(row.id)}" data-location-id="${escapeHtml(match.id)}">Bestehende: „${escapeHtml(match.name)}“</button>`
+        :'';
+      return `<div class="import-location-offer" data-import-location-offer="${escapeHtml(row.id)}">
+        <p class="import-location-offer-title">Location aus Kalender-Import</p>
+        <p class="import-location-offer-text"><strong>${escapeHtml(label)}</strong> — in die Location-Bibliothek übernehmen und mit diesem Shooting verknüpfen?</p>
+        <div class="btnbar import-location-offer-actions">
+          <button type="button" class="btn primary" data-import-location-accept="${escapeHtml(row.id)}">Ja, übernehmen</button>
+          ${matchBtn}
+          <button type="button" class="btn" data-import-location-skip="${escapeHtml(row.id)}">Nein, nur dieses Shooting</button>
         </div>
-        <div class="btnbar">
-          <button class="btn primary" type="button" data-save-as-location="${escapeHtml(row.id)}">${hasLocation ? 'Location aktualisieren' : 'Location speichern & verknüpfen'}</button>
-          <button class="btn" type="button" data-close-location-panel="${escapeHtml(row.id)}">Abbrechen</button>
-        </div>
-        <div class="hint" style="margin-top:8px;">Übernommen werden Name, Treffpunkt, Maps-Link und Bild aus diesem Shooting. Zusatzinfos füllst du nur aus, wenn die Location wiederverwendbar werden soll.</div>
       </div>`;
+    }
+
+    function renderMapsPlaceBlock(kind,row){
+      const isMeeting=kind==='meeting';
+      const linkKey=isMeeting?'meeting_link':'location_link';
+      const linkLabel=isMeeting?'Maps-Link (Treffpunkt)':'Maps-Link (Location)';
+      const linkVal=escapeHtml(valueForInput(row,linkKey,'url'));
+      return `<div class="place-maps-block" data-place-maps="${escapeHtml(kind)}">
+        <div class="field full">
+          <label>${linkLabel}</label>
+          <input name="${linkKey}" type="url" inputmode="url" value="${linkVal}" placeholder="Google-Maps-Link einfügen" data-place-link="${escapeHtml(kind)}" />
+        </div>
+        <div class="maps-tools">
+          <button class="btn" type="button" data-detect-place="${escapeHtml(kind)}">Aus Maps-Link erkennen</button>
+          <span class="maps-status" data-maps-status="${escapeHtml(kind)}"></span>
+        </div>
+      </div>`;
+    }
+
+    function renderShootingMeetingPanel(row){
+      const hasLib=!!row.location_id;
+      const placeVal=escapeHtml(valueForInput(row,'meeting_place','text'));
+      const linkVal=escapeHtml(valueForInput(row,'meeting_link','url'));
+      const meetHint=typeof MEETING_CAPTURE_HINT!=='undefined'?MEETING_CAPTURE_HINT:'Name, Kartensuche, Maps-Link oder GPS.';
+      const libHint=hasLib
+        ?'Aus der Location-Bibliothek — hier nur für <strong>dieses Shooting</strong> änderbar. Geänderten Treff unten in die Bibliothek zurückspeichern.'
+        :'Eigener Treffpunkt — leer = die Location-Adresse oben gilt als Treff.';
+      return `<div class="shooting-meeting-panel" data-shooting-meeting-body>
+        <p class="hint editor-block-hint">${libHint}</p>
+        <p class="hint-inline">${meetHint}</p>
+        <div class="field full">
+          <label>Treffpunkt</label>
+          <div class="location-capture-row">
+            <input class="location-capture-name" name="meeting_place" type="text" value="${placeVal}" placeholder="Treff suchen, Name oder Google-Maps-Link" data-meeting-lib-name data-place-address="shared" autocomplete="off" />
+            <button type="button" class="btn location-gps-btn" data-capture-gps-meeting title="Aktuellen Standort als Treff" aria-label="GPS Treffpunkt">📍</button>
+          </div>
+          <input type="hidden" name="meeting_capture_lat" value="" data-meeting-capture-lat />
+          <input type="hidden" name="meeting_capture_lon" value="" data-meeting-capture-lon />
+          <div class="location-lib-osm address-search-panel hidden" data-shooting-meeting-osm aria-live="polite"></div>
+        </div>
+        <div class="field full">
+          <label>Maps-Link (Treffpunkt)</label>
+          <input name="meeting_link" type="url" inputmode="url" value="${linkVal}" placeholder="Google-Maps-Link einfügen" data-place-link="meeting" />
+        </div>
+        <div class="maps-tools">
+          <button class="btn" type="button" data-detect-meeting-from-maps>Aus Maps-Link erkennen</button>
+          <span class="maps-status" data-maps-status="meeting"></span>
+        </div>
+        <button type="button" class="btn hidden" data-save-meeting-to-library>Treff in Location speichern</button>
+      </div>`;
+    }
+
+    function renderLocationBlock(row){
+      const separate=rowUsesSeparateMeeting(row);
+      const libLinked=!!row.location_id;
+      const openMeeting=libLinked||separate;
+      const imageVal=escapeHtml(valueForInput(row,'image_url','url'));
+      return `<section class="editor-block editor-block-location">
+        <div class="editor-block-head"><h3 class="editor-block-title">Ort</h3></div>
+        <div class="location-picker-block">${renderLocationFinder(row)}</div>
+        <details class="editor-subpanel editor-subpanel-media">
+          <summary class="editor-subpanel-summary"><strong>Bild</strong><span>optional</span></summary>
+          <div class="editor-subpanel-body">
+            <p class="hint-inline">Nach Ortserfassung Bildvorschlag (Wikipedia / Wikimedia) — URL jederzeit austauschbar.</p>
+            <div class="field full"><label>Bild URL</label><input name="image_url" type="url" inputmode="url" value="${imageVal}" placeholder="Direkte Bild-URL einfügen" /></div>
+            <button type="button" class="btn location-image-clear-btn" data-clear-suggested-image>Bild entfernen</button>
+          </div>
+        </details>
+        <details class="editor-subpanel" data-shooting-meeting-panel data-separate-meeting-panel ${openMeeting?'open':''}>
+          <summary class="editor-subpanel-summary">
+            <strong>Treffpunkt</strong>
+            <span>${libLinked?'aus Bibliothek':'optional'}</span>
+          </summary>
+          <div class="editor-subpanel-body">
+            ${renderShootingMeetingPanel(row)}
+          </div>
+        </details>
+        ${renderLocationExtrasPanel(row)}
+      </section>`;
+    }
+
+    function renderLocationExtrasPanel(row){
+      return `<details class="editor-subpanel editor-subpanel-extras">
+        <summary class="editor-subpanel-summary">
+          <strong>Notiz &amp; Vorschau</strong>
+          <span>optional</span>
+        </summary>
+        <div class="editor-subpanel-body">
+          <div class="field full"><label>Notiz für dieses Shooting</label><textarea name="shooting_note" placeholder="Parkplatz, Anfahrt, Besonderheiten…">${escapeHtml(row.shooting_note || '')}</textarea></div>
+          ${renderPreview(row)}
+          <label class="checkbox-card checkbox-card-compact">
+            <input type="checkbox" name="skip_library_autosave" data-skip-library-autosave />
+            <div>
+              <strong>Nicht in die Location-Bibliothek aufnehmen</strong>
+              <span>Standard: Orte mit Adresse/Maps landen in der Bibliothek. Nur reine Verwaltungsorte (z. B. nur „Standesamt“) werden ausgeschlossen — Bahnhöfe &amp; Spots schon.</span>
+            </div>
+          </label>
+          <input type="hidden" name="location_meta_name" value="${escapeHtml(row.location_name||'')}" />
+          <input type="hidden" name="location_meta_country" value="" />
+          <input type="hidden" name="location_meta_region" value="" />
+          <input type="hidden" name="location_meta_area" value="" />
+          <input type="hidden" name="location_meta_category" value="" />
+        </div>
+      </details>`;
     }
 
 
@@ -139,9 +614,10 @@
       const search=searchInput.value.trim().toLowerCase();
       return rows.filter(row=>{
         const matchesStatus=activeStatus==='all'||autoStatusForRow(row)===activeStatus;
+        const matchesWorkflow=rowMatchesWorkflowFilter(row);
         const matchesProject=activeProject==='all'||String(row.project_name||'')===activeProject;
         const haystack=[row.project_name,row.title,row.subtitle,row.day_label,row.date_label,row.meeting_place,row.location_name,...(row.badges||[])].filter(Boolean).join(' ').toLowerCase();
-        return matchesStatus&&matchesProject&&(!search||haystack.includes(search));
+        return matchesStatus&&matchesWorkflow&&matchesProject&&(!search||haystack.includes(search));
       });
     }
 
@@ -218,23 +694,166 @@
     }
 
     function updateProjectFilter(){
+      const el=$('projectFilter');
+      if(!el)return;
       const projects=[...new Set([...events.map(e=>String(e.name||'').trim()),...rows.map(r=>String(r.project_name||'').trim())])].sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
-      const current=projectFilter.value!==null?projectFilter.value:'all';
-      projectFilter.innerHTML=`<option value="all">Alle Events</option>`+projects.map(project=>{
+      const current=el.value!=='all'?el.value:'all';
+      el.innerHTML=`<option value="all">Alle Events</option>`+projects.map(project=>{
         const value=project||'';
         const label=project||'Keine Projektzuordnung';
         return `<option value="${escapeHtml(value)}" ${value===current?'selected':''}>${escapeHtml(label)}</option>`;
       }).join('');
-      if(current!=='all'&&!projects.includes(current))projectFilter.value='all';
+      if(current!=='all'&&!projects.includes(current))el.value='all';
     }
 
-    async function loadShootings(){
+    const DRAFT_SESSION_KEY='dolomiten.admin.drafts.v1';
+    let draftPersistTimer=null;
+
+    function clearAdminDraftSession(){
+      try{sessionStorage.removeItem(DRAFT_SESSION_KEY)}catch{}
+    }
+
+    function formToSnapshot(form){
+      const id=form.dataset.id;
+      const base=currentRowsById[id]||{};
+      const payload=collectPayload(form);
+      return normalizeRowStatus({
+        ...base,
+        ...payload,
+        id,
+        sort_order:base.sort_order,
+        __draft:form.dataset.draft==='true',
+      });
+    }
+
+    function schedulePersistAdminDrafts(){
+      clearTimeout(draftPersistTimer);
+      draftPersistTimer=setTimeout(persistAdminDrafts,400);
+    }
+
+    function persistAdminDrafts(){
+      try{
+        if(!shootingsEl)return;
+        const entries=[];
+        shootingsEl.querySelectorAll('form[data-id]').forEach(form=>{
+          const id=form.dataset.id;
+          if(form.dataset.draft==='true'||dirtyForms.has(id)){
+            entries.push({
+              id,
+              row:formToSnapshot(form),
+              open:!!form.closest('details')?.open,
+            });
+          }
+        });
+        if(!entries.length){
+          clearAdminDraftSession();
+          return;
+        }
+        sessionStorage.setItem(DRAFT_SESSION_KEY,JSON.stringify({
+          savedAt:new Date().toISOString(),
+          view:currentView,
+          activeProject,
+          activeStatus,
+          activeWorkflowFilter,
+          search:searchInput?.value||'',
+          entries,
+        }));
+      }catch(error){console.warn('Entwürfe konnten nicht gespeichert werden',error)}
+    }
+
+    async function restoreAdminDrafts(){
+      let saved=null;
+      try{
+        const raw=sessionStorage.getItem(DRAFT_SESSION_KEY);
+        saved=raw?JSON.parse(raw):null;
+      }catch{return}
+      if(!saved||!Array.isArray(saved.entries)||!saved.entries.length)return;
+
+      isRestoringAdminSession=true;
+      try{
+        if(saved.search!=null)searchInput.value=saved.search;
+        if(saved.activeProject)activeProject=saved.activeProject;
+        if(saved.activeStatus)activeStatus=saved.activeStatus;
+        if(saved.activeWorkflowFilter)activeWorkflowFilter=saved.activeWorkflowFilter;
+        if(saved.view&&saved.view!==currentView&&typeof setView==='function')await setView(saved.view);
+        const pf=$('projectFilter');if(pf)pf.value=activeProject||'all';
+        syncStatusButtons();
+        if(typeof syncWorkflowFilterButtons==='function')syncWorkflowFilterButtons();
+
+        saved.entries.forEach(entry=>{
+          if(!entry?.id||!entry.row)return;
+          const row=normalizeRowStatus({...entry.row,id:entry.id});
+          const idx=rows.findIndex(r=>r.id===entry.id);
+          const isDraft=!!row.__draft;
+          if(isDraft){
+            if(idx>=0)rows[idx]=row;
+            else rows.push(row);
+            currentRowsById[entry.id]=row;
+          }else if(idx>=0){
+            rows[idx]=row;
+            currentRowsById[entry.id]=row;
+          }
+        });
+        rows=sortRowsByDateAndTime(rows);
+        updateProjectFilter();
+        renderAll();
+
+        requestAnimationFrame(()=>{
+          let restored=0;
+          saved.entries.forEach(entry=>{
+            const card=shootingsEl.querySelector(`[data-id="${entry.id}"]`);
+            const form=card?.querySelector('form');
+            const row=currentRowsById[entry.id];
+            if(!form||!row)return;
+            fillFormFromRow(form,row);
+            setFormDirty(form,true);
+            if(entry.open)card.open=true;
+            restored++;
+          });
+          updateUnsavedBar();
+          if(restored)showToast(`${restored} Entwurf${restored===1?'':'e'} nach Neuladen wiederhergestellt`);
+        });
+      }finally{
+        isRestoringAdminSession=false;
+      }
+    }
+
+    async function loadShootings(options={}){
+      const {skipConfirm=false,skipRestore=false}=options;
+      if(!skipConfirm&&!isRestoringAdminSession&&hasUnsavedChanges()){
+        const parts=[];
+        if(dirtyForms.size)parts.push(`${dirtyForms.size} ungespeicherte Shooting${dirtyForms.size===1?'':'s'}`);
+        if(orderDirty)parts.push('geänderte Reihenfolge');
+        if(!confirm(`Ungespeicherte Änderungen (${parts.join(', ')}) gehen verloren.\n\nDaten wirklich vom Server neu laden?`))return false;
+        clearAdminDraftSession();
+      }
       clearError();orderDirty=false;dirtyForms.clear();updateOrderButton();updateUnsavedBar();setStatus('Daten werden geladen…');
       const {data,error}=await db.from('shootings').select('*');
-      if(error){setStatus('Fehler beim Laden');showError('Fehler beim Laden: '+formatError(error));return}
-      rows=sortRowsByDateAndTime((data||[]).map(r=>normalizeRowStatus({...r, project_name:r.project_name||'', project_status:r.project_status||'aktiv'})));
+      if(error){setStatus('Fehler beim Laden');showError('Fehler beim Laden: '+formatError(error));return false}
+      rows=sortRowsByDateAndTime((data||[]).map(r=>normalizeRowStatus({...r,project_name:r.project_name||'',project_status:r.project_status||'aktiv',workflow_status:r.workflow_status||null,end_time:r.end_time||null})));
       await loadEvents();
-      if(!locations.length)await loadLocations();currentRowsById=Object.fromEntries(rows.map(r=>[r.id,r]));updateProjectFilter();updateDataStamp();renderAll();setStatus(rows.length+' Einträge geladen');
+      if(!locations.length)await loadLocations();
+      currentRowsById=Object.fromEntries(rows.map(r=>[r.id,r]));
+      updateProjectFilter();
+      updateDataStamp();
+      if(typeof renderWorkflowFilterButtons==='function')renderWorkflowFilterButtons();
+      renderAll();
+      if(locations.length&&typeof renderLocations==='function')renderLocations();
+      setStatus(rows.length+' Einträge geladen');
+      if(!skipRestore)await restoreAdminDrafts();
+      return true;
+    }
+
+    async function refreshAdminData(){
+      if(hasUnsavedChanges()){
+        const parts=[];
+        if(dirtyForms.size)parts.push(`${dirtyForms.size} ungespeicherte Shooting${dirtyForms.size===1?'':'s'}`);
+        if(orderDirty)parts.push('geänderte Reihenfolge');
+        if(!confirm(`Ungespeicherte Änderungen (${parts.join(', ')}) gehen verloren.\n\nDaten wirklich vom Server neu laden?`))return;
+      }
+      clearAdminDraftSession();
+      const ok=await loadShootings({skipConfirm:true,skipRestore:true});
+      if(ok!==false)showToast('Daten vom Server aktualisiert');
     }
 
     async function loadEvents(){
@@ -319,17 +938,18 @@
     }
 
     function renderAll(){
-      const hasStatusFilter=activeStatus!=='all';
+      const hasListFilter=activeStatus!=='all'||activeWorkflowFilter!=='all';
       const visible=sortRowsByDateAndTime(filteredRows());
 
-      if(hasStatusFilter){
+      if(hasListFilter){
         const groups=groupRowsByProject(visible);
-        shootingsEl.innerHTML=groups.length?groups.map(renderProjectGroup).join(''):`<div class="card hint">Keine passenden Shootings gefunden.</div>`;
+        shootingsEl.innerHTML=groups.length?groups.map(renderProjectGroup).join(''):`<div class="card hint">Keine passenden Shootings${activeWorkflowFilter!=='all'?' mit diesem Planungsstatus':''} gefunden.</div>`;
         bindEditors();
+        if(currentView==='calendar'&&typeof renderCalendar==='function')renderCalendar();
         return;
       }
 
-      const matchingRows=rows.filter(rowMatchesProjectAndSearch);
+      const matchingRows=rows.filter(row=>rowMatchesProjectAndSearch(row)&&rowMatchesWorkflowFilter(row));
       const upcoming=sortRowsByDateAndTime(matchingRows.filter(row=>autoStatusForRow(row)==='aktiv'));
       const past=sortRowsByDateAndTime(matchingRows.filter(row=>autoStatusForRow(row)==='abgeschlossen'));
       const archived=sortRowsByDateAndTime(matchingRows.filter(row=>autoStatusForRow(row)==='archiviert'));
@@ -342,79 +962,72 @@
       shootingsEl.innerHTML=html;
       bindTimelineSections();
       bindEditors();
+      if(currentView==='calendar'&&typeof renderCalendar==='function')renderCalendar();
     }
 
-    function renderManualOverrides(row){
-      const hasLibraryLocation=!!row.location_id;
-      return `<details class="one-time-location-panel">
-        <summary>
-          <div class="one-time-location-title">
-            <strong>${hasLibraryLocation?'Einmalige Location / Anpassung erfassen':'Einmalige Location erfassen'}</strong>
-            <span>${hasLibraryLocation?'Nur öffnen, wenn dieses Shooting von der gewählten Bibliotheks-Location abweicht.':'Optional öffnen, wenn du keine Bibliotheks-Location auswählen möchtest.'}</span>
-          </div>
-          <div class="manual-overrides-chevron">⌄</div>
-        </summary>
-        <div class="one-time-location-body">
-          ${renderGroup('Location für dieses Shooting',row,manualPlaceFields,'two')}
-          ${renderGroup('Links & Bild',row,linkFields,'two')}
-          ${renderPreview(row)}
-          <div class="field full" style="margin-top:12px;"><label>Notiz für dieses Shooting</label><textarea name="shooting_note" placeholder="z.B. Parkplatz hinter dem Hotel nutzen, bei Regen direkt zum Aussichtspunkt…">${escapeHtml(row.shooting_note || '')}</textarea></div>
-
-          <label class="checkbox-card">
-            <input type="checkbox" name="save_as_recurring_location" data-save-as-recurring-location>
-            <div>
-              <strong>Als wiederkehrende Location speichern</strong>
-              <span>Diese Location wird zusätzlich in deiner Location-Bibliothek gespeichert und kann später wiederverwendet werden.</span>
-            </div>
-          </label>
-
-          <div class="recurring-location-fields" data-recurring-location-fields>
-            <div class="section-title">Location-Bibliothek</div>
-            <div class="hint" style="margin-bottom:12px;">Diese Felder entsprechen dem Location-Editor im Bereich „Locations“.</div>
-
-            <div class="grid two">
-              <div class="field"><label>Name</label><input name="location_meta_name" type="text" value="${escapeHtml(row.location_name === 'TBA' ? (row.title || '') : (row.location_name || row.title || ''))}" placeholder="Name der Location" /></div>
-              <div class="field"><label>Kategorie</label><input name="location_meta_category" type="text" list="categorySuggestions" placeholder="Berge, See, Stadt…" /></div>
-              <div class="field"><label>Land</label><input name="location_meta_country" type="text" list="countrySuggestions" placeholder="Deutschland, Italien…" /></div>
-              <div class="field"><label>Bundesland / Region</label><input name="location_meta_region" type="text" placeholder="Bayern, Südtirol…" /></div>
-              <div class="field"><label>Gebiet / Landschaft</label><input name="location_meta_area" type="text" placeholder="Dolomiten, Allgäu…" /></div>
-              <div class="field"><label>Aktiv</label><select name="location_meta_active"><option value="true" selected>Aktiv</option><option value="false">Archiviert</option></select></div>
-            </div>
-
-            <div class="section-title">Ort & Links</div>
-            <div class="grid two">
-              <div class="field full"><label>Adresse</label><input name="location_meta_address" type="text" value="${escapeHtml(row.meeting_place === 'TBA' ? '' : (row.meeting_place || ''))}" placeholder="Adresse / Treffpunkt" /></div>
-              <div class="field"><label>Google Maps Link</label><input name="location_meta_maps_link" type="url" inputmode="url" value="${escapeHtml(row.location_link || row.meeting_link || '')}" /></div>
-              <div class="field"><label>Standard-Treffpunkt</label><input name="location_meta_meeting_place" type="text" value="${escapeHtml(row.meeting_place === 'TBA' ? '' : (row.meeting_place || ''))}" /></div>
-              <div class="field full"><label>Bild URL</label><input name="location_meta_image_url" type="url" inputmode="url" value="${escapeHtml(row.image_url || '')}" /></div>
-            </div>
-
-            <div class="image-preview" data-recurring-location-image-preview style="--preview-image:${row.image_url ? `url('${escapeHtml(row.image_url)}')` : ''};">${row.image_url ? 'Bildvorschau' : 'Keine Bild-URL gesetzt'}</div>
-
-            <div class="section-title">Beschreibung & Tags</div>
-            <div class="grid two">
-              <div class="field full"><label>Beschreibung</label><textarea name="location_meta_description" placeholder="Kurze Beschreibung für die Location-Bibliothek">${escapeHtml(row.subtitle || '')}</textarea></div>
-              <div class="field"><label>Tags, kommagetrennt</label><textarea name="location_meta_tags">${escapeHtml(parseBadges(row.badges).join(', '))}</textarea></div>
-              <div class="field"><label>Jahreszeiten, kommagetrennt</label><textarea name="location_meta_seasons" placeholder="Sommer, Herbst…"></textarea></div>
-            </div>
-
-            <div class="maps-tools"><button class="btn" type="button" data-detect-shooting-location>Infos aus Maps-Link erkennen</button><span class="maps-status" data-maps-status></span></div>
-          </div>
-        </div>
-      </details>`;
+    function bindShootingEditorPanels(form){
+      const durationInput=form.querySelector('[data-duration-minutes]');
+      const startEl=form.elements.meeting_time;
+      const endEl=form.elements.end_time;
+      const syncDurationFromTimes=()=>{
+        if(!durationInput||!startEl||!endEl)return;
+        const d=durationMinutesBetween(startEl.value,endEl.value);
+        if(d)durationInput.value=d;
+      };
+      durationInput?.addEventListener('change',()=>{
+        const mins=Number(durationInput.value);
+        if(!Number.isFinite(mins)||mins<=0||!startEl?.value||!endEl)return;
+        endEl.value=addMinutesToTime(startEl.value,mins);
+        refreshFormDirtyState(form);
+        refreshLivePreview(form);
+      });
+      startEl?.addEventListener('change',syncDurationFromTimes);
+      endEl?.addEventListener('change',syncDurationFromTimes);
+      const dateInput=form.elements.date_label;
+      const syncDayLabel=()=>{
+        const hidden=form.querySelector('[data-day-label-hidden]');
+        const hint=form.querySelector('[data-day-label-hint]');
+        const label=dayLabelFromDateLabel(inputToDateLabel(dateInput?.value||''));
+        if(hidden)hidden.value=label||'';
+        if(hint){
+          hint.innerHTML=label
+            ?`Wochentag: <strong>${escapeHtml(label)}</strong> (automatisch aus Datum)`
+            :'Wochentag wird automatisch aus dem Datum gesetzt.';
+        }
+      };
+      dateInput?.addEventListener('change',syncDayLabel);
+      dateInput?.addEventListener('input',syncDayLabel);
+      if(typeof bindPlaceMapsBlocks==='function')bindPlaceMapsBlocks(form);
+      if(typeof bindMeetingCapture==='function')bindMeetingCapture(form);
+      if(typeof syncShootingMeetingLibraryState==='function')syncShootingMeetingLibraryState(form);
     }
 
     function renderEditor(row){
       const thumb=row.image_url?`style="background-image:url('${escapeHtml(row.image_url)}')"`:'';
-      const rowStatus=autoStatusForRow(row);
-      const statusLabel=projectStatusLabels[rowStatus]||String(rowStatus||'Aktiv');
+      const rowStatus=displayStatusKeyForRow(row);
+      const statusLabel=displayStatusLabelForRow(row);
       const statusClass=`status-${escapeHtml(rowStatus)}`;
       const projectName=String(row.project_name||'').trim();
-      return `<details class="spot-card" data-id="${escapeHtml(row.id)}" ${row.__draft?'open':''}><summary><div class="thumb" ${thumb}></div><div class="summary-main"><div class="summary-title">${escapeHtml(row.title)}</div><div class="summary-sub">${escapeHtml(row.date_label||'')} · ${escapeHtml(row.meeting_time||'TBA')} · ${escapeHtml(row.meeting_place||row.location_name||'TBA')}${projectName?` · ${escapeHtml(projectName)}`:''}</div><div class="dirty-badge">${row.__draft?'Entwurf':'Nicht gespeichert'}</div></div><div class="summary-day"><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span></div></summary><div class="editor"><form data-id="${escapeHtml(row.id)}" ${row.__draft?'data-draft="true"':''}>${renderEventSection(row)}${renderGroup('Basis',row,simpleFields,'two')}${renderGroup('Zeiten',row,timeFields,'two')}${renderGroup('Orte',row,placeFields,'two')}${renderManualOverrides(row)}${renderBadges(row)}<div class="sticky-actions"><button class="btn" type="button" data-cancel="${escapeHtml(row.id)}">Abbrechen</button><button class="btn primary form-save-btn" type="submit">Speichern</button></div><div class="danger-zone"><div class="form-meta-row"><div class="save-state" data-save-state>${row.__draft?'Entwurf':'Gespeichert'}</div><div class="btnbar"><button class="btn" type="button" data-duplicate="${escapeHtml(row.id)}">Duplizieren</button><button class="btn danger" type="button" data-delete="${escapeHtml(row.id)}">Löschen</button></div></div></div></form></div></details>`;
+      const timeSummary=[row.meeting_time,row.end_time?`– ${row.end_time}`:''].filter(Boolean).join(' ')||'TBA';
+      const placeSummary=row.meeting_place||row.location_name||'TBA';
+      const titleDisplay=String(row.title||'').trim()||'(ohne Titel)';
+      return `<details class="spot-card" data-id="${escapeHtml(row.id)}" ${row.__draft?'open':''}><summary><div class="thumb" ${thumb}></div><div class="summary-main"><div class="summary-title">${escapeHtml(titleDisplay)}</div><div class="summary-sub">${escapeHtml(row.date_label||'')} · ${escapeHtml(timeSummary)} · ${escapeHtml(placeSummary)}${projectName?` · ${escapeHtml(projectName)}`:''}</div><div class="dirty-badge">${row.__draft?'Entwurf':'Nicht gespeichert'}</div></div><div class="summary-day"><span class="status-chip ${statusClass}">${escapeHtml(statusLabel)}</span></div></summary><div class="editor"><form data-id="${escapeHtml(row.id)}" ${row.__draft?'data-draft="true"':''}><div class="editor-admin-meta">${renderEventSection(row)}${renderWorkflowSection(row)}</div>${renderBasicsSection(row)}${renderLocationBlock(row)}${renderScheduleSection(row)}${renderBadges(row)}<div class="sticky-actions"><button class="btn" type="button" data-cancel="${escapeHtml(row.id)}">Abbrechen</button><button class="btn primary form-save-btn" type="submit">Speichern</button></div><div class="danger-zone"><div class="form-meta-row"><div class="save-state" data-save-state>${row.__draft?'Entwurf':'Gespeichert'}</div><div class="btnbar"><button class="btn" type="button" data-duplicate="${escapeHtml(row.id)}">Duplizieren</button><button class="btn danger" type="button" data-delete="${escapeHtml(row.id)}">Löschen</button></div></div></div></form></div></details>`;
     }
 
     function bindEditors(){
-      shootingsEl.querySelectorAll('form').forEach(form=>{setFormBaseline(form);if(form.dataset.draft==='true')setFormDirty(form,true);form.addEventListener('submit',saveForm);form.addEventListener('input',()=>{refreshLivePreview(form);refreshFormDirtyState(form)});form.addEventListener('change',()=>{refreshLivePreview(form);refreshFormDirtyState(form)})});
+      shootingsEl.querySelectorAll('form').forEach(form=>{
+        setFormBaseline(form);
+        if(form.dataset.draft==='true')setFormDirty(form,true);
+        form.addEventListener('submit',saveForm);
+        form.addEventListener('input',()=>{refreshLivePreview(form);refreshFormDirtyState(form)});
+        form.addEventListener('change',event=>{
+          refreshLivePreview(form);
+          refreshFormDirtyState(form);
+          if(event.target?.name==='project_name')refreshWorkflowSectionInForm(form);
+        });
+      });
+      bindWorkflowPickers(shootingsEl);
+      shootingsEl.querySelectorAll('form[data-id]').forEach(form=>bindShootingEditorPanels(form));
       shootingsEl.querySelectorAll('.project-group').forEach(group=>group.addEventListener('toggle',event=>{if(event.target===group)setProjectGroupOpen(group.dataset.projectKey,group.open)}));
       shootingsEl.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',cancelForm));
       shootingsEl.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',deleteRow));
@@ -424,7 +1037,7 @@
       shootingsEl.querySelectorAll('[data-toggle-archive]').forEach(b=>b.addEventListener('click',toggleArchiveStatus));
       shootingsEl.querySelectorAll('[data-edit-event]').forEach(b=>b.addEventListener('pointerdown',renameEvent));
       shootingsEl.querySelectorAll('[data-delete-event]').forEach(b=>b.addEventListener('pointerdown',deleteEmptyEvent));
-      shootingsEl.querySelectorAll('[data-spot-select]').forEach(s=>s.addEventListener('change',applySpotPreset));bindLocationPickers();shootingsEl.querySelectorAll('[data-open-location-panel]').forEach(b=>b.addEventListener('click',openLocationPanel));shootingsEl.querySelectorAll('[data-close-location-panel]').forEach(b=>b.addEventListener('click',closeLocationPanel));shootingsEl.querySelectorAll('[data-save-as-location]').forEach(b=>b.addEventListener('click',saveShootingAsLocation));shootingsEl.querySelectorAll('[data-detect-shooting-location]').forEach(b=>b.addEventListener('click',detectShootingLocationFromMaps));shootingsEl.querySelectorAll('[data-save-as-recurring-location]').forEach(c=>c.addEventListener('change',toggleRecurringLocationFields));
+      shootingsEl.querySelectorAll('[data-spot-select]').forEach(s=>s.addEventListener('change',applySpotPreset));bindLocationFinders();if(typeof bindImportLocationOffers==='function')bindImportLocationOffers();shootingsEl.querySelectorAll('[data-open-location-panel]').forEach(b=>b.addEventListener('click',openLocationPanel));shootingsEl.querySelectorAll('[data-close-location-panel]').forEach(b=>b.addEventListener('click',closeLocationPanel));shootingsEl.querySelectorAll('[data-save-as-location]').forEach(b=>b.addEventListener('click',saveShootingAsLocation));shootingsEl.querySelectorAll('[data-save-meeting-to-library]').forEach(b=>b.addEventListener('click',e=>{if(typeof saveMeetingToLibraryFromShooting==='function')saveMeetingToLibraryFromShooting(e)}));
     }
 
     function refreshBadgeChips(form){const badges=parseBadges(form.elements.badges?.value);form.querySelectorAll('[data-badge]').forEach(chip=>chip.classList.toggle('active',badges.includes(chip.dataset.badge)))}
@@ -458,7 +1071,7 @@
 
       const lower=url.toLowerCase();
 
-      if(lower.includes('maps.app.goo.gl')||lower.includes('google.com/maps')||lower.includes('goo.gl/maps')||lower.includes('maps.google.')){
+      if(lower.includes('maps.app.goo.gl')||lower.includes('google.com/maps')||lower.includes('goo.gl/maps')||lower.includes('maps.google.')||lower.includes('share.google/')){
         return {
           ok:false,
           type:'maps',
@@ -491,7 +1104,7 @@
       }
 
       const looksLikeImage=/\.(jpg|jpeg|png|webp|gif|avif)(\?|#|$)/i.test(url);
-      const trustedImageHost=lower.includes('images.unsplash.com')||lower.includes('images.pexels.com')||lower.includes('cdn.');
+      const trustedImageHost=lower.includes('images.unsplash.com')||lower.includes('images.pexels.com')||lower.includes('upload.wikimedia.org')||lower.includes('commons.wikimedia.org')||lower.includes('wikipedia.org')||lower.includes('cdn.');
 
       if(looksLikeImage||trustedImageHost){
         return {ok:true,type:'image',message:'Bildvorschau'};
@@ -504,26 +1117,61 @@
       };
     }
 
-    function setImagePreviewState(preview,url){
+    function parseImageFocus(value){
+      const raw=String(value||'').trim();
+      const match=raw.match(/([\d.]+)\s*%?\s+([\d.]+)\s*%?/);
+      if(!match)return{x:50,y:50};
+      return{
+        x:Math.max(0,Math.min(100,Number(match[1]))),
+        y:Math.max(0,Math.min(100,Number(match[2])))
+      };
+    }
+
+    function formatImageFocus(x,y){
+      const fx=Math.max(0,Math.min(100,Number(x)));
+      const fy=Math.max(0,Math.min(100,Number(y)));
+      return `${fx.toFixed(1)}% ${fy.toFixed(1)}%`;
+    }
+
+    function applyImageFocusToPreview(preview,focus){
+      if(!preview)return;
+      const {x,y}=parseImageFocus(focus);
+      const pos=formatImageFocus(x,y);
+      preview.style.setProperty('--preview-position',pos);
+      preview.style.backgroundPosition=pos;
+      preview.dataset.imageFocus=pos;
+    }
+
+    function setImagePreviewState(preview,url,focus){
       const result=classifyImageUrl(url);
       preview.classList.toggle('warning',!result.ok&&result.type!=='empty');
+      preview.classList.toggle('is-pannable',!!(result.ok&&url));
 
       if(!url){
         preview.style.setProperty('--preview-image','linear-gradient(135deg,rgba(216,177,106,.18),rgba(143,181,161,.12))');
+        preview.classList.remove('is-pannable');
         preview.textContent=result.message;
+        applyImageFocusToPreview(preview,'50% 50%');
         return;
       }
 
       if(!result.ok){
         preview.style.setProperty('--preview-image','linear-gradient(135deg,rgba(216,177,106,.18),rgba(217,108,108,.12))');
+        preview.classList.remove('is-pannable');
         const lines=result.message.split('\\n');
         preview.innerHTML=`<div><strong>${escapeHtml(lines[0])}</strong>${escapeHtml(lines.slice(1).join(' '))}</div>`;
+        applyImageFocusToPreview(preview,'50% 50%');
         return;
       }
 
       preview.style.setProperty('--preview-image',`url('${url.replaceAll("'","%27")}')`);
       preview.textContent=result.message;
+      applyImageFocusToPreview(preview,focus||preview.dataset.imageFocus||'50% 50%');
     }
+
+    window.parseImageFocus=parseImageFocus;
+    window.formatImageFocus=formatImageFocus;
+    window.applyImageFocusToPreview=applyImageFocusToPreview;
 
     function validateImageBeforeSave(imageUrl,label='Bild URL'){
       const url=String(imageUrl||'').trim();
@@ -538,14 +1186,20 @@
 
 
     function refreshImagePreview(form){const p=form.querySelector('[data-image-preview]');if(!p)return;const url=form.elements.image_url?.value||'';setImagePreviewState(p,url)}
-    function applySpotPreset(e){const preset=spotPresets[e.currentTarget.value];if(!preset)return;const form=e.currentTarget.closest('form');if(form.elements.location_name)form.elements.location_name.value=preset.location_name;if(form.elements.title&&!form.elements.title.value.trim())form.elements.title.value=preset.title;if(form.elements.image_url&&!form.elements.image_url.value.trim())form.elements.image_url.value=preset.image_url;refreshLivePreview(form);refreshFormDirtyState(form)}
+    function applySpotPreset(e){const preset=spotPresets[e.currentTarget.value];if(!preset)return;const form=e.currentTarget.closest('form');if(form.elements.location_id)form.elements.location_id.value='';if(form.elements.location_name)form.elements.location_name.value=preset.location_name;if(form.elements.title&&!form.elements.title.value.trim())form.elements.title.value=preset.title;if(form.elements.image_url&&!form.elements.image_url.value.trim())form.elements.image_url.value=preset.image_url;refreshLivePreview(form);refreshFormDirtyState(form);if(typeof refreshLocationFinderUI==='function')refreshLocationFinderUI(form)}
 
-    function fillFormFromRow(form,row){allFieldGroups.forEach(([key,label,type])=>{const f=form.elements[key];if(f)f.value=valueForInput(row,key,type)});if(form.elements.project_status)form.elements.project_status.value=String(row.project_status||'')==='archiviert'?'archiviert':'auto';const archiveBtn=form.querySelector('[data-toggle-archive]');if(archiveBtn)archiveBtn.classList.toggle('active',String(row.project_status||'')==='archiviert');if(form.elements.badges)form.elements.badges.value=parseBadges(row.badges).join(', ');if(form.elements.shooting_note)form.elements.shooting_note.value=row.shooting_note||'';refreshBadgeChips(form);refreshLivePreview(form);setFormBaseline(form);refreshFormDirtyState(form)}
-    function collectPayload(form){const fd=new FormData(form),p={};allFieldGroups.forEach(([key,label,type])=>{const raw=fd.get(key);p[key]=type==='date'?inputToDateLabel(raw):(type==='time'?(raw||null):(raw||null))});p.project_status=String(fd.get('project_status')||'')==='archiviert'?'archiviert':autoStatusForRow(p);p.badges=parseBadges(fd.get('badges'));p.shooting_note=fd.get('shooting_note')||null;p.weather_label=null;p.weather_id=null;p.updated_at=new Date().toISOString();return p}
+    function fillFormFromRow(form,row){allFieldGroups.forEach(([key,label,type])=>{const f=form.elements[key];if(f)f.value=valueForInput(row,key,type)});if(form.elements.project_status)form.elements.project_status.value=String(row.project_status||'')==='archiviert'?'archiviert':'auto';const archiveBtn=form.querySelector('[data-toggle-archive]');if(archiveBtn)archiveBtn.classList.toggle('active',String(row.project_status||'')==='archiviert');if(form.elements.badges)form.elements.badges.value=parseBadges(row.badges).join(', ');if(form.elements.shooting_note)form.elements.shooting_note.value=row.shooting_note||'';refreshWorkflowSectionInForm(form);refreshBadgeChips(form);refreshLivePreview(form);setFormBaseline(form);refreshFormDirtyState(form)}
+    function collectPayload(form){const fd=new FormData(form),p={};allFieldGroups.forEach(([key,label,type])=>{const raw=fd.get(key);p[key]=type==='date'?inputToDateLabel(raw):(type==='time'?(raw||null):(raw||null))});p.day_label=dayLabelFromDateLabel(p.date_label)||String(fd.get('day_label')||'').trim()||null;p.project_name=String(fd.get('project_name')||'').trim();const archived=String(fd.get('project_status')||'')==='archiviert';p.project_status=archived?'archiviert':autoStatusForRow(p);p.workflow_status=isShootingBoundToEvent(p)?null:workflowSlug(fd.get('workflow_status')||'angefragt');p.badges=parseBadges(fd.get('badges'));p.shooting_note=fd.get('shooting_note')||null;p.weather_label=null;p.weather_id=null;p.updated_at=new Date().toISOString();const meetPlace=String(p.meeting_place||'').trim();const meetLink=String(p.meeting_link||'').trim();if(!meetPlace&&!meetLink)p.meeting_place=String(p.location_name||'').trim()||null;return p}
 
-    function cancelForm(e){const id=e.currentTarget.dataset.cancel,form=e.currentTarget.closest('form'),row=currentRowsById[id];if(!form||!row)return;if(form.dataset.draft==='true'){if(!confirm('Neues Shooting/Event verwerfen?'))return;rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);renderAll();updateUnsavedBar();showToast('Entwurf verworfen');return}fillFormFromRow(form,row);setFormDirty(form,false);form.closest('details').open=false;setStatus('Änderungen verworfen: '+id);showToast('Änderungen verworfen')}
-    async function saveForm(e){e.preventDefault();clearError();const form=e.currentTarget,id=form.dataset.id,card=form.closest('.spot-card'),isDraft=form.dataset.draft==='true';let payload=collectPayload(form);if(!validateImageBeforeSave(payload.image_url,'Bild URL'))return;card?.classList.add('is-saving');setStatus((isDraft?'Erstelle ':'Speichere ')+id+'…');try{payload=await maybeCreateRecurringLocationFromForm(form,id,payload)}catch(error){card?.classList.remove('is-saving');if(error.message!=='INVALID_IMAGE_URL')showError('Wiederkehrende Location konnte nicht erstellt werden: '+formatError(error));return}payload=normalizeRowStatus(payload);const savePayload=isDraft?{...payload,id,sort_order:currentRowsById[id]?.sort_order||rows.length+1}:payload;const {error}=isDraft?await db.from('shootings').insert(savePayload):await db.from('shootings').update(payload).eq('id',id);card?.classList.remove('is-saving');if(error){setStatus('Fehler beim Speichern');showError('Fehler beim Speichern: '+formatError(error));return}const index=rows.findIndex(r=>r.id===id);if(index>=0)rows[index]=normalizeRowStatus({...rows[index],...savePayload,__draft:false});currentRowsById[id]=rows[index]||normalizeRowStatus({...currentRowsById[id],...savePayload,__draft:false});setFormBaseline(form);setFormDirty(form,false);updateProjectFilter();updateDataStamp();renderAll();const newCard=shootingsEl.querySelector(`[data-id="${id}"]`);if(newCard)newCard.open=true;setStatus('Gespeichert: '+id);showToast(isDraft?'Erstellt':'Gespeichert')}
-    async function duplicateRow(e){const id=e.currentTarget.dataset.duplicate,source=currentRowsById[id];if(!source)return;const copy=normalizeRowStatus({...source,id:`${source.id}-kopie-${Date.now()}`,title:`${source.title||'Shooting'} · Kopie`,sort_order:rows.length?Math.max(...rows.map(r=>Number(r.sort_order||0)))+1:1,project_name:source.project_name||'',project_status:String(source.project_status||'')==='archiviert'?'archiviert':'aktiv',updated_at:new Date().toISOString()});delete copy.weather_label;delete copy.weather_id;delete copy.__draft;const {error}=await db.from('shootings').insert(copy);if(error){showError('Duplizieren fehlgeschlagen: '+formatError(error));return}showToast('Dupliziert');await loadShootings()}
+    function cancelForm(e){const id=e.currentTarget.dataset.cancel,form=e.currentTarget.closest('form'),row=currentRowsById[id];if(!form||!row)return;if(form.dataset.draft==='true'){if(!confirm('Neues Shooting/Event verwerfen?'))return;rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);renderAll();updateUnsavedBar();schedulePersistAdminDrafts();showToast('Entwurf verworfen');return}fillFormFromRow(form,row);setFormDirty(form,false);form.closest('details').open=false;setStatus('Änderungen verworfen: '+id);showToast('Änderungen verworfen')}
+    async function saveForm(e){e.preventDefault();clearError();const form=e.currentTarget,id=form.dataset.id,card=form.closest('.spot-card'),isDraft=form.dataset.draft==='true';let payload=collectPayload(form);if(!validateImageBeforeSave(payload.image_url,'Bild URL'))return;card?.classList.add('is-saving');setStatus((isDraft?'Erstelle ':'Speichere ')+id+'…');try{payload=await maybeAutoAddLocationToLibrary(form,id,payload)}catch(error){card?.classList.remove('is-saving');if(error.message!=='INVALID_IMAGE_URL')showError('Location-Bibliothek konnte nicht aktualisiert werden: '+formatError(error));return}payload=normalizeRowStatus(payload);const savePayload=isDraft?{...payload,id,sort_order:currentRowsById[id]?.sort_order||rows.length+1}:payload;const {error}=isDraft?await db.from('shootings').insert(savePayload):await db.from('shootings').update(payload).eq('id',id);card?.classList.remove('is-saving');if(error){
+        setStatus('Fehler beim Speichern');
+        const msg=formatError(error);
+        showError(/workflow_status/i.test(msg)?'Spalte workflow_status fehlt in Supabase. Bitte Migration docs/migrations/add_workflow_status.sql ausführen.':/end_time/i.test(msg)?'Spalte end_time fehlt in Supabase. Bitte Migration docs/migrations/add_end_time.sql ausführen.':('Fehler beim Speichern: '+msg));
+        return;
+      }
+      const index=rows.findIndex(r=>r.id===id);if(index>=0)rows[index]=normalizeRowStatus({...rows[index],...savePayload,__draft:false});currentRowsById[id]=rows[index]||normalizeRowStatus({...currentRowsById[id],...savePayload,__draft:false});setFormBaseline(form);setFormDirty(form,false);updateProjectFilter();updateDataStamp();renderAll();if(typeof renderLocations==='function'&&locations.length)renderLocations();const newCard=shootingsEl.querySelector(`[data-id="${id}"]`);if(newCard)newCard.open=true;setStatus('Gespeichert: '+id);showToast(isDraft?'Erstellt':'Gespeichert')}
+    async function duplicateRow(e){const id=e.currentTarget.dataset.duplicate,source=currentRowsById[id];if(!source)return;const copy=normalizeRowStatus({...source,id:`${source.id}-kopie-${Date.now()}`,title:`${source.title||'Shooting'} · Kopie`,sort_order:rows.length?Math.max(...rows.map(r=>Number(r.sort_order||0)))+1:1,project_name:source.project_name||'',project_status:String(source.project_status||'')==='archiviert'?'archiviert':'aktiv',updated_at:new Date().toISOString()});delete copy.weather_label;delete copy.weather_id;delete copy.__draft;const {error}=await db.from('shootings').insert(copy);if(error){showError('Duplizieren fehlgeschlagen: '+formatError(error));return}showToast('Dupliziert');clearAdminDraftSession();await loadShootings({skipConfirm:true,skipRestore:true})}
     async function ensureEventForProject(name,status='aktiv'){
       const project=String(name||'').trim();
       if(!project||events.some(event=>String(event.name||'').trim()===project))return;
@@ -554,8 +1208,26 @@
       if(error)throw error;
       events=[...events,payload];currentEventsById[payload.id]=payload;
     }
-    async function deleteRow(e){const id=e.currentTarget.dataset.delete,row=currentRowsById[id];if(!row)return;if(row.__draft){if(!confirm('Diesen Entwurf verwerfen?'))return;rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);renderAll();updateUnsavedBar();showToast('Entwurf verworfen');return}if(!confirm(`Shooting wirklich löschen?\n\n${row.title||id}`))return;const projectName=String(row.project_name||'').trim(),isLastInProject=projectName&&rows.filter(r=>String(r.project_name||'').trim()===projectName).length===1;try{if(isLastInProject)await ensureEventForProject(projectName,autoStatusForRow(row))}catch(error){showError('Event konnte nicht erhalten bleiben: '+formatError(error));return}const {error}=await db.from('shootings').delete().eq('id',id);if(error){showError('Löschen fehlgeschlagen: '+formatError(error));return}showToast('Gelöscht');await loadShootings()}
-    function setEventNameDialogOpen(open){eventNameDialog.classList.toggle('hidden',!open);eventNameDialog.setAttribute('aria-hidden',open?'false':'true');document.body.classList.toggle('event-dialog-open',open);if(open)setTimeout(()=>eventNameInput.focus(),30)}
+    async function deleteRow(e){const id=e.currentTarget.dataset.delete,row=currentRowsById[id];if(!row)return;if(row.__draft){if(!confirm('Diesen Entwurf verwerfen?'))return;rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);renderAll();updateUnsavedBar();schedulePersistAdminDrafts();showToast('Entwurf verworfen');return}if(!confirm(`Shooting wirklich löschen?\n\n${row.title||id}`))return;const projectName=String(row.project_name||'').trim(),isLastInProject=projectName&&rows.filter(r=>String(r.project_name||'').trim()===projectName).length===1;try{if(isLastInProject)await ensureEventForProject(projectName,autoStatusForRow(row))}catch(error){showError('Event konnte nicht erhalten bleiben: '+formatError(error));return}const {error}=await db.from('shootings').delete().eq('id',id);      if(error){showError('Löschen fehlgeschlagen: '+formatError(error));return}showToast('Gelöscht');clearAdminDraftSession();await loadShootings({skipConfirm:true,skipRestore:true})}
+    const EVENT_DIALOG_SESSION_KEY='dolomiten.admin.event-dialog.v1';
+    function setEventNameDialogOpen(open){
+      eventNameDialog.classList.toggle('hidden',!open);
+      eventNameDialog.setAttribute('aria-hidden',open?'false':'true');
+      document.body.classList.toggle('event-dialog-open',open);
+      try{
+        if(open)sessionStorage.setItem(EVENT_DIALOG_SESSION_KEY,'open');
+        else sessionStorage.removeItem(EVENT_DIALOG_SESSION_KEY);
+      }catch{}
+      if(open)setTimeout(()=>eventNameInput.focus(),30);
+    }
+    function restoreEventNameDialog(){
+      let wasOpen=false;
+      try{wasOpen=sessionStorage.getItem(EVENT_DIALOG_SESSION_KEY)==='open'}catch{}
+      if(!wasOpen)return;
+      try{sessionStorage.removeItem(EVENT_DIALOG_SESSION_KEY)}catch{}
+      pendingEventNameResolve=null;
+      showToast('„Neues Event“ wurde unterbrochen — bitte über + erneut starten.');
+    }
     function resolveEventName(value){if(!pendingEventNameResolve)return;const resolve=pendingEventNameResolve;pendingEventNameResolve=null;setEventNameDialogOpen(false);resolve(value)}
     function askEventName(){return new Promise(resolve=>{pendingEventNameResolve=resolve;eventNameInput.value='';setEventNameDialogOpen(true)})}
     async function createNewEvent(){
@@ -580,7 +1252,7 @@
       saved=events.find(event=>String(event.name||'').trim()===name)||saved;
       const normalizedEvent={...saved,status:saved.status||'aktiv'};
       if(!events.some(event=>event.id===normalizedEvent.id))events=[...events,normalizedEvent];
-      currentEventsById[normalizedEvent.id]=normalizedEvent;activeProject=name;activeStatus='all';syncStatusButtons();updateProjectFilter();projectFilter.value=name;renderAll();setStatus('Event erstellt');showToast('Event erstellt');
+      currentEventsById[normalizedEvent.id]=normalizedEvent;activeProject=name;activeStatus='all';syncStatusButtons();updateProjectFilter();const pf=$('projectFilter');if(pf)pf.value=name;renderAll();setStatus('Event erstellt');showToast('Event erstellt');
     }
 
     async function commitEventRename(group,input,oldName,eventId){
@@ -614,7 +1286,7 @@
         }
         events=events.map(event=>event.id===eventId?{...event,name:newName,updated_at:now}:event);
         rows=rows.map(row=>matchesOldProject(row)?{...row,project_name:newName,updated_at:now}:row);
-        currentRowsById=Object.fromEntries(rows.map(row=>[row.id,row]));activeProject=(activeProject===oldName||isUnassigned)?newName:activeProject;updateProjectFilter();projectFilter.value=activeProject;renderAll();setStatus(isUnassigned?'Event erstellt':'Event umbenannt');showToast(isUnassigned?'Event erstellt und Shootings zugeordnet':'Event umbenannt');
+        currentRowsById=Object.fromEntries(rows.map(row=>[row.id,row]));activeProject=(activeProject===oldName||isUnassigned)?newName:activeProject;updateProjectFilter();const pf2=$('projectFilter');if(pf2)pf2.value=activeProject;renderAll();setStatus(isUnassigned?'Event erstellt':'Event umbenannt');showToast(isUnassigned?'Event erstellt und Shootings zugeordnet':'Event umbenannt');
       }catch(error){
         setStatus('Fehler beim Umbenennen');
         showError(formatError(error));
@@ -663,7 +1335,7 @@
         if(form.dataset.draft==='true'){rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);return}
         fillFormFromRow(form,row);setFormDirty(form,false);
       });
-      orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll();showToast('Änderungen verworfen');
+      orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll();clearAdminDraftSession();showToast('Änderungen verworfen');
     }
     function dateLabelFromDate(date){return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear()}`}
 
@@ -677,64 +1349,104 @@
       };
     }
 
-    async function createNewRow(overrides={}){
-      clearError();
-      if(addBtn.disabled)return;
+    function buildShootingDraftRow(overrides={}){
+      const sortOrder=rows.length?Math.max(...rows.map(r=>Number(r.sort_order||0)))+1:1;
+      const id=overrides.id??'shooting-'+Date.now();
+      return normalizeRowStatus({
+        id,
+        sort_order:overrides.sort_order??sortOrder,
+        day_label:overrides.day_label??dayLabelFromDateLabel(overrides.date_label??dateLabelFromDate(new Date())),
+        project_name:overrides.project_name??'',
+        project_status:overrides.project_status??'aktiv',
+        date_label:overrides.date_label??dateLabelFromDate(new Date()),
+        title:overrides.title??'',
+        subtitle:overrides.subtitle??'',
+        meeting_time:overrides.meeting_time??'09:00',
+        meeting_place:overrides.meeting_place??'',
+        shooting_time:overrides.shooting_time??'10:00',
+        end_time:overrides.end_time??null,
+        location_name:overrides.location_name??'',
+        meeting_link:overrides.meeting_link??'',
+        location_link:overrides.location_link??'',
+        image_url:overrides.image_url??'',
+        shooting_note:overrides.shooting_note??null,
+        workflow_status:overrides.workflow_status??null,
+        badges:overrides.badges??[],
+        weather_label:null,
+        weather_id:null,
+        updated_at:new Date().toISOString(),
+        __draft:true,
+        __icsImportLocation:!!overrides.__icsImportLocation,
+      });
+    }
 
-      addBtn.disabled=true;
-      addBtn.classList.add('is-busy');
-      setStatus('Neuer Entwurf…');
+    function appendShootingDraftRow(overrides={}){
+      const row=buildShootingDraftRow(overrides);
+      rows=sortRowsByDateAndTime([...rows.filter(r=>r.id!==row.id),row]);
+      currentRowsById[row.id]=row;
+      dirtyForms.add(row.id);
+      return row.id;
+    }
+
+    function projectGroupKeyForRow(row){
+      const projectName=String(row?.project_name||'').trim();
+      if(!projectName)return 'project:__unassigned__';
+      const event=events.find(e=>String(e.name||'').trim()===projectName);
+      return event?.id?`event:${event.id}`:`project:${projectName}`;
+    }
+
+    function revealDraftsInList(ids){
+      if(!ids?.length)return;
+      const row=currentRowsById[ids[0]];
+      if(!row)return;
+      setProjectGroupOpen(projectGroupKeyForRow(row),true);
+      const status=autoStatusForRow(row);
+      if(status==='abgeschlossen')setTimelineSectionOpen('past',true);
+      if(status==='archiviert')setTimelineSectionOpen('archived',true);
+    }
+
+    async function createNewRow(overrides={},options={}){
+      const {batch=false}=options;
+      clearError();
+      if(!batch&&addBtn?.disabled)return null;
+
+      if(!batch){
+        addBtn.disabled=true;
+        addBtn.classList.add('is-busy');
+        setStatus('Neuer Entwurf…');
+      }
 
       try{
-        const sortOrder=rows.length?Math.max(...rows.map(r=>Number(r.sort_order||0)))+1:1;
-        const id='shooting-'+Date.now();
-        const dateLabel=overrides.date_label??dateLabelFromDate(new Date());
-
-        const row={
-          id,
-          sort_order:sortOrder,
-          day_label:'Freitag',
-          project_name:overrides.project_name??'',
-          project_status:overrides.project_status??'aktiv',
-          date_label:dateLabel,
-          title:overrides.title??'Neues Shooting',
-          subtitle:'',
-          meeting_time:'09:00',
-          meeting_place:'',
-          shooting_time:'10:00',
-          location_name:'',
-          meeting_link:'',
-          location_link:'',
-          image_url:'',
-          badges:[],
-          weather_label:null,
-          weather_id:null,
-          updated_at:new Date().toISOString(),
-          __draft:true
-        };
-
-        rows=sortRowsByDateAndTime([...rows,row]);
-        currentRowsById[id]=row;
-        updateProjectFilter();
-        renderAll();
-        updateUnsavedBar();
-        showToast(overrides.project_name?'Neues Event vorbereitet':'Neues Shooting vorbereitet');
-
-        const card=shootingsEl.querySelector(`[data-id="${id}"]`);
-        if(card){
-          card.open=true;
-          card.scrollIntoView({behavior:'smooth',block:'center'});
-          const titleInput=card.querySelector('input[name="title"]');
-          if(titleInput)setTimeout(()=>titleInput.focus(),350);
-          const form=card.querySelector('form');
-          if(form)setFormDirty(form,true);
+        const id=appendShootingDraftRow(overrides);
+        if(!batch){
+          updateProjectFilter();
+          renderAll();
+          updateUnsavedBar();
+          showToast(overrides.project_name?'Neues Event vorbereitet':'Neues Shooting vorbereitet');
+          const card=shootingsEl.querySelector(`[data-id="${id}"]`);
+          if(card){
+            card.open=true;
+            card.scrollIntoView({behavior:'smooth',block:'center'});
+            const titleInput=card.querySelector('input[name="title"]');
+            if(titleInput)setTimeout(()=>titleInput.focus(),350);
+            const form=card.querySelector('form');
+            if(form)setFormDirty(form,true);
+          }
+          schedulePersistAdminDrafts();
         }
+        return id;
       }catch(error){
         console.error(error);
         setStatus('Fehler beim Erstellen');
         showError('Fehler beim Erstellen: '+(error.message||error));
+        return null;
       }finally{
-        addBtn.disabled=false;
-        addBtn.classList.remove('is-busy');
+        if(!batch){
+          addBtn.disabled=false;
+          addBtn.classList.remove('is-busy');
+        }
       }
     }
+
+    window.appendShootingDraftRow=appendShootingDraftRow;
+    window.revealDraftsInList=revealDraftsInList;
