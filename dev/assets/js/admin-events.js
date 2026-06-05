@@ -28,14 +28,28 @@
     function renderLocationFinderStatus(row){
       const linked=row.location_id?currentLocationsById[row.location_id]:null;
       if(linked){
-        return `<span class="location-finder-badge is-library">Bibliothek · ${escapeHtml(linked.name)}</span>`;
+        const display=String(row.location_name||'').trim();
+        const differs=display&&display!==String(linked.name||'').trim();
+        return `<span class="location-finder-badge is-library">Bibliothek · ${escapeHtml(linked.name)}</span>${differs?`<span class="location-finder-hint">Anzeigename: ${escapeHtml(display)}</span>`:''}`;
       }
       const name=String(row.location_name||'').trim();
       if(name){
-        return `<span class="location-finder-badge is-onetime">Neu · Kartentreffer oder Maps — Bibliothek beim Speichern</span>`;
+        return `<span class="location-finder-badge is-onetime">Neuer Ort · Bibliothek beim Speichern</span>`;
       }
       return `<span class="location-finder-hint">Name tippen, Maps-Link einfügen — zuerst Bibliothek, sonst Karte.</span>`;
     }
+
+    function renderLibrarySaveChoice(row){
+      if(row.location_id)return '';
+      return `<label class="checkbox-card checkbox-card-compact library-save-choice">
+        <input type="checkbox" name="skip_library_autosave" data-skip-library-autosave />
+        <div>
+          <strong>Nur für dieses Shooting</strong>
+          <span>Aktivieren, wenn der Ort nicht in die Location-Bibliothek soll. Standard: Orte mit Adresse oder Maps-Link werden beim Speichern übernommen.</span>
+        </div>
+      </label>`;
+    }
+
 
     function renderLocationFinderIcsBlock(row){
       if(!row.__icsImportLocation||row.location_id)return '';
@@ -72,8 +86,8 @@
       const open=show&&!row.location_id;
       return `<details class="editor-subpanel location-setup-panel ${show?'':'hidden'}" data-location-setup ${open?'open':''}>
         <summary class="editor-subpanel-summary">
-          <strong>Maps-Link (Location)</strong>
-          <span>optional bearbeiten</span>
+          <strong>Neuen Ort vorbereiten</strong>
+          <span>Maps & Bibliothek</span>
         </summary>
         <div class="editor-subpanel-body">
           <div class="field full">
@@ -84,9 +98,22 @@
             <button class="btn" type="button" data-detect-place="location">Aus Maps-Link erkennen</button>
             <span class="maps-status" data-maps-status="location"></span>
           </div>
+          ${renderLibrarySaveChoice(row)}
         </div>
       </details>`;
     }
+
+    function renderLocationFinderSummary(row){
+      const linked=row.location_id?currentLocationsById[row.location_id]:null;
+      const display=String(locationFinderDisplayName(row)||'').trim();
+      if(linked){
+        const displayText=display&&display!==String(linked.name||'').trim()?` · Anzeige: ${display}`:'';
+        return `Bibliothek · ${linked.name}${displayText}`;
+      }
+      if(display)return `Neuer Ort · ${display}`;
+      return 'Noch keine Location';
+    }
+
 
     function renderLocationFinder(row){
       const current=row.location_id||'';
@@ -96,18 +123,15 @@
       const mode=current?'library':displayName?'onetime':'';
       const captureHint=typeof LOCATION_CAPTURE_HINT!=='undefined'?LOCATION_CAPTURE_HINT:'Name tippen (Kartensuche), Maps-Link einfügen oder <strong>📍</strong> am aktuellen Spot.';
       return `<div class="field full location-finder-field">
-        <label>Location</label>
+        <label>Ort im Shooting</label>
         <p class="hint editor-block-hint location-finder-hint-block">${captureHint}</p>
         <input type="hidden" name="location_id" value="${escapeHtml(current)}" data-location-hidden>
         <div class="location-finder is-open" data-location-finder data-location-mode="${escapeHtml(mode)}">
           <div class="location-finder-main-with-gps">
-            <input class="location-finder-input" name="location_name" type="text" value="${escapeHtml(displayName)}" placeholder="Optional: Anzeigename — oder Kartensuche / Maps-Link" data-location-finder-input autocomplete="off" />
+            <input class="location-finder-input" name="location_name" type="text" value="${escapeHtml(displayName)}" placeholder="Anzeigename, Kartensuche oder Maps-Link" data-location-finder-input autocomplete="off" />
             <button type="button" class="btn location-gps-btn" data-capture-gps-shooting title="Aktuellen Standort" aria-label="Aktuellen Standort">📍</button>
           </div>
           <div class="location-finder-status" data-location-finder-status>${renderLocationFinderStatus(row)}</div>
-          <div class="location-finder-results location-picker-grid" data-location-finder-grid>${renderLocationFinderResults(displayName,'all','all',current,row)}</div>
-          <div class="location-finder-results location-picker-grid location-osm-grid" data-osm-results></div>
-          ${renderLocationSetupPanel(row)}
           <details class="location-finder-filters-wrap">
             <summary class="location-finder-filters-summary">Bibliothek filtern</summary>
             <div class="location-finder-filters" data-location-finder-filters>
@@ -115,9 +139,13 @@
               <select data-location-finder-category aria-label="Kategorie filtern"><option value="all">Alle Kategorien</option>${categoryOptions.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
             </div>
           </details>
+          <div class="location-finder-results location-picker-grid" data-location-finder-grid>${renderLocationFinderResults(displayName,'all','all',current,row)}</div>
+          <div class="location-finder-results location-picker-grid location-osm-grid" data-osm-results></div>
+          ${renderLocationSetupPanel(row)}
         </div>
       </div>`;
     }
+
 
     function renderLocationFinderResults(search='',country='all',category='all',current='',row={}){
       const term=String(search||'').trim().toLowerCase();
@@ -330,7 +358,7 @@
       if(type==='event-select'){
         const current=String(row[key]||'').trim();
         const names=[...new Set([...events.map(event=>String(event.name||'').trim()),...rows.map(item=>String(item.project_name||'').trim()),current].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
-        return `<div class="field"><label>${label}</label><select name="${key}"><option value="" ${!current?'selected':''}>Keine Projektzuordnung</option>${names.map(name=>`<option value="${escapeHtml(name)}" ${current===name?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></div>`;
+        return `<div class="field"><label>${label}</label><select name="${key}"><option value="" ${!current?'selected':''}>Einzel-Shooting (kein Event)</option>${names.map(name=>`<option value="${escapeHtml(name)}" ${current===name?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></div>`;
       }
       if(type==='select-status'){
         const options=[['aktiv','Aktiv'],['abgeschlossen','Abgeschlossen'],['archiviert','Archiv']];
@@ -354,11 +382,24 @@
     function renderEventSection(row){
       const archived=String(row.project_status||'')==='archiviert';
       const bound=isShootingBoundToEvent(row);
-      return `<div class="event-head"><div class="section-title">Event</div><button class="archive-toggle ${archived?'active':''}" type="button" data-toggle-archive title="${archived?'Archiviert':'Archivieren'}" aria-label="${archived?'Archiviert':'Archivieren'}">${archived?'Archiviert':'Archivieren'}</button></div>
+      const project=String(row.project_name||'').trim();
+      return `<section class="event-assignment">
         <input type="hidden" name="project_status" value="${archived?'archiviert':'auto'}" />
-        <p class="hint event-section-hint">${bound?'Status und Gruppierung kommen vom <strong>Event</strong> (Datum, Archiv).':'Ohne Event-Zuordnung legst du den <strong>Shooting-Status</strong> unten selbst fest.'}</p>
-        <div class="grid two">${projectFields.map(f=>renderField(row,f)).join('')}</div>`;
+        <div class="event-assignment-head">
+          <span class="event-assignment-chip ${bound?'is-event':'is-single'}">${bound?'Event':'Einzel-Shooting'}</span>
+          <span class="event-assignment-name">${escapeHtml(project||'Kein Event zugeordnet')}</span>
+        </div>
+        <p class="hint event-section-hint">${bound?'Dieses Shooting wird in der Liste unter dem Event gruppiert.':'Ohne Event-Zuordnung nutzt du den Shooting-Status darunter.'}</p>
+        <div class="event-assignment-grid">${projectFields.map(f=>renderField(row,['project_name','Event-Zuordnung',f[2]])).join('')}</div>
+        <details class="archive-panel">
+          <summary class="archive-panel-summary"><strong>Archiv</strong><span>${archived?'Archiviert':'Aktiv nach Datum'}</span></summary>
+          <div class="archive-panel-body">
+            <button class="archive-toggle ${archived?'active':''}" type="button" data-toggle-archive title="${archived?'Aus Archiv holen':'In Archiv verschieben'}" aria-label="${archived?'Aus Archiv holen':'In Archiv verschieben'}">${archived?'Aus Archiv holen':'In Archiv verschieben'}</button>
+          </div>
+        </details>
+      </section>`;
     }
+
 
     function renderWorkflowSection(row){
       if(isShootingBoundToEvent(row)){
@@ -473,16 +514,22 @@
       return `<section class="editor-block editor-block-schedule">
         <div class="editor-block-head"><h3 class="editor-block-title">Termin</h3></div>
         <input type="hidden" name="day_label" value="${escapeHtml(dayAuto)}" data-day-label-hidden />
-        ${renderGroup('',row,scheduleFields,'two')}
-        <p class="hint-inline schedule-day-hint" data-day-label-hint>${dayAuto?`Wochentag: <strong>${escapeHtml(dayAuto)}</strong> (automatisch aus Datum)`:'Wochentag wird automatisch aus dem Datum gesetzt.'}</p>
-        <div class="field schedule-duration-field">
-          <label>Dauer (Min.)</label>
-          <input name="duration_minutes" type="number" min="15" step="15" placeholder="z. B. 120" value="${escapeHtml(duration)}" data-duration-minutes />
-          <span class="hint-inline">Passt das <strong>Ende</strong> an (ab Beginn / Treff).</span>
+        <div class="grid two schedule-grid">
+          ${renderField(row,['date_label','Datum','date'])}
+          ${renderField(row,['meeting_time','Beginn / Treff','time'])}
+          <div class="field schedule-duration-field">
+            <label>Dauer ab Beginn (Min.)</label>
+            <input name="duration_minutes" type="number" min="15" step="15" placeholder="z. B. 120" value="${escapeHtml(duration)}" data-duration-minutes />
+            <span class="hint-inline">Setzt das <strong>Ende</strong> automatisch ab Beginn/Treff.</span>
+          </div>
+          ${renderField(row,['end_time','Ende','time'])}
+          ${renderField(row,['shooting_time','Shooting ab','time'])}
         </div>
-        <p class="hint editor-block-hint">„Shooting ab“ = Start der Session in der Kunden-App. <strong>Ende</strong> ist optional (z. B. aus Kalender-Import).</p>
+        <p class="hint-inline schedule-day-hint" data-day-label-hint>${dayAuto?`Wochentag: <strong>${escapeHtml(dayAuto)}</strong> (automatisch aus Datum)`:'Wochentag wird automatisch aus dem Datum gesetzt.'}</p>
+        <p class="hint editor-block-hint">„Beginn / Treff“ ist die Basis fuer die Dauer. „Shooting ab“ bleibt optional fuer die Kundenansicht.</p>
       </section>`;
     }
+
     function renderPreview(row){const image=row.image_url?`url('${escapeHtml(row.image_url)}')`:'';return `<div class="link-preview" data-link-preview><a class="preview-button ${row.meeting_link?'':'disabled'}" ${row.meeting_link?`href="${escapeHtml(row.meeting_link)}" target="_blank" rel="noopener"`:''}>Treffpunkt ${row.meeting_link?'öffnen':'leer'}</a><a class="preview-button primary ${row.location_link?'':'disabled'}" ${row.location_link?`href="${escapeHtml(row.location_link)}" target="_blank" rel="noopener"`:''}>Location ${row.location_link?'öffnen':'leer'}</a></div><div class="image-preview" data-image-preview style="--preview-image:${image};">${row.image_url?'Bildvorschau':'Keine Bild-URL gesetzt'}</div>`}
 
     function renderImportLocationOffer(row){
@@ -558,12 +605,23 @@
       const separate=rowUsesSeparateMeeting(row);
       const libLinked=!!row.location_id;
       const openMeeting=libLinked||separate;
+      const openLocation=!libLinked||row.__draft;
+      const locationSummary=renderLocationFinderSummary(row);
       const imageVal=escapeHtml(valueForInput(row,'image_url','url'));
+      const showImagePanel=!libLinked||!!String(row.image_url||'').trim();
+      const imageSummary=libLinked?'aus Location / optional':'optional fuer neuen Ort';
       return `<section class="editor-block editor-block-location">
-        <div class="editor-block-head"><h3 class="editor-block-title">Ort</h3></div>
-        <div class="location-picker-block">${renderLocationFinder(row)}</div>
-        <details class="editor-subpanel editor-subpanel-media">
-          <summary class="editor-subpanel-summary"><strong>Bild</strong><span>optional</span></summary>
+        <details class="editor-subpanel editor-subpanel-location-main" ${openLocation?'open':''}>
+          <summary class="editor-subpanel-summary">
+            <strong>Location</strong>
+            <span>${escapeHtml(locationSummary)}</span>
+          </summary>
+          <div class="editor-subpanel-body">
+            <div class="location-picker-block">${renderLocationFinder(row)}</div>
+          </div>
+        </details>
+        <details class="editor-subpanel editor-subpanel-media ${showImagePanel?'':'is-secondary'}">
+          <summary class="editor-subpanel-summary"><strong>Bild</strong><span>${imageSummary}</span></summary>
           <div class="editor-subpanel-body">
             <p class="hint-inline">Nach Ortserfassung Bildvorschlag (Wikipedia / Wikimedia) — URL jederzeit austauschbar.</p>
             <div class="field full"><label>Bild URL</label><input name="image_url" type="url" inputmode="url" value="${imageVal}" placeholder="Direkte Bild-URL einfügen" /></div>
@@ -584,21 +642,18 @@
     }
 
     function renderLocationExtrasPanel(row){
+      const showExtras=!row.location_id||!!String(row.shooting_note||'').trim();
+      if(!showExtras){
+        return `<input type="hidden" name="shooting_note" value="${escapeHtml(row.shooting_note||'')}" />`;
+      }
       return `<details class="editor-subpanel editor-subpanel-extras">
         <summary class="editor-subpanel-summary">
-          <strong>Notiz &amp; Vorschau</strong>
-          <span>optional</span>
+          <strong>Notiz &amp; Links</strong>
+          <span>${row.location_id?'vorhandene Notiz':'nur neuer Ort'}</span>
         </summary>
         <div class="editor-subpanel-body">
           <div class="field full"><label>Notiz für dieses Shooting</label><textarea name="shooting_note" placeholder="Parkplatz, Anfahrt, Besonderheiten…">${escapeHtml(row.shooting_note || '')}</textarea></div>
           ${renderPreview(row)}
-          <label class="checkbox-card checkbox-card-compact">
-            <input type="checkbox" name="skip_library_autosave" data-skip-library-autosave />
-            <div>
-              <strong>Nicht in die Location-Bibliothek aufnehmen</strong>
-              <span>Standard: Orte mit Adresse/Maps landen in der Bibliothek. Nur reine Verwaltungsorte (z. B. nur „Standesamt“) werden ausgeschlossen — Bahnhöfe &amp; Spots schon.</span>
-            </div>
-          </label>
           <input type="hidden" name="location_meta_name" value="${escapeHtml(row.location_name||'')}" />
           <input type="hidden" name="location_meta_country" value="" />
           <input type="hidden" name="location_meta_region" value="" />
@@ -1062,7 +1117,7 @@
     }
     function makeAddBadgeButton(){const button=document.createElement('button');button.type='button';button.className='badge-chip add-badge';button.dataset.addBadge='';button.setAttribute('aria-label','Badge hinzufügen');button.textContent='+';button.addEventListener('click',addCustomBadge);return button}
     function addCustomBadge(e){const addButton=e.currentTarget,input=document.createElement('input');input.className='badge-inline-input';input.type='text';input.placeholder='Badge';const wrap=document.createElement('span');wrap.className='badge-inline badge-chip';wrap.append(input);addButton.replaceWith(wrap);input.focus();input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();commitInlineBadge(input)}if(event.key==='Escape'){wrap.replaceWith(makeAddBadgeButton())}});input.addEventListener('blur',()=>commitInlineBadge(input))}
-    function toggleArchiveStatus(e){const btn=e.currentTarget,form=btn.closest('form'),input=form.elements.project_status,archived=input.value==='archiviert';input.value=archived?'auto':'archiviert';btn.classList.toggle('active',!archived);btn.textContent=archived?'Archivieren':'Archiviert';btn.title=btn.textContent;btn.setAttribute('aria-label',btn.title);refreshFormDirtyState(form)}
+    function toggleArchiveStatus(e){const btn=e.currentTarget,form=btn.closest('form'),input=form.elements.project_status,archived=input.value==='archiviert';input.value=archived?'auto':'archiviert';btn.classList.toggle('active',!archived);btn.textContent=archived?'In Archiv verschieben':'Aus Archiv holen';btn.title=btn.textContent;btn.setAttribute('aria-label',btn.title);refreshFormDirtyState(form)}
     function refreshLivePreview(form){refreshLinkPreview(form);refreshImagePreview(form);const recurringPreview=form.querySelector('[data-recurring-location-image-preview]');if(recurringPreview){const url=form.elements.location_meta_image_url?.value||'';setImagePreviewState(recurringPreview,url)}}
     function refreshLinkPreview(form){const p=form.querySelector('[data-link-preview]');if(!p)return;const meeting=form.elements.meeting_link?.value,location=form.elements.location_link?.value;p.innerHTML=`<a class="preview-button ${meeting?'':'disabled'}" ${meeting?`href="${escapeHtml(meeting)}" target="_blank" rel="noopener"`:''}>Treffpunkt ${meeting?'öffnen':'leer'}</a><a class="preview-button primary ${location?'':'disabled'}" ${location?`href="${escapeHtml(location)}" target="_blank" rel="noopener"`:''}>Location ${location?'öffnen':'leer'}</a>`}
     function classifyImageUrl(value){

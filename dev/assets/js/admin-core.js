@@ -4,8 +4,21 @@
 
     const $=id=>document.getElementById(id);
     const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),calendarBox=$('calendarBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),addBtn=$('addBtn'),addMenu=$('addMenu'),eventNameDialog=$('eventNameDialog'),eventNameForm=$('eventNameForm'),eventNameInput=$('eventNameInput'),eventNameCancel=$('eventNameCancel'),toast=$('toast'),searchInput=$('searchInput'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),refreshDataBtn=$('refreshDataBtn'),whatsNewBtn=$('whatsNewBtn'),featurePanel=$('featurePanel'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn'),discardOpenBtn=$('discardOpenBtn'),viewTabs=$('viewTabs'),timelineTab=$('timelineTab'),calendarTab=$('calendarTab'),locationsTab=$('locationsTab'),locationsBox=$('locationsBox'),locationsList=$('locationsList'),favoriteLocationsBtn=$('favoriteLocationsBtn'),locationSearchInput=$('locationSearchInput'),countryFilter=$('countryFilter'),regionFilter=$('regionFilter'),categoryFilter=$('categoryFilter'),projectFilter=$('projectFilter');
+    const ADMIN_VIEW_STORAGE_KEY='dolomiten.admin.current-view.v1';
 
-    let db=null,rows=[],events=[],locations=[],currentRowsById={},currentEventsById={},currentLocationsById={},activeStatus='all',activeWorkflowFilter='all',activeProject='all',currentView='timeline',locationFavoritesOnly=false,toastTimer=null,draggedCard=null,orderDirty=false,dirtyForms=new Set(),isRestoringAdminSession=false;
+    function normalizeAdminView(view){
+      return ['timeline','calendar','locations'].includes(view)?view:'timeline';
+    }
+
+    function readStoredAdminView(){
+      try{return normalizeAdminView(localStorage.getItem(ADMIN_VIEW_STORAGE_KEY))}catch{return 'timeline'}
+    }
+
+    function writeStoredAdminView(view){
+      try{localStorage.setItem(ADMIN_VIEW_STORAGE_KEY,normalizeAdminView(view))}catch{}
+    }
+
+    let db=null,rows=[],events=[],locations=[],currentRowsById={},currentEventsById={},currentLocationsById={},activeStatus='all',activeWorkflowFilter='all',activeProject='all',currentView=readStoredAdminView(),locationFavoritesOnly=false,toastTimer=null,draggedCard=null,orderDirty=false,dirtyForms=new Set(),isRestoringAdminSession=false;
     let pendingEventNameResolve=null;
 
     const badgePresets=['Goldene Stunde','Picknick','Sonnenaufgang','Farben','Paar-Momente','Kreativ','Aussicht','Gitarre','Goldenes Licht','Spaziergang','Ruhe','Portraits','Perspektiven','Gemeinsame Bilder','Dolomiten','Natur','Abenteuer'];
