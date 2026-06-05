@@ -530,7 +530,6 @@
       </section>`;
     }
 
-    function renderPreview(row)
     function renderPreview(row){const image=row.image_url?`url('${escapeHtml(row.image_url)}')`:'';return `<div class="link-preview" data-link-preview><a class="preview-button ${row.meeting_link?'':'disabled'}" ${row.meeting_link?`href="${escapeHtml(row.meeting_link)}" target="_blank" rel="noopener"`:''}>Treffpunkt ${row.meeting_link?'öffnen':'leer'}</a><a class="preview-button primary ${row.location_link?'':'disabled'}" ${row.location_link?`href="${escapeHtml(row.location_link)}" target="_blank" rel="noopener"`:''}>Location ${row.location_link?'öffnen':'leer'}</a></div><div class="image-preview" data-image-preview style="--preview-image:${image};">${row.image_url?'Bildvorschau':'Keine Bild-URL gesetzt'}</div>`}
 
     function renderImportLocationOffer(row){
@@ -664,9 +663,6 @@
       </details>`;
     }
 
-
-
-    function filteredRows(){
 
 
     function filteredRows(){
