@@ -628,6 +628,8 @@
   .location-group-items{padding:8px 4px 10px}
   .location-group-summary{padding:10px 12px}
   .location-editor{padding:0 6px 12px}
+  .location-card-draft>.location-editor{display:block}
+  .location-card-draft .location-capture-name{scroll-margin-top:max(84px,calc(env(safe-area-inset-top) + 72px))}
   .location-toolbar-sort{
     margin-top:18px;
     display:grid;

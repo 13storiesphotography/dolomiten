@@ -283,14 +283,36 @@
       return String(loc?.name||'').trim();
     }
     function scrollLocationCardToTop(card){
-      const anchor=card?.querySelector('.location-summary')
-        ||card?.querySelector('.location-editor-form > .section-title')
-        ||card?.querySelector('.location-editor-form');
+      const isDraft=card?.dataset?.locationDraft==='true';
+      const anchor=isDraft
+        ?(card?.querySelector('[data-location-lib-name]')||card?.querySelector('.location-editor-form > .section-title')||card?.querySelector('.location-editor-form'))
+        :(card?.querySelector('.location-summary')||card?.querySelector('.location-editor-form > .section-title')||card?.querySelector('.location-editor-form'));
       if(!anchor)return;
       const topBar=document.querySelector('.top');
-      const topOffset=topBar?Math.ceil(topBar.getBoundingClientRect().height):0;
+      const topOffset=(topBar?Math.ceil(topBar.getBoundingClientRect().height):0)+8;
+      const mobile=window.matchMedia('(max-width:740px)').matches;
       const targetY=anchor.getBoundingClientRect().top+window.scrollY-topOffset;
-      window.scrollTo({top:Math.max(0,targetY),behavior:'smooth'});
+      window.scrollTo({top:Math.max(0,targetY),behavior:mobile?'auto':'smooth'});
+    }
+    function openNewLocationDraftCard(card){
+      if(!card)return;
+      const editor=card.querySelector(':scope>.location-editor');
+      if(editor){
+        editor.hidden=false;
+        editor.removeAttribute('hidden');
+      }
+      const input=card.querySelector('[data-location-lib-name]');
+      const mobile=window.matchMedia('(max-width:740px)').matches;
+      const focusName=()=>{
+        if(!input)return;
+        scrollLocationCardToTop(card);
+        if(mobile){
+          setTimeout(()=>input.focus(),140);
+        }else{
+          setTimeout(()=>input.focus({preventScroll:true}),300);
+        }
+      };
+      requestAnimationFrame(()=>requestAnimationFrame(focusName));
     }
     function dedupeOsmResults(results){
       const seen=new Set();
@@ -1760,7 +1782,10 @@
       locationsList.querySelectorAll('[data-admin-toggle-favorite]').forEach(b=>b.addEventListener('click',toggleLocationFavoriteFromAdmin));
       locationsList.querySelectorAll('.location-card-draft').forEach(card=>{
         const editor=card.querySelector(':scope>.location-editor');
-        if(editor)editor.hidden=false;
+        if(editor){
+          editor.hidden=false;
+          editor.removeAttribute('hidden');
+        }
       });
       locationsList.querySelectorAll('details.location-card').forEach(card=>{
         const editor=card.querySelector(':scope>.location-editor');
@@ -1976,7 +2001,7 @@
       showToast(`Tag „${tag}“ entfernt`);
     }
 
-    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;syncLocationFavoritesFilterBtn();const id=newLocationId();const payload={id,name:'',display_name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');const card=locationsList.querySelector(`[data-location-id="${id}"]`);if(card){if('open' in card)card.open=true;requestAnimationFrame(()=>{requestAnimationFrame(()=>{scrollLocationCardToTop(card);const input=card.querySelector('[data-location-lib-name]');if(input)setTimeout(()=>input.focus({preventScroll:true}),300)})})}}
+    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;syncLocationFavoritesFilterBtn();const id=newLocationId();const payload={id,name:'',display_name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');openNewLocationDraftCard(locationsList.querySelector(`[data-location-id="${id}"]`))}
     function cancelLocationEdit(e){const form=e.currentTarget.closest('form'),id=form?.dataset.locationForm;if(form?.dataset.locationDraft==='true'){locations=locations.filter(l=>l.id!==id);delete currentLocationsById[id]}renderLocations()}
     async function setLocationActiveState(id,active){
       const now=new Date().toISOString();
