@@ -1386,14 +1386,30 @@
       events=events.filter(event=>event.id!==eventId);delete currentEventsById[eventId];if(activeProject===name)activeProject='all';updateProjectFilter();renderAll();showToast('Event gelöscht');
     }
     function discardOpenChanges(){
-      const ids=[...dirtyForms];
-      ids.forEach(id=>{
-        const form=shootingsEl.querySelector(`form[data-id="${id}"]`),row=currentRowsById[id];
-        if(!form||!row)return;
-        if(form.dataset.draft==='true'){rows=rows.filter(r=>r.id!==id);delete currentRowsById[id];dirtyForms.delete(id);return}
+      const keys=[...dirtyForms];
+      keys.forEach(key=>{
+        const form=findFormByDirtyKey(key);
+        if(!form)return;
+        if(isLocationDirtyKey(key)){
+          const id=form.dataset.locationForm;
+          if(form.dataset.locationDraft==='true'){
+            locations=locations.filter(l=>l.id!==id);
+            delete currentLocationsById[id];
+            dirtyForms.delete(key);
+            return;
+          }
+          dirtyForms.delete(key);
+          return;
+        }
+        const row=currentRowsById[key];
+        if(!row)return;
+        if(form.dataset.draft==='true'){rows=rows.filter(r=>r.id!==key);delete currentRowsById[key];dirtyForms.delete(key);return}
         fillFormFromRow(form,row);setFormDirty(form,false);
       });
-      orderDirty=false;updateOrderButton();updateUnsavedBar();renderAll();clearAdminDraftSession();showToast('Änderungen verworfen');
+      orderDirty=false;updateOrderButton();updateUnsavedBar();
+      if(typeof renderLocations==='function'&&currentView==='locations')renderLocations();
+      else renderAll();
+      clearAdminDraftSession();showToast('Änderungen verworfen');
     }
     function dateLabelFromDate(date){return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear()}`}
 

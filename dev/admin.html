@@ -12,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <link rel="stylesheet" href="assets/css/admin.css" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=20260608b" />
 </head>
 <body>
   <main class="wrap">
@@ -209,6 +209,16 @@
       <div class="event-dialog-actions"><button class="btn" type="button" id="eventNameCancel">Abbrechen</button><button class="btn primary" type="submit">Erstellen</button></div>
     </form>
   </div>
+  <div class="event-dialog hidden" id="categoryDeleteDialog" aria-hidden="true">
+    <div class="event-dialog-box" role="alertdialog" aria-modal="true" aria-labelledby="categoryDeleteTitle" aria-describedby="categoryDeleteBody">
+      <div class="event-dialog-title" id="categoryDeleteTitle">Kategorie löschen</div>
+      <p class="hint category-delete-dialog-body" id="categoryDeleteBody"></p>
+      <div class="event-dialog-actions">
+        <button class="btn" type="button" id="categoryDeleteCancel">Abbrechen</button>
+        <button class="btn danger" type="button" id="categoryDeleteConfirm">Überall entfernen</button>
+      </div>
+    </div>
+  </div>
   <div class="release-panel hidden" id="featurePanel">
     <div class="release-panel-body">
       <p class="release-panel-heading">Neuigkeiten</p>
@@ -261,6 +271,34 @@
             <li class="release-item">
               <span class="release-item-label">Neue Location</span>
               <p class="release-item-desc">Über + → Neue Location öffnet sich wieder das Erfassungsformular (nicht nur eine leere Zeile).</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Kartentreffer am Handy</span>
+              <p class="release-item-desc">Treffer unter dem Namensfeld sind wieder lesbar — Titel und Adresse in voller Höhe, nicht nur ein Textstreifen.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Schlankerer Editor</span>
+              <p class="release-item-desc">Bild ist einklappbar. Adresse und Maps-Link stehen direkt unter Anzeigename — vor der Kategorie, ohne extra Klappe.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Maps-Kurzlinks</span>
+              <p class="release-item-desc">Eingefügte Google-Links (maps.app.goo.gl) liefern wieder den richtigen Ort — z. B. Verein statt Staatsstraße.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Kategorien löschen</span>
+              <p class="release-item-desc">× öffnet einen blockierenden Dialog (nicht nur Toast) — betroffene Locations wie Schaky-Park werden genannt; danach kein hängender „ungespeichert“-Zustand mehr.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Bildvorschläge</span>
+              <p class="release-item-desc">Standard sind Aquarell-Muster nach Kategorie — kein falsches Echtfoto. Nur bei sicherem Wikipedia-Treffer zum Ort ein echtes Bild.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Manuelle Bilder</span>
+              <p class="release-item-desc">Gespeicherte oder selbst gesetzte Bild-URLs werden nicht mehr durch späte Vorschläge oder Kategorie-/Tag-Änderungen überschrieben.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Ungespeicherte Locations</span>
+              <p class="release-item-desc">Wie bei Shootings: Badge „Nicht gespeichert“, goldener Rand, Leiste unten mit Speichern/Verwerfen — auch beim Filtern und Tab-Wechsel.</p>
             </li>
           </ul>
         </div>
@@ -409,13 +447,13 @@
   <datalist id="countrySuggestions"><option value="Deutschland"></option><option value="Italien"></option><option value="Österreich"></option><option value="Schweiz"></option></datalist>
   <div class="unsaved-bar" id="unsavedBar"><span id="unsavedText">Ungespeicherte Änderungen</span><button class="btn primary" id="saveOpenBtn" type="button">Speichern</button><button class="btn" id="discardOpenBtn" type="button">Verwerfen</button></div>
 
-  <script src="assets/js/admin-core.js"></script>
-  <script src="assets/js/admin-icons.js"></script>
-  <script src="assets/js/admin-events.js"></script>
-  <script src="assets/js/admin-locations.js"></script>
-  <script src="assets/js/admin-ics.js"></script>
-  <script src="assets/js/admin-calendar-import.js"></script>
-  <script src="assets/js/admin-calendar.js"></script>
-  <script src="assets/js/admin-ui.js"></script>
+  <script src="assets/js/admin-core.js?v=20260608b"></script>
+  <script src="assets/js/admin-icons.js?v=20260608b"></script>
+  <script src="assets/js/admin-events.js?v=20260608b"></script>
+  <script src="assets/js/admin-locations.js?v=20260608b"></script>
+  <script src="assets/js/admin-ics.js?v=20260608b"></script>
+  <script src="assets/js/admin-calendar-import.js?v=20260608b"></script>
+  <script src="assets/js/admin-calendar.js?v=20260608b"></script>
+  <script src="assets/js/admin-ui.js?v=20260608b"></script>
 </body>
 </html>

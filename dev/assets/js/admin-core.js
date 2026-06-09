@@ -94,16 +94,80 @@
 
     function canSortNow(){return activeStatus==='all'&&activeWorkflowFilter==='all'&&activeProject==='all'&&!searchInput.value.trim()}
     function updateOrderButton(){saveOrderBtn.disabled=!orderDirty;saveOrderBtn.classList.toggle('primary',orderDirty)}
+    function dirtyFormKey(form){
+      if(!form)return '';
+      if(form.dataset.locationForm)return `loc:${form.dataset.locationForm}`;
+      return form.dataset.id||'';
+    }
+    function isLocationDirtyKey(key){return String(key||'').startsWith('loc:')}
+    function findFormByDirtyKey(key){
+      if(!key)return null;
+      if(isLocationDirtyKey(key)){
+        const id=key.slice(4);
+        return locationsList?.querySelector(`form[data-location-form="${CSS.escape(id)}"]`);
+      }
+      return shootingsEl?.querySelector(`form[data-id="${CSS.escape(key)}"]`);
+    }
+    function hasUnsavedLocationChanges(){return [...dirtyForms].some(isLocationDirtyKey)}
+    function confirmUnsavedLocationRefresh(){
+      if(!hasUnsavedLocationChanges())return true;
+      return confirm('Du hast ungespeicherte Location-Änderungen. Trotzdem fortfahren?');
+    }
     function hasUnsavedChanges(){return orderDirty||dirtyForms.size>0}
-    function updateUnsavedBar(){if(!unsavedBar)return;const total=dirtyForms.size+(orderDirty?1:0);unsavedText.textContent=orderDirty&&dirtyForms.size?'Reihenfolge + '+dirtyForms.size+' Shooting(s) ungespeichert':orderDirty?'Reihenfolge ungespeichert':dirtyForms.size?dirtyForms.size+' Shooting(s) ungespeichert':'Alles gespeichert';unsavedBar.classList.toggle('show',total>0)}
+    function updateUnsavedBar(){
+      if(!unsavedBar)return;
+      let shootings=0,locations=0;
+      dirtyForms.forEach(key=>{if(isLocationDirtyKey(key))locations++;else shootings++});
+      const parts=[];
+      if(orderDirty)parts.push('Reihenfolge');
+      if(shootings)parts.push(`${shootings} Shooting${shootings===1?'':'s'}`);
+      if(locations)parts.push(`${locations} Location${locations===1?'':'s'}`);
+      unsavedText.textContent=parts.length?`${parts.join(' + ')} ungespeichert`:'Alles gespeichert';
+      unsavedBar.classList.toggle('show',parts.length>0);
+    }
     function readProjectGroupState(){try{return JSON.parse(localStorage.getItem('adminProjectGroups')||'{}')}catch{return {}}}
     function writeProjectGroupState(state){try{localStorage.setItem('adminProjectGroups',JSON.stringify(state))}catch{}}
     function projectGroupKey(group){return group.eventId?`event:${group.eventId}`:`project:${group.project||'__unassigned__'}`}
     function isProjectGroupOpen(group){return readProjectGroupState()[projectGroupKey(group)]===true}
     function setProjectGroupOpen(key,open){const state=readProjectGroupState();state[key]=open;writeProjectGroupState(state)}
-    function setFormDirty(form,dirty=true){const id=form?.dataset?.id;if(!id)return;const card=form.closest('.spot-card'),btn=form.querySelector('.form-save-btn'),state=form.querySelector('[data-save-state]');if(dirty){dirtyForms.add(id);card?.classList.add('is-dirty');btn?.classList.add('is-dirty');if(state)state.textContent='Nicht gespeichert'}else{dirtyForms.delete(id);card?.classList.remove('is-dirty');btn?.classList.remove('is-dirty');if(state)state.textContent='Gespeichert'}updateUnsavedBar();if(typeof schedulePersistAdminDrafts==='function')schedulePersistAdminDrafts()}
+    function setFormDirty(form,dirty=true){
+      const key=dirtyFormKey(form);
+      if(!key)return;
+      const card=form.closest('.spot-card,.location-card');
+      const btn=form.querySelector('.form-save-btn');
+      const state=form.querySelector('[data-save-state]');
+      const isDraft=form.dataset.draft==='true'||form.dataset.locationDraft==='true';
+      if(dirty){
+        dirtyForms.add(key);
+        card?.classList.add('is-dirty');
+        btn?.classList.add('is-dirty');
+        if(state)state.textContent=isDraft?'Entwurf':'Nicht gespeichert';
+      }else{
+        dirtyForms.delete(key);
+        card?.classList.remove('is-dirty');
+        btn?.classList.remove('is-dirty');
+        if(state)state.textContent='Gespeichert';
+      }
+      updateUnsavedBar();
+      if(typeof schedulePersistAdminDrafts==='function')schedulePersistAdminDrafts();
+    }
     function normalizeForCompare(value){return String(value??'').trim()}
-    function snapshotForm(form){const payload=collectPayload(form);delete payload.updated_at;delete payload.weather_label;delete payload.weather_id;if(Array.isArray(payload.badges))payload.badges=[...payload.badges].map(normalizeForCompare).filter(Boolean).sort();Object.keys(payload).forEach(key=>{if(key!=='badges')payload[key]=normalizeForCompare(payload[key])});return JSON.stringify(payload)}
+    function snapshotForm(form){
+      if(form?.dataset?.locationForm){
+        const payload=collectLocationPayload(form);
+        delete payload.updated_at;
+        if(Array.isArray(payload.tags))payload.tags=[...payload.tags].map(normalizeForCompare).filter(Boolean).sort();
+        Object.keys(payload).forEach(key=>{if(key!=='tags')payload[key]=normalizeForCompare(payload[key])});
+        return JSON.stringify(payload);
+      }
+      const payload=collectPayload(form);
+      delete payload.updated_at;
+      delete payload.weather_label;
+      delete payload.weather_id;
+      if(Array.isArray(payload.badges))payload.badges=[...payload.badges].map(normalizeForCompare).filter(Boolean).sort();
+      Object.keys(payload).forEach(key=>{if(key!=='badges')payload[key]=normalizeForCompare(payload[key])});
+      return JSON.stringify(payload);
+    }
     function setFormBaseline(form){form.dataset.baseline=snapshotForm(form)}
     function refreshFormDirtyState(form){if(!form.dataset.baseline)setFormBaseline(form);setFormDirty(form,snapshotForm(form)!==form.dataset.baseline)}
     function clampValue(value,min,max){return Math.min(Math.max(value,min),max)}

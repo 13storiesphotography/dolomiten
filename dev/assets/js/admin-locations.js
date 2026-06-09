@@ -33,6 +33,72 @@
     }
     const LOCATION_IMAGE_FOCUS_CACHE_KEY='dolomiten.admin.locationImageFocus.v1';
     const LOCATION_DISPLAY_NAME_CACHE_KEY='dolomiten.admin.locationDisplayName.v1';
+    let categoryDeleteInFlight=null;
+    let categoryDeleteDialogResolve=null;
+
+    function initCategoryDeleteDialog(){
+      if(initCategoryDeleteDialog.bound)return;
+      initCategoryDeleteDialog.bound=true;
+      const dialog=$('categoryDeleteDialog');
+      const cancelBtn=$('categoryDeleteCancel');
+      const confirmBtn=$('categoryDeleteConfirm');
+      if(!dialog||!cancelBtn||!confirmBtn)return;
+      cancelBtn.addEventListener('click',()=>closeCategoryDeleteDialog(false));
+      confirmBtn.addEventListener('click',()=>closeCategoryDeleteDialog(true));
+      dialog.addEventListener('click',event=>{
+        if(event.target===dialog)closeCategoryDeleteDialog(false);
+      });
+      document.addEventListener('keydown',event=>{
+        if(event.key!=='Escape'||dialog.classList.contains('hidden'))return;
+        event.preventDefault();
+        closeCategoryDeleteDialog(false);
+      });
+    }
+
+    function closeCategoryDeleteDialog(result=false){
+      const dialog=$('categoryDeleteDialog');
+      if(dialog){
+        dialog.classList.add('hidden');
+        dialog.setAttribute('aria-hidden','true');
+      }
+      const resolver=categoryDeleteDialogResolve;
+      categoryDeleteDialogResolve=null;
+      if(resolver)resolver(!!result);
+    }
+
+    function askCategoryDeleteConfirmation({title,message,confirmLabel,confirmDanger=true}){
+      initCategoryDeleteDialog();
+      return new Promise(resolve=>{
+        const dialog=$('categoryDeleteDialog');
+        const titleEl=$('categoryDeleteTitle');
+        const bodyEl=$('categoryDeleteBody');
+        const confirmBtn=$('categoryDeleteConfirm');
+        if(!dialog||!titleEl||!bodyEl||!confirmBtn){
+          resolve(window.confirm(`${title}\n\n${message}`));
+          return;
+        }
+        if(categoryDeleteDialogResolve){
+          resolve(false);
+          return;
+        }
+        categoryDeleteDialogResolve=resolve;
+        titleEl.textContent=title;
+        bodyEl.textContent=message;
+        confirmBtn.textContent=confirmLabel;
+        confirmBtn.classList.toggle('danger',!!confirmDanger);
+        confirmBtn.classList.toggle('primary',!confirmDanger);
+        dialog.classList.remove('hidden');
+        dialog.setAttribute('aria-hidden','false');
+        $('categoryDeleteCancel')?.focus();
+      });
+    }
+
+    function resetLocationDirtyTracking(){
+      [...dirtyForms].forEach(key=>{
+        if(isLocationDirtyKey(key))dirtyForms.delete(key);
+      });
+      updateUnsavedBar();
+    }
     function readDisplayNameCache(){
       try{return JSON.parse(localStorage.getItem(LOCATION_DISPLAY_NAME_CACHE_KEY)||'{}')||{}}catch{return {}}
     }
@@ -718,6 +784,7 @@
     }
 
     function setLocationSort(sortKey){
+      if(!confirmUnsavedLocationRefresh())return;
       locationSortKey=normalizeLocationSort(sortKey);
       writeStoredLocationSort(locationSortKey);
       syncLocationSortSelect();
@@ -735,6 +802,7 @@
     }
 
     function setLocationGroup(groupKey){
+      if(!confirmUnsavedLocationRefresh())return;
       locationGroupKey=normalizeLocationGroup(groupKey);
       writeStoredLocationGroup(locationGroupKey);
       syncLocationGroupSelect();
@@ -804,6 +872,8 @@
       const s=String(label||'').trim();
       if(!s||s.length<2)return true;
       if(/^\d+[a-zA-Z]?$/.test(s))return true;
+      if(/^(St|B|A|L|K)\s*\d{1,4}[a-zA-Z]?$/i.test(s))return true;
+      if(/^(Staatsstraße|Bundesstraße|Autobahn|Landesstraße|Kreisstraße)\s*\d+/i.test(s))return true;
       if(looksLikeMapsLink(s))return true;
       return false;
     }
@@ -913,11 +983,26 @@
       form.dataset.placeAnchorRev=String((Number(form.dataset.placeAnchorRev)||0)+1);
     }
 
+    function cancelLocationImageSuggestion(form){
+      if(!form)return;
+      clearTimeout(form._imageSuggestTimer);
+      form._imageSuggestTimer=null;
+    }
+
+    function markLocationImageManual(form){
+      if(!form)return;
+      const value=String(locationImageField(form)?.value||'').trim();
+      if(!value)return;
+      form.dataset.imageManual='true';
+      delete form.dataset.imageSuggested;
+      cancelLocationImageSuggestion(form);
+    }
+
     function canAutoReplaceLocationImage(form){
       if(!form||form.dataset.imageManual==='true'||form.dataset.imageFromLibrary==='true')return false;
       const current=String(locationImageField(form)?.value||'').trim();
       if(!current)return true;
-      if(form.dataset.imageSuggested==='true')return true;
+      if(form.dataset.imageSuggested!=='true')return false;
       const placeRev=Number(form.dataset.placeAnchorRev)||0;
       const suggestRev=Number(form.dataset.imageSuggestRev)||0;
       return placeRev>suggestRev;
@@ -1389,9 +1474,10 @@
       const meetLat=meetCoords?.lat??'';
       const meetLon=meetCoords?.lon??'';
       const hasNotes=!!String(l.description||'').trim();
+      const hasImage=!!String(l.image_url||'').trim();
       const imageVal=escapeHtml(l.image_url||'');
       return `<form data-location-form="${escapeHtml(l.id)}" ${l.__draft?'data-location-draft="true"':''} class="location-editor-form" novalidate>
-        <div class="section-title">Ort erfassen</div>
+        <div class="location-editor-head">${l.__draft?`<div class="dirty-badge location-form-dirty-badge">Entwurf</div>`:''}<div class="section-title">Ort erfassen</div></div>
         <div class="field full">
           <label>Name</label>
           <div class="location-capture-row">
@@ -1406,12 +1492,15 @@
           <label>Anzeigename</label>
           <input name="display_name" type="text" value="${escapeHtml(customDisplay)}" placeholder="Eigener Name (optional)" />
         </div>
+        <div class="field full"><label>Adresse</label><input name="address" type="text" value="${escapeHtml(l.address||'')}" /></div>
+        <div class="field full"><label>Google Maps Link</label><input name="maps_link" type="text" inputmode="url" value="${escapeHtml(l.maps_link||'')}" /></div>
         <div class="field full"><label>Kategorie</label>${renderLocationCategoryPicker(l)}</div>
         <input type="hidden" name="active" value="${l.active===false?'false':'true'}" />
-        <div class="location-image-block">
-          <div class="location-image-block-head"><span class="location-essentials-label">Bild</span><span class="hint-inline">Vorschlag nach Ort — URL austauschbar</span></div>
-          <div class="field full"><label>Bild URL</label><input name="image_url" type="text" inputmode="url" value="${imageVal}" placeholder="Direkte Bild-URL" /></div>
-          <div class="location-image-stack">
+        <details class="editor-subpanel location-image-panel" ${hasImage?'open':''}>
+          <summary class="editor-subpanel-summary"><strong>Bild</strong><span>optional</span></summary>
+          <div class="editor-subpanel-body location-subpanel-fields">
+            <div class="field full"><label>Bild URL</label><input name="image_url" type="text" inputmode="url" value="${imageVal}" placeholder="Direkte Bild-URL" /></div>
+            <div class="location-image-stack">
               <input type="hidden" name="image_focus" value="${escapeHtml(l.image_focus||'50% 50%')}" data-image-focus-input />
               <div class="location-image-preview-wrap">
                 <div class="image-preview image-preview-pannable" data-location-image-preview data-image-focus="${escapeHtml(l.image_focus||'50% 50%')}" style="--preview-image:${l.image_url?`url('${escapeHtml(l.image_url)}')`:''};--preview-position:${escapeHtml(l.image_focus||'50% 50%')};">${l.image_url?'Ziehen = Ausschnitt · Doppelklick = zentrieren':'Keine Bild-URL gesetzt'}</div>
@@ -1421,7 +1510,8 @@
                 </div>
               </div>
             </div>
-        </div>
+          </div>
+        </details>
         <details class="editor-subpanel location-pin-panel is-collapsed" data-location-pin-panel>
           <summary class="editor-subpanel-summary"><strong>Spot auf Karte anpassen</strong><span>Pin verschieben</span></summary>
           <div class="editor-subpanel-body">
@@ -1449,16 +1539,8 @@
             <div class="field full"><label>Google Maps Link · Treffpunkt</label><input name="meeting_maps_link" type="text" inputmode="url" value="${escapeHtml(l.meeting_maps_link||'')}" placeholder="Eigener Maps-Link nur für den Treffpunkt" /></div>
           </div>
         </details>
-        <details class="editor-subpanel">
-          <summary class="editor-subpanel-summary"><strong>Adresse &amp; Maps-Link</strong><span>optional · Land automatisch</span></summary>
-          <div class="editor-subpanel-body location-subpanel-fields">
-            <div class="field full"><label>Adresse</label><input name="address" type="text" value="${escapeHtml(l.address||'')}" /></div>
-            <div class="field full"><label>Google Maps Link</label><input name="maps_link" type="text" inputmode="url" value="${escapeHtml(l.maps_link||'')}" /></div>
-            <div class="maps-tools"><button class="btn" type="button" data-detect-location-from-maps>Aus Maps-Link erkennen</button><span class="maps-status" data-maps-status="library"></span></div>
-          </div>
-        </details>
         <div class="location-geo-manual hidden" data-location-geo-manual>
-          <p class="hint editor-block-hint">Ohne GPS, Kartentreffer oder Maps-Link: <strong>Land</strong>, <strong>Region</strong> und <strong>Gebiet</strong> ergänzen (oder unten eine Adresse eintragen).</p>
+          <p class="hint editor-block-hint">Ohne GPS, Kartentreffer oder Maps-Link: <strong>Land</strong>, <strong>Region</strong> und <strong>Gebiet</strong> ergänzen (oder oben Adresse eintragen).</p>
           <div class="field full"><label>Land</label><input name="country" type="text" list="countrySuggestions" value="${escapeHtml(l.country||'')}" placeholder="z. B. Deutschland" /></div>
           <div class="grid two">
             <div class="field"><label>Region</label><input name="region" type="text" value="${escapeHtml(l.region||'')}" placeholder="z. B. Bayern" /></div>
@@ -1472,7 +1554,8 @@
             <div class="field full"><label>Tags</label>${renderLocationTagPicker(l)}</div>
           </div>
         </details>
-        <div class="sticky-actions"><button class="btn" type="button" data-location-cancel="${escapeHtml(l.id)}">Abbrechen</button><button class="btn primary" type="submit">Location speichern</button></div>
+        <div class="sticky-actions"><button class="btn" type="button" data-location-cancel="${escapeHtml(l.id)}">Abbrechen</button><button class="btn primary form-save-btn" type="submit">Location speichern</button></div>
+        <div class="form-meta-row location-form-meta"><div class="save-state" data-save-state>${l.__draft?'Entwurf':'Gespeichert'}</div></div>
         ${renderLocationDangerZone(l)}
       </form>`;
     }
@@ -1507,6 +1590,7 @@
           <div>
             <div class="location-title">${escapeHtml(titleName)}${archived?'<span class="location-title-separator">·</span><span class="location-archived-badge">Archiv</span>':''}${l.category?`<span class="location-title-category-group"><span class="location-title-separator">·</span><span class="location-title-category">${escapeHtml(l.category)}</span></span>`:''}</div>
             <div class="location-meta">${escapeHtml(locationMeta(l)||'Noch nicht kategorisiert')}</div>
+            <div class="dirty-badge">Nicht gespeichert</div>
           </div>
           <div class="location-admin-actions"><button class="location-admin-star ${l.is_favorite?'active':''}" type="button" data-admin-toggle-favorite="${escapeHtml(l.id)}" title="Favorit" aria-label="Favorit">${renderFavoriteStarIcon(!!l.is_favorite)}</button></div>
         </summary>`;
@@ -1573,13 +1657,14 @@
           return;
         }
         if(!others)textarea.value=tags.filter(x=>x!==tag).join(', ');
-        chip.querySelector('[data-remove-location-tag]')?.remove();
-      }else{
-        textarea.value=(tags.includes(tag)?tags.filter(x=>x!==tag):[...tags,tag]).join(', ');
-        const next=parseLocationTags(textarea.value);
-        if(next.includes(tag)&&!chip.querySelector('[data-remove-location-tag]'))chip.insertAdjacentHTML('beforeend','<span class="badge-chip-remove" data-remove-location-tag>x</span>');
+        rebuildLocationTagPicker(form);
+        if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
+        return;
       }
+      cancelLocationImageSuggestion(form);
+      textarea.value=(tags.includes(tag)?tags.filter(x=>x!==tag):[...tags,tag]).join(', ');
       rebuildLocationTagPicker(form);
+      if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
     }
 
     function makeAddLocationTagButton(){
@@ -1596,6 +1681,7 @@
       input.dataset.committed='true';
       if(!wrap)return;
       if(value){
+        cancelLocationImageSuggestion(form);
         const tags=parseLocationTags(textarea.value);
         if(!tags.includes(value)){
           textarea.value=[...tags,value].join(', ');
@@ -1617,10 +1703,209 @@
       input.addEventListener('blur',()=>commitInlineLocationTag(input));
     }
 
+    function locationCategoryPresetsList(){
+      return typeof locationCategoryPresets!=='undefined'?locationCategoryPresets:[];
+    }
+
+    function isLocationCategoryPreset(category){
+      const key=String(category||'').trim().toLowerCase();
+      return key!==''&&locationCategoryPresetsList().some(p=>String(p||'').trim().toLowerCase()===key);
+    }
+
     function knownLocationCategories(){
-      const presets=typeof locationCategoryPresets!=='undefined'?locationCategoryPresets:[];
+      const presets=locationCategoryPresetsList();
       const fromLib=[...new Set(locations.map(l=>String(l.category||'').trim()).filter(Boolean))];
       return [...new Set([...presets,...fromLib])].sort((a,b)=>a.localeCompare(b,'de'));
+    }
+
+    function locationCategoryMatches(value,category){
+      const left=String(value||'').trim().toLowerCase();
+      const right=String(category||'').trim().toLowerCase();
+      return left!==''&&left===right;
+    }
+
+    function locationRecordLabel(loc){
+      return locationDisplayName(loc)||String(loc?.name||'').trim()||'(ohne Name)';
+    }
+
+    function syncLocationCategoryInMemory(form,category){
+      const id=form?.dataset?.locationForm;
+      if(!id)return;
+      const value=String(category??form.elements.category?.value??'').trim();
+      const loc=locations.find(item=>item.id===id);
+      if(loc)loc.category=value||'';
+      if(currentLocationsById[id])currentLocationsById[id].category=value||'';
+    }
+
+    function updateLocationSummaryCategory(form){
+      const card=form?.closest('[data-location-id]');
+      if(!card||card.dataset.locationDraft==='true')return;
+      const category=String(form.elements.category?.value||'').trim();
+      const title=card.querySelector('.location-title');
+      if(title){
+        title.querySelector('.location-title-category-group')?.remove();
+        if(category){
+          title.insertAdjacentHTML('beforeend',`<span class="location-title-category-group"><span class="location-title-separator">·</span><span class="location-title-category">${escapeHtml(category)}</span></span>`);
+        }
+      }
+      const meta=card.querySelector('.location-meta');
+      if(meta){
+        const loc={
+          category,
+          country:form.elements.country?.value,
+          region:form.elements.region?.value,
+          area:form.elements.area?.value,
+          address:form.elements.address?.value,
+        };
+        meta.textContent=locationMeta(loc)||'Noch nicht kategorisiert';
+      }
+      syncLocationCategoryInMemory(form,category);
+    }
+
+    function collectImmediateCategoryUsage(category){
+      const cat=String(category||'').trim();
+      if(!cat)return [];
+      const seen=new Set();
+      const names=[];
+
+      function bump(id,label){
+        const key=id?`id:${id}`:`name:${String(label||'').trim().toLowerCase()}`;
+        if(seen.has(key))return;
+        seen.add(key);
+        names.push(String(label||'').trim()||'(ohne Name)');
+      }
+
+      locations.forEach(loc=>{
+        if(loc.__draft||!locationCategoryMatches(loc.category,cat))return;
+        bump(loc.id,locationRecordLabel(loc));
+      });
+
+      locationsList?.querySelectorAll('form[data-location-form]').forEach(form=>{
+        if(form.dataset.locationDraft==='true')return;
+        const value=String(form.elements.category?.value||'').trim();
+        if(!locationCategoryMatches(value,cat))return;
+        bump(form.dataset.locationForm,form.elements.display_name?.value||form.elements.name?.value);
+      });
+
+      locationsList?.querySelectorAll('[data-location-id]:not([data-location-draft="true"])').forEach(card=>{
+        const titleCategory=card.querySelector('.location-title-category');
+        if(titleCategory&&locationCategoryMatches(titleCategory.textContent,cat)){
+          bump(card.dataset.locationId,String(card.querySelector('.location-title')?.textContent||'').split('·')[0].trim());
+          return;
+        }
+        const meta=String(card.querySelector('.location-meta')?.textContent||'').trim();
+        const metaKey=cat.toLowerCase();
+        if(meta.toLowerCase()===metaKey||meta.toLowerCase().startsWith(`${metaKey} ·`)){
+          bump(card.dataset.locationId,String(card.querySelector('.location-title')?.textContent||'').split('·')[0].trim());
+        }
+      });
+
+      return names;
+    }
+
+    async function collectCategoryUsageFromDb(category){
+      const cat=String(category||'').trim();
+      if(!cat)return {total:0,names:[]};
+      if(!db)throw new Error('Keine Datenbankverbindung — Kategorie-Verwendung kann nicht geprüft werden.');
+      const seenIds=new Set();
+      const names=[];
+
+      function bump(id,label){
+        if(id&&seenIds.has(id))return;
+        if(id)seenIds.add(id);
+        names.push(String(label||'').trim()||'(ohne Name)');
+      }
+
+      const {data,error}=await db.from('locations').select('id,category,name,display_name');
+      if(error)throw error;
+      (data||[]).forEach(row=>{
+        if(!locationCategoryMatches(row.category,cat))return;
+        bump(row.id,row.display_name||row.name);
+      });
+
+      return {total:names.length,names};
+    }
+
+    async function collectCategoryUsage(category){
+      const immediate=collectImmediateCategoryUsage(category);
+      const dbUsage=await collectCategoryUsageFromDb(category);
+      const names=[...new Set([...immediate,...dbUsage.names])];
+      return {total:names.length,names};
+    }
+
+    async function countCategoryUsage(category){
+      const {total}=await collectCategoryUsage(category);
+      return total;
+    }
+
+    function rebuildAllLocationCategoryPickers(){
+      locationsList?.querySelectorAll('form[data-location-form]').forEach(form=>rebuildLocationCategoryPicker(form));
+    }
+
+    async function deleteLocationCategoryFromPicker(category){
+      const cat=String(category||'').trim();
+      if(!cat)return false;
+      if(categoryDeleteInFlight){
+        showToast('Kategorie-Löschung läuft bereits…');
+        return false;
+      }
+      categoryDeleteInFlight=cat;
+      try{
+        const immediateNames=collectImmediateCategoryUsage(cat);
+        let dbNames=[];
+        try{
+          const dbUsage=await collectCategoryUsageFromDb(cat);
+          dbNames=dbUsage.names;
+        }catch(error){
+          console.error(error);
+          if(!immediateNames.length){
+            showError('Kategorie-Verwendung konnte nicht aus der Datenbank gelesen werden: '+formatError(error));
+            return false;
+          }
+        }
+        const effectiveNames=[...new Set([...immediateNames,...dbNames])];
+        const effectiveTotal=effectiveNames.length;
+        const examples=effectiveNames.slice(0,4).join(', ');
+        const more=effectiveNames.length>4?` (+${effectiveNames.length-4} weitere)`: '';
+        if(effectiveTotal===0&&isLocationCategoryPreset(cat)){
+          alert(`Kategorie „${cat}“ ist eine Voreinstellung und derzeit bei keiner Location vergeben.\n\nEs gibt nichts zu löschen.`);
+          return false;
+        }
+        if(effectiveTotal>0){
+          const ok=await askCategoryDeleteConfirmation({
+            title:'Kategorie wirklich überall entfernen?',
+            message:`„${cat}“ ist bei ${effectiveTotal} Location(s) vergeben${examples?`: ${examples}${more}`:''}.\n\nDie Kategorie wird bei allen betroffenen Locations in der Datenbank entfernt. Abbrechen lässt alles unverändert.`,
+            confirmLabel:`Bei ${effectiveTotal} Location(s) entfernen`,
+            confirmDanger:true,
+          });
+          if(!ok)return false;
+          await removeLocationCategoryGlobally(cat);
+          resetLocationDirtyTracking();
+          await loadLocations();
+          showToast(`Kategorie „${cat}“ bei ${effectiveTotal} Location(s) in der Datenbank entfernt`);
+          return true;
+        }
+        const ok=await askCategoryDeleteConfirmation({
+          title:'Kategorie nur aus Entwürfen entfernen?',
+          message:`„${cat}“ ist bei keiner gespeicherten Location vergeben.\n\nNur aus offenen Entwürfen entfernen?`,
+          confirmLabel:'Aus Entwürfen entfernen',
+          confirmDanger:false,
+        });
+        if(!ok)return false;
+        locationsList?.querySelectorAll('form[data-location-form][data-location-draft="true"]').forEach(form=>{
+          if(!locationCategoryMatches(form.elements.category?.value,cat))return;
+          form.elements.category.value='';
+          delete form.dataset.categorySuggested;
+          rebuildLocationCategoryPicker(form);
+        });
+        showToast(`Kategorie „${cat}“ nur aus Entwürfen entfernt`);
+        return true;
+      }catch(error){
+        showError('Kategorie konnte nicht gelöscht werden: '+formatError(error));
+        return false;
+      }finally{
+        categoryDeleteInFlight=null;
+      }
     }
 
     function renderLocationCategoryPickerMarkup(activeCategory='',suggested=''){
@@ -1629,7 +1914,7 @@
       return `<div class="location-category-tools"><div class="badge-picker location-category-picker">${known.map(c=>{
         const on=active===c;
         const isSuggested=on&&suggested&&suggested===c;
-        return `<button type="button" class="badge-chip ${on?'active':''} ${isSuggested?'is-suggested':''}" data-location-category="${escapeHtml(c)}">${escapeHtml(c)}</button>`;
+        return `<button type="button" class="badge-chip ${on?'active':''} ${isSuggested?'is-suggested':''}" data-location-category="${escapeHtml(c)}">${escapeHtml(c)}<span class="badge-chip-remove" data-remove-location-category>x</span></button>`;
       }).join('')}<button type="button" class="badge-chip add-badge" data-add-location-category aria-label="Eigene Kategorie">+</button></div><input type="hidden" name="category" value="${escapeHtml(active)}" /></div>`;
     }
 
@@ -1637,9 +1922,24 @@
       return renderLocationCategoryPickerMarkup(loc?.category||'');
     }
 
+    async function handleRemoveLocationCategoryChip(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      const chip=e.currentTarget.closest('[data-location-category]');
+      const form=chip?.closest('form');
+      const cat=chip?.dataset.locationCategory;
+      if(!cat||!form)return;
+      const deleted=await deleteLocationCategoryFromPicker(cat);
+      if(deleted&&form.dataset.locationDraft==='true'&&typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
+    }
+
     function bindLocationCategoryPicker(form){
       const tools=form?.querySelector('.location-category-tools');
       if(!tools)return;
+      tools.querySelectorAll('[data-remove-location-category]').forEach(btn=>{
+        btn.addEventListener('click',handleRemoveLocationCategoryChip,{capture:true});
+      });
       tools.querySelectorAll('[data-location-category]').forEach(b=>b.addEventListener('click',toggleLocationCategory));
       const addBtn=tools.querySelector('[data-add-location-category]');
       if(addBtn){
@@ -1659,22 +1959,27 @@
 
     function setLocationCategoryOnForm(form,category,{suggested=false,clearSuggested=false}={}){
       if(!form?.elements?.category)return;
+      cancelLocationImageSuggestion(form);
       const value=String(category||'').trim();
       form.elements.category.value=value;
       if(clearSuggested)delete form.dataset.categorySuggested;
       else if(suggested&&value)form.dataset.categorySuggested=value;
       else if(!suggested)delete form.dataset.categorySuggested;
       rebuildLocationCategoryPicker(form);
+      updateLocationSummaryCategory(form);
     }
 
-    function toggleLocationCategory(e){
+    async function toggleLocationCategory(e){
+      if(e.target.closest('[data-remove-location-category]'))return;
       const chip=e.currentTarget,form=chip.closest('form'),input=form?.elements?.category;
       if(!input)return;
       const cat=chip.dataset.locationCategory;
       const current=String(input.value||'').trim();
+      cancelLocationImageSuggestion(form);
       input.value=current===cat?'':cat;
       delete form.dataset.categorySuggested;
       rebuildLocationCategoryPicker(form);
+      updateLocationSummaryCategory(form);
       if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
     }
 
@@ -1720,7 +2025,7 @@
       const extraBits=[...Object.entries(extra).map(([k,v])=>`${k}=${v}`),...Object.values(osmHit.address||{})].join(' ').toLowerCase();
       const hay=`${type} ${klass} ${category} ${name} ${extraBits}`;
 
-      if(/water=lake|natural=water|reservoir|\blake\b|\blago\b|\blac\b/.test(hay)||type==='lake'||type==='reservoir')return 'See';
+      if(/water=lake|natural=water|reservoir|\blake\b|\blago\b|\blac\b|\bsee\b|stausee|speicher|teich|weiher/.test(hay)||type==='lake'||type==='reservoir'||type==='water')return 'See';
       if(/natural=peak|mountain_pass|mountain_range|\bpeak\b|\bpass\b|berg|spitze|joch|gipfel|alm\b|dolomit/.test(hay)||type==='peak'||type==='pass')return /dolomit|dolomiti|südtirol|south.?tyrol/.test(hay)?'Dolomiten':'Berge';
       if(/tourism=viewpoint|viewpoint|aussicht/.test(hay)||type==='viewpoint')return 'Aussichtspunkt';
       if(/mountain_pass|passstraße|highway=.*pass/.test(hay))return 'Passstraße';
@@ -1753,11 +2058,17 @@
 
     function bindLocationEditors(){
       locationsList.querySelectorAll('form[data-location-form]').forEach(form=>{
+        setFormBaseline(form);
+        if(form.dataset.locationDraft==='true')setFormDirty(form,true);
+        else if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
         form.addEventListener('submit',saveLocationForm);
-        form.addEventListener('input',()=>{
+        const syncLocationFormState=()=>{
           refreshLocationImagePreview(form);
           syncLocationGeoFieldsVisibility(form);
-        });
+          refreshFormDirtyState(form);
+        };
+        form.addEventListener('input',syncLocationFormState);
+        form.addEventListener('change',syncLocationFormState);
         form.elements.region?.addEventListener('input',()=>syncLocationGeoFieldsVisibility(form));
         form.elements.area?.addEventListener('input',()=>syncLocationGeoFieldsVisibility(form));
         bindLocationLibraryCapture(form);
@@ -1772,8 +2083,6 @@
       });
       locationsList.querySelectorAll('[data-location-tag]').forEach(b=>b.addEventListener('click',toggleLocationTag));
       locationsList.querySelectorAll('[data-add-location-tag]').forEach(b=>b.addEventListener('click',addCustomLocationTag));
-      locationsList.querySelectorAll('[data-location-category]').forEach(b=>b.addEventListener('click',toggleLocationCategory));
-      locationsList.querySelectorAll('[data-add-location-category]').forEach(b=>b.addEventListener('click',addCustomLocationCategory));
       locationsList.querySelectorAll('[data-detect-location-from-maps]').forEach(b=>b.addEventListener('click',detectLocationFromMaps));
       locationsList.querySelectorAll('[data-location-delete]').forEach(b=>b.addEventListener('click',deleteLocation));
       locationsList.querySelectorAll('[data-location-archive]').forEach(b=>b.addEventListener('click',archiveLocation));
@@ -1979,6 +2288,8 @@
       }else{
         showToast(isDraft?'Location erstellt':'Location gespeichert');
       }
+      setFormBaseline(form);
+      setFormDirty(form,false);
       await loadLocations();
       setStatus('Location gespeichert');
     }
@@ -2001,8 +2312,67 @@
       showToast(`Tag „${tag}“ entfernt`);
     }
 
-    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;syncLocationFavoritesFilterBtn();const id=newLocationId();const payload={id,name:'',display_name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');openNewLocationDraftCard(locationsList.querySelector(`[data-location-id="${id}"]`))}
-    function cancelLocationEdit(e){const form=e.currentTarget.closest('form'),id=form?.dataset.locationForm;if(form?.dataset.locationDraft==='true'){locations=locations.filter(l=>l.id!==id);delete currentLocationsById[id]}renderLocations()}
+    async function removeLocationCategoryGlobally(category){
+      const cat=String(category||'').trim();
+      const now=new Date().toISOString();
+      const idsToClear=new Set();
+      locations.forEach(loc=>{
+        if(!locationCategoryMatches(loc.category,cat))return;
+        loc.category='';
+        loc.updated_at=now;
+        if(loc.id){
+          currentLocationsById[loc.id]=loc;
+          idsToClear.add(loc.id);
+        }
+      });
+      const {data,error}=await db.from('locations').select('id,category');
+      if(error)throw error;
+      (data||[]).forEach(row=>{
+        if(!locationCategoryMatches(row.category,cat)||!row.id)return;
+        idsToClear.add(row.id);
+      });
+      for(const id of idsToClear){
+        const {error:updateError}=await db.from('locations').update({category:'',updated_at:now}).eq('id',id);
+        if(updateError)throw updateError;
+      }
+      locationsList.querySelectorAll('form[data-location-form]').forEach(form=>{
+        if(!locationCategoryMatches(form.elements.category?.value,cat))return;
+        form.elements.category.value='';
+        delete form.dataset.categorySuggested;
+        rebuildLocationCategoryPicker(form);
+        updateLocationSummaryCategory(form);
+        if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
+      });
+      renderLocationFilters();
+    }
+
+    async function createNewLocation(){clearError();if(!confirmUnsavedLocationRefresh())return;locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;syncLocationFavoritesFilterBtn();const id=newLocationId();const payload={id,name:'',display_name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');openNewLocationDraftCard(locationsList.querySelector(`[data-location-id="${id}"]`))}
+    function cancelLocationEdit(e){
+      const form=e.currentTarget.closest('form'),id=form?.dataset.locationForm;
+      if(!form||!id)return;
+      const isDraft=form.dataset.locationDraft==='true';
+      const key=dirtyFormKey(form);
+      if(isDraft){
+        if(!confirm('Neue Location verwerfen?'))return;
+        locations=locations.filter(l=>l.id!==id);
+        delete currentLocationsById[id];
+        if(key)dirtyForms.delete(key);
+        updateUnsavedBar();
+        renderLocations();
+        showToast('Entwurf verworfen');
+        return;
+      }
+      if(key&&dirtyForms.has(key)&&!confirm('Änderungen an dieser Location verwerfen?'))return;
+      if(key)dirtyForms.delete(key);
+      updateUnsavedBar();
+      const wasOpen=form.closest('details.location-card')?.open;
+      renderLocations();
+      if(wasOpen){
+        const card=locationsList.querySelector(`details.location-card[data-location-id="${CSS.escape(id)}"]`);
+        if(card)card.open=true;
+      }
+      showToast('Änderungen verworfert');
+    }
     async function setLocationActiveState(id,active){
       const now=new Date().toISOString();
       const {error}=await db.from('locations').update({active:active!==false,updated_at:now}).eq('id',id);
@@ -2232,31 +2602,60 @@
 
     function applyLocationToForm(e){const location=currentLocationsById[e.currentTarget.value];if(!location)return;const form=e.currentTarget.closest('form');applyLibraryLocationToShootingForm(form,location);showToast('Location übernommen')}
 
+    function mapsCoordPair(lat,lon){
+      const la=Number(lat),lo=Number(lon);
+      if(!Number.isFinite(la)||!Number.isFinite(lo))return null;
+      if(Math.abs(la)>90||Math.abs(lo)>180)return null;
+      return {lat:la,lon:lo};
+    }
+
+    function extractPlaceNameFromMapsLink(url){
+      const value=String(url||'').trim();
+      if(!value)return '';
+      try{
+        const decoded=decodeURIComponent(value);
+        const match=decoded.match(/\/maps\/place\/([^/@?]+)/i)||decoded.match(/\/place\/([^/@?]+)/i);
+        if(!match)return '';
+        const name=String(match[1]||'').replace(/\+/g,' ').trim();
+        return name&&!isWeakLocationLabel(name)?name:'';
+      }catch(_){
+        return '';
+      }
+    }
+
     function extractCoordsFromMapsLink(url){
       const value=String(url||'').trim();
       if(!value)return null;
 
+      // Google place links often embed a viewport @ pair and a precise POI !3d/!4d pair — prefer the pin.
+      const precise3d=value.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+      if(precise3d){
+        const coords=mapsCoordPair(precise3d[1],precise3d[2]);
+        if(coords)return coords;
+      }
+      const precise2d=value.match(/!2d(-?\d+(?:\.\d+)?)!3d(-?\d+(?:\.\d+)?)/);
+      if(precise2d){
+        const coords=mapsCoordPair(precise2d[2],precise2d[1]);
+        if(coords)return coords;
+      }
+
       const patterns=[
         /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
         /[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
-        /[?&]ll=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
-        /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
-        /!2d(-?\d+(?:\.\d+)?)!3d(-?\d+(?:\.\d+)?)/
+        /[?&]ll=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/
       ];
 
       for(const pattern of patterns){
         const match=value.match(pattern);
         if(match){
-          if(pattern.source.includes('!2d')){
-            return {lat:Number(match[2]),lon:Number(match[1])};
-          }
-          return {lat:Number(match[1]),lon:Number(match[2])};
+          const coords=mapsCoordPair(match[1],match[2]);
+          if(coords)return coords;
         }
       }
 
       const decoded=decodeURIComponent(value);
       const coordMatch=decoded.match(/(-?\d{1,2}\.\d{4,})\s*,\s*(-?\d{1,3}\.\d{4,})/);
-      if(coordMatch)return {lat:Number(coordMatch[1]),lon:Number(coordMatch[2])};
+      if(coordMatch)return mapsCoordPair(coordMatch[1],coordMatch[2]);
 
       return null;
     }
@@ -2334,13 +2733,23 @@
       return await response.json();
     }
 
-    const CATEGORY_LOCATION_IMAGES={
-      Berge:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=80',
-      See:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&q=80',
-      Wald:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80',
-      'Aussichtspunkt':'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=80',
-      'Passstraße':'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80',
-      Dolomiten:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80'
+    const WATERCOLOR_SAMPLE_IMAGES={
+      default:'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80',
+      See:'https://images.unsplash.com/photo-1574169208507-84376144848b?auto=format&fit=crop&w=1600&q=80',
+      Berge:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Wald:'https://images.unsplash.com/photo-1752316226118-d7ece2fe4607?auto=format&fit=crop&w=1600&q=80',
+      Wiese:'https://images.unsplash.com/photo-1752316226118-d7ece2fe4607?auto=format&fit=crop&w=1600&q=80',
+      Stadt:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      'Aussichtspunkt':'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      'Passstraße':'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Dolomiten:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Altstadt:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Dorf:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Hotel:'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80',
+      Indoor:'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80',
+      Schloss:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Roadtrip:'https://images.unsplash.com/photo-1740516367938-ad29a1bc6ed1?auto=format&fit=crop&w=1600&q=80',
+      Park:'https://images.unsplash.com/photo-1752316226118-d7ece2fe4607?auto=format&fit=crop&w=1600&q=80'
     };
 
     function locationImageField(form){
@@ -2358,12 +2767,13 @@
       form.dataset.locationImageBound='true';
       const input=locationImageField(form);
       if(!input)return;
+      if(String(input.value||'').trim()&&!form.dataset.imageSuggested)markLocationImageManual(form);
       input.addEventListener('input',()=>{
         const value=String(input.value||'').trim();
         if(value){
-          form.dataset.imageManual='true';
-          delete form.dataset.imageSuggested;
+          markLocationImageManual(form);
         }else{
+          cancelLocationImageSuggestion(form);
           delete form.dataset.imageManual;
           delete form.dataset.imageSuggested;
           delete form.dataset.imageFromLibrary;
@@ -2389,6 +2799,23 @@
       return{lang:raw.slice(0,idx)||'de',title:raw.slice(idx+1).replace(/_/g,' ')};
     }
 
+    function normalizePlaceTitle(value){
+      return String(value||'').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .replace(/\s*\([^)]*\)\s*/g,' ')
+        .replace(/[._,'’`"]/g,' ')
+        .replace(/\s+/g,' ')
+        .trim();
+    }
+
+    function placeTitlesMatch(expected,actual){
+      const wanted=normalizePlaceTitle(expected);
+      const found=normalizePlaceTitle(actual);
+      if(!wanted||!found||wanted.length<3)return false;
+      if(wanted===found)return true;
+      return found.startsWith(`${wanted} `)||wanted.startsWith(`${found} `);
+    }
+
     async function fetchWikipediaLeadImage(title,lang='de'){
       const pageTitle=String(title||'').trim().replace(/\s+/g,'_');
       if(!pageTitle)return null;
@@ -2406,74 +2833,78 @@
       }
     }
 
-    async function fetchCommonsImage(searchTerm){
-      const q=String(searchTerm||'').trim();
-      if(q.length<3)return null;
-      const api=`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=1200&format=json&origin=*`;
+    async function fetchWikipediaLeadImageIfExact(title,lang='de'){
+      const wanted=String(title||'').trim();
+      if(!wanted||wanted.length<3)return null;
+      const pageTitle=wanted.replace(/\s+/g,'_');
+      const api=`https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=pageimages&piprop=thumbnail|original&pithumbsize=1200&format=json&origin=*`;
       try{
         const response=await fetch(api);
-        if(!response.ok)return null;
+        if(!response.ok)return lang==='de'?fetchWikipediaLeadImageIfExact(title,'en'):null;
         const data=await response.json();
-        const pages=data?.query?.pages||{};
-        for(const page of Object.values(pages)){
-          const info=page?.imageinfo?.[0];
-          const url=info?.thumburl||info?.url;
-          if(url&&!/\.svg($|\?)/i.test(url))return url;
-        }
-      }catch(error){console.error(error)}
-      return null;
+        const page=Object.values(data?.query?.pages||{})[0];
+        if(!page||page.missing)return lang==='de'?fetchWikipediaLeadImageIfExact(title,'en'):null;
+        if(!placeTitlesMatch(wanted,page.title))return null;
+        return page.original?.source||page.thumbnail?.source||null;
+      }catch(error){
+        console.error(error);
+        return null;
+      }
     }
 
-    function buildLocationImageSearchQuery(form,meta={}){
-      const name=String(form?.elements?.name?.value||form?.elements?.location_name?.value||'').trim();
-      const region=String(meta?.region||readFormRegionArea(form).region||'').trim();
-      const area=String(meta?.area||readFormRegionArea(form).area||'').trim();
-      const country=String(meta?.country||form?.elements?.country?.value||'').trim();
+    function inferImageCategoryLabel(form,meta={}){
       const category=String(form?.elements?.category?.value||'').trim();
-      const parts=[name,area,region,category,country].filter(Boolean);
-      const unique=[...new Set(parts.map(p=>String(p).trim()).filter(p=>p.length>1))];
-      const query=unique.slice(0,4).join(' ');
-      if(!query)return '';
-      const inAlps=/ital|österreich|austria|südtirol|south tyrol|dolomiten|dolomiti|alps|alpen/i.test(query);
-      return inAlps?`${query} landscape`:`${query} landscape mountains`;
+      if(category)return category;
+      return suggestCategoryFromOsm({
+        name:String(form?.elements?.name?.value||form?.elements?.location_name?.value||meta?.official_name||''),
+        display_name:meta?.display_name||'',
+        type:meta?.osm_type||'',
+        class:meta?.osm_class||'',
+        category:meta?.osm_category||'',
+        extratags:meta?.osm_extratags||{}
+      })||'';
     }
 
-    function categoryFallbackImage(category){
+    function watercolorSampleImage(category){
       const key=String(category||'').trim();
-      if(!key)return null;
-      if(CATEGORY_LOCATION_IMAGES[key])return CATEGORY_LOCATION_IMAGES[key];
+      if(key&&WATERCOLOR_SAMPLE_IMAGES[key])return WATERCOLOR_SAMPLE_IMAGES[key];
       const lower=key.toLowerCase();
-      if(/berg|alm|joch|pass|spitze|gipfel/.test(lower))return CATEGORY_LOCATION_IMAGES.Berge;
-      if(/see|lake|lago/.test(lower))return CATEGORY_LOCATION_IMAGES.See;
-      if(/wald|forest|wood/.test(lower))return CATEGORY_LOCATION_IMAGES.Wald;
-      return null;
+      if(/berg|alm|joch|pass|spitze|gipfel|dolomit/.test(lower))return WATERCOLOR_SAMPLE_IMAGES.Berge;
+      if(/\bsee\b|lake|lago|teich|weiher|stausee/.test(lower))return WATERCOLOR_SAMPLE_IMAGES.See;
+      if(/wald|forest|wood/.test(lower))return WATERCOLOR_SAMPLE_IMAGES.Wald;
+      if(/wiese|meadow|grass/.test(lower))return WATERCOLOR_SAMPLE_IMAGES.Wiese;
+      if(/stadt|city|dorf|altstadt|hotel|schloss|indoor/.test(lower))return WATERCOLOR_SAMPLE_IMAGES.Stadt;
+      return WATERCOLOR_SAMPLE_IMAGES.default;
+    }
+
+    async function fetchTrustedLocationPhoto(form,meta={},osmExtratags=null){
+      const placeName=String(form?.elements?.name?.value||form?.elements?.location_name?.value||meta?.official_name||'').trim();
+      if(!placeName||placeName.length<3)return null;
+      const wiki=parseWikipediaTag(osmExtratags?.wikipedia);
+      if(wiki?.title&&placeTitlesMatch(placeName,wiki.title)){
+        const fromTagged=await fetchWikipediaLeadImage(wiki.title,wiki.lang||'de');
+        if(fromTagged)return fromTagged;
+      }
+      return await fetchWikipediaLeadImageIfExact(placeName,'de');
     }
 
     async function resolveLocationImageUrl(form,meta={},osmExtratags=null){
       if(!canAutoReplaceLocationImage(form))return null;
       const input=locationImageField(form);
       if(!input)return null;
-
-      const wiki=parseWikipediaTag(osmExtratags?.wikipedia);
-      if(wiki?.title){
-        const fromWiki=await fetchWikipediaLeadImage(wiki.title,wiki.lang);
-        if(fromWiki)return fromWiki;
-      }
-
-      const query=buildLocationImageSearchQuery(form,meta);
-      if(query){
-        const fromCommons=await fetchCommonsImage(query);
-        if(fromCommons)return fromCommons;
-      }
-
-      return categoryFallbackImage(form?.elements?.category?.value)||categoryFallbackImage(meta?.area);
+      const extratags=osmExtratags||meta?.osm_extratags||null;
+      const trusted=await fetchTrustedLocationPhoto(form,meta,extratags);
+      if(trusted)return {url:trusted,trusted:true};
+      return {url:watercolorSampleImage(inferImageCategoryLabel(form,meta)),trusted:false};
     }
 
-    function applySuggestedImageToForm(form,url,{silent=false}={}){
+    function applySuggestedImageToForm(form,url,{silent=false,trusted=false}={}){
       const input=locationImageField(form);
       if(!url||!input||!canAutoReplaceLocationImage(form))return false;
       input.value=url;
+      delete form.dataset.imageManual;
       form.dataset.imageSuggested='true';
+      form.dataset.imageSuggestKind=trusted?'photo':'watercolor';
       form.dataset.imageSuggestRev=form.dataset.placeAnchorRev||'0';
       if(form.elements.image_focus)form.elements.image_focus.value='50% 50%';
       delete form.dataset.lastPreviewImageUrl;
@@ -2482,17 +2913,25 @@
       }
       refreshFormImagePreview(form);
       if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
-      if(!silent)showToast('Bildvorschlag gesetzt — bei Bedarf URL ersetzen');
+      if(!silent){
+        showToast(trusted
+          ?'Ortsbild übernommen — bei Bedarf ersetzen'
+          :'Aquarell-Vorschlag gesetzt — eigenes Bild eintragen');
+      }
       return true;
     }
 
     function scheduleLocationImageSuggestion(form,meta={},osmExtratags=null){
-      if(!form||!formHasGeoAnchor(form))return;
-      clearTimeout(form._imageSuggestTimer);
+      if(!form||!formHasGeoAnchor(form)||!canAutoReplaceLocationImage(form))return;
+      const extratags=osmExtratags||meta?.osm_extratags||null;
+      const anchorRev=String(form.dataset.placeAnchorRev||'0');
+      cancelLocationImageSuggestion(form);
       form._imageSuggestTimer=setTimeout(async()=>{
         try{
-          const url=await resolveLocationImageUrl(form,meta,osmExtratags);
-          if(url)applySuggestedImageToForm(form,url);
+          if(String(form.dataset.placeAnchorRev||'0')!==anchorRev)return;
+          if(!canAutoReplaceLocationImage(form))return;
+          const suggestion=await resolveLocationImageUrl(form,meta,extratags);
+          if(suggestion?.url)applySuggestedImageToForm(form,suggestion.url,{trusted:!!suggestion.trusted});
         }catch(error){console.error(error)}
       },700);
     }
@@ -2602,7 +3041,7 @@
       if(!results?.length){
         return `<div class="location-picker-empty">Kein Kartentreffer — unten Maps-Link nutzen oder Namen anpassen.</div>`;
       }
-      return results.map((item,index)=>{
+      const items=results.map((item,index)=>{
         const title=osmOfficialName(item,searchQuery);
         const meta=String(item.display_name||'');
         return `<button class="location-option location-option-osm" type="button" data-pick-osm="${index}">
@@ -2610,6 +3049,7 @@
           <div><div class="location-option-title">${escapeHtml(title)}</div><div class="location-option-meta">${escapeHtml(meta)}</div></div>
         </button>`;
       }).join('');
+      return `<div class="location-osm-results">${items}</div>`;
     }
 
     async function applyMapsLinkFromFinder(form,rawLink){
@@ -2783,10 +3223,17 @@
       setMapsStatus(form,'Erkenne Ort…',kind);
       const result=await reverseGeocodeCoords(coords);
       const meta=mapAddressToMeta(result.address||{},result.display_name||'');
+      const placeName=extractPlaceNameFromMapsLink(resolvedLink);
+      const osmName=osmOfficialName({name:result.name,display_name:result.display_name,address:result.address});
+      meta.official_name=placeName||osmName;
       meta.display_name=result.display_name||'';
       meta.lat=coords.lat;
       meta.lon=coords.lon;
       meta.resolved_link=resolvedLink;
+      meta.osm_extratags=result.extratags||null;
+      meta.osm_type=result.type||'';
+      meta.osm_class=result.class||'';
+      meta.osm_category=result.category||'';
       if(form&&isLibraryLocationForm(form))maybeApplyOsmCategorySuggestion(form,result);
       setMapsStatus(form,'Infos erkannt',kind);
       window.setTimeout(()=>setMapsStatus(form,'',kind),2200);
