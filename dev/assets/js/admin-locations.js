@@ -35,6 +35,7 @@
     const LOCATION_DISPLAY_NAME_CACHE_KEY='dolomiten.admin.locationDisplayName.v1';
     let categoryDeleteInFlight=null;
     let categoryDeleteDialogResolve=null;
+    const hiddenPickerCategories=new Set();
 
     function initCategoryDeleteDialog(){
       if(initCategoryDeleteDialog.bound)return;
@@ -815,6 +816,9 @@
       const {data,error}=await db.from('locations').select('*').order('updated_at',{ascending:false});
       if(error){showError('Locations konnten nicht geladen werden: '+formatError(error));return}
       locations=(data||[]).map(normalizeLocationRecord);
+      locations.forEach(loc=>{
+        if(!loc.__draft&&loc.category)showCategoryInPicker(loc.category);
+      });
       await migrateLocationTagsIfNeeded();
       await migrateLocationGeoIfNeeded();
       await hydrateLocationShootingUsage();
@@ -1703,19 +1707,56 @@
       input.addEventListener('blur',()=>commitInlineLocationTag(input));
     }
 
-    function locationCategoryPresetsList(){
-      return typeof locationCategoryPresets!=='undefined'?locationCategoryPresets:[];
+    function categoriesUsedInLibrary(){
+      return [...new Set(locations.map(l=>String(l.category||'').trim()).filter(Boolean))];
     }
 
-    function isLocationCategoryPreset(category){
+    function resolveCategorySuggestion(suggested){
+      const raw=String(suggested||'').trim();
+      if(!raw)return '';
+      const key=raw.toLowerCase();
+      const existing=categoriesUsedInLibrary().find(c=>c.toLowerCase()===key);
+      return existing||raw;
+    }
+
+    function isCategoryHiddenFromPicker(category){
       const key=String(category||'').trim().toLowerCase();
-      return key!==''&&locationCategoryPresetsList().some(p=>String(p||'').trim().toLowerCase()===key);
+      return key!==''&&hiddenPickerCategories.has(key);
+    }
+
+    function hideCategoryFromPicker(category){
+      const key=String(category||'').trim().toLowerCase();
+      if(key)hiddenPickerCategories.add(key);
+    }
+
+    function showCategoryInPicker(category){
+      const key=String(category||'').trim().toLowerCase();
+      if(key)hiddenPickerCategories.delete(key);
     }
 
     function knownLocationCategories(){
-      const presets=locationCategoryPresetsList();
-      const fromLib=[...new Set(locations.map(l=>String(l.category||'').trim()).filter(Boolean))];
-      return [...new Set([...presets,...fromLib])].sort((a,b)=>a.localeCompare(b,'de'));
+      return categoriesUsedInLibrary()
+        .filter(c=>!isCategoryHiddenFromPicker(c))
+        .sort((a,b)=>a.localeCompare(b,'de'));
+    }
+
+    function removeUnusedCategoryFromPicker(category){
+      const cat=String(category||'').trim();
+      if(!cat)return;
+      hideCategoryFromPicker(cat);
+      locations.forEach(loc=>{
+        if(!locationCategoryMatches(loc.category,cat))return;
+        loc.category='';
+        if(loc.id)currentLocationsById[loc.id]=loc;
+      });
+      locationsList?.querySelectorAll('form[data-location-form]').forEach(form=>{
+        if(!locationCategoryMatches(form.elements.category?.value,cat))return;
+        form.elements.category.value='';
+        delete form.dataset.categorySuggested;
+        rebuildLocationCategoryPicker(form);
+        updateLocationSummaryCategory(form);
+      });
+      renderLocationFilters();
     }
 
     function locationCategoryMatches(value,category){
@@ -1867,10 +1908,6 @@
         const effectiveTotal=effectiveNames.length;
         const examples=effectiveNames.slice(0,4).join(', ');
         const more=effectiveNames.length>4?` (+${effectiveNames.length-4} weitere)`: '';
-        if(effectiveTotal===0&&isLocationCategoryPreset(cat)){
-          alert(`Kategorie „${cat}“ ist eine Voreinstellung und derzeit bei keiner Location vergeben.\n\nEs gibt nichts zu löschen.`);
-          return false;
-        }
         if(effectiveTotal>0){
           const ok=await askCategoryDeleteConfirmation({
             title:'Kategorie wirklich überall entfernen?',
@@ -1886,19 +1923,14 @@
           return true;
         }
         const ok=await askCategoryDeleteConfirmation({
-          title:'Kategorie nur aus Entwürfen entfernen?',
-          message:`„${cat}“ ist bei keiner gespeicherten Location vergeben.\n\nNur aus offenen Entwürfen entfernen?`,
-          confirmLabel:'Aus Entwürfen entfernen',
+          title:'Kategorie aus Auswahl entfernen?',
+          message:`„${cat}“ ist bei keiner gespeicherten Location vergeben.\n\nAus der Auswahlliste entfernen?`,
+          confirmLabel:'Aus Liste entfernen',
           confirmDanger:false,
         });
         if(!ok)return false;
-        locationsList?.querySelectorAll('form[data-location-form][data-location-draft="true"]').forEach(form=>{
-          if(!locationCategoryMatches(form.elements.category?.value,cat))return;
-          form.elements.category.value='';
-          delete form.dataset.categorySuggested;
-          rebuildLocationCategoryPicker(form);
-        });
-        showToast(`Kategorie „${cat}“ nur aus Entwürfen entfernt`);
+        removeUnusedCategoryFromPicker(cat);
+        showToast(`Kategorie „${cat}“ aus der Auswahl entfernt`);
         return true;
       }catch(error){
         showError('Kategorie konnte nicht gelöscht werden: '+formatError(error));
@@ -1962,6 +1994,7 @@
       cancelLocationImageSuggestion(form);
       const value=String(category||'').trim();
       form.elements.category.value=value;
+      if(value)showCategoryInPicker(value);
       if(clearSuggested)delete form.dataset.categorySuggested;
       else if(suggested&&value)form.dataset.categorySuggested=value;
       else if(!suggested)delete form.dataset.categorySuggested;
@@ -2044,8 +2077,9 @@
       if(!form||!category||!isLibraryLocationForm(form))return false;
       const current=String(form.elements.category?.value||'').trim();
       if(current)return false;
-      setLocationCategoryOnForm(form,category,{suggested:true});
-      showToast(`Kategorie-Vorschlag: ${category}`);
+      const resolved=resolveCategorySuggestion(category);
+      setLocationCategoryOnForm(form,resolved,{suggested:true});
+      showToast(`Kategorie-Vorschlag: ${resolved}`);
       if(typeof refreshFormDirtyState==='function')refreshFormDirtyState(form);
       return true;
     }

@@ -23,7 +23,6 @@
 
     const badgePresets=['Goldene Stunde','Picknick','Sonnenaufgang','Farben','Paar-Momente','Kreativ','Aussicht','Gitarre','Goldenes Licht','Spaziergang','Ruhe','Portraits','Perspektiven','Gemeinsame Bilder','Dolomiten','Natur','Abenteuer'];
     const locationOnlyTagPresets=['Parkplatz'];
-    const locationCategoryPresets=['Berge','See','Wald','Wiese','Stadt','Altstadt','Dorf','Indoor','Hotel','Roadtrip','Aussichtspunkt','Passstraße','Dolomiten'];
     const projectStatusLabels={aktiv:'Aktiv',abgeschlossen:'Abgeschlossen',archiviert:'Archiv'};
     const workflowStatusPresets=['Angefragt','Option','Fix','Geplant','Bestätigt','Abgesagt'];
     const WORKFLOW_STATUS_STORAGE_KEY='dolomiten.shooting.workflow-statuses.v1';
