@@ -185,7 +185,8 @@
     .location-setup-panel.hidden{display:none}
     .location-setup-panel:not(.hidden){margin-top:8px}
     .location-capture-row{display:flex;gap:8px;align-items:stretch}
-    .location-capture-row .location-capture-name,.location-capture-row .location-finder-input{flex:1 1 auto;min-width:0}
+    .location-capture-row .location-capture-name,.location-capture-row .location-finder-input{flex:1 1 auto;min-width:0;scroll-margin-top:max(72px,env(safe-area-inset-top))}
+    .location-display-name-hint{margin:0 0 8px}
     .location-gps-btn{flex:0 0 auto;min-width:48px;padding:0 14px;font-size:1.1rem;border-radius:12px}
     .location-gps-btn.is-busy{opacity:.55;pointer-events:none}
     .location-pin-map{height:220px;border-radius:16px;border:1px solid rgba(247,241,232,.14);background:rgba(0,0,0,.2);z-index:0}

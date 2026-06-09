@@ -5,6 +5,33 @@
       holder[key]=id;
       return id;
     }
+    function locationDisplayName(loc){
+      const custom=String(loc?.display_name||'').trim();
+      if(custom)return custom;
+      return String(loc?.name||'').trim();
+    }
+    function dedupeOsmResults(results){
+      const seen=new Set();
+      return (results||[]).filter(item=>{
+        const key=[item?.osm_type,item?.osm_id].filter(Boolean).join(':')||
+          `${Number(item?.lat).toFixed(5)},${Number(item?.lon).toFixed(5)}:${String(item?.name||'').trim().toLowerCase()}`;
+        if(seen.has(key))return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    function osmOfficialName(hit){
+      const named=String(hit?.name||'').trim();
+      if(named)return named;
+      return String(hit?.display_name||'').split(',')[0]?.trim()||'';
+    }
+    function metaFromOsmHit(hit){
+      const displayAddr=String(hit?.display_name||'').trim();
+      const meta=mapAddressToMeta(hit?.address||{},displayAddr);
+      meta.official_name=osmOfficialName(hit);
+      meta.display_name=displayAddr;
+      return meta;
+    }
     function parseCsv(value){if(Array.isArray(value))return value;return String(value||'').split(',').map(x=>x.trim()).filter(Boolean)}
     function csv(value){return Array.isArray(value)?value.join(', '):(value||'')}
     function locationMeta(l){return [l.country,l.region,l.area].filter(Boolean).join(' · ')}
@@ -47,7 +74,7 @@
       renderLocations();
     }
     function renderLocationFilters(){const fill=(select,values,label)=>{const current=select.value;select.innerHTML=`<option value="all">${label}</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');if([...select.options].some(o=>o.value===current))select.value=current};fill(countryFilter,[...new Set(locations.map(l=>l.country).filter(Boolean))].sort(),'Alle Länder');fill(regionFilter,[...new Set(locations.map(l=>l.region).filter(Boolean))].sort(),'Alle Regionen');fill(categoryFilter,[...new Set(locations.map(l=>l.category).filter(Boolean))].sort(),'Alle Kategorien')}
-    function filteredLocations(){const search=locationSearchInput.value.trim().toLowerCase();return locations.filter(l=>{if(l.__draft)return true;const okCountry=countryFilter.value==='all'||l.country===countryFilter.value,okRegion=regionFilter.value==='all'||l.region===regionFilter.value,okCategory=categoryFilter.value==='all'||l.category===categoryFilter.value;const haystack=[l.name,l.country,l.region,l.area,l.category,l.address,l.meeting_place,l.description,...locationTagsForRecord(l)].filter(Boolean).join(' ').toLowerCase();const okFavorite=!locationFavoritesOnly||l.is_favorite;return okCountry&&okRegion&&okCategory&&okFavorite&&(!search||haystack.includes(search))})}
+    function filteredLocations(){const search=locationSearchInput.value.trim().toLowerCase();return locations.filter(l=>{if(l.__draft)return true;const okCountry=countryFilter.value==='all'||l.country===countryFilter.value,okRegion=regionFilter.value==='all'||l.region===regionFilter.value,okCategory=categoryFilter.value==='all'||l.category===categoryFilter.value;const haystack=[l.name,l.display_name,l.country,l.region,l.area,l.category,l.address,l.meeting_place,l.description,...locationTagsForRecord(l)].filter(Boolean).join(' ').toLowerCase();const okFavorite=!locationFavoritesOnly||l.is_favorite;return okCountry&&okRegion&&okCategory&&okFavorite&&(!search||haystack.includes(search))})}
     function renderLocations(){const visible=filteredLocations();locationsList.innerHTML=visible.length?visible.map(renderLocationEditor).join(''):`<div class="card hint location-empty">Keine Location gefunden. Über <strong>+</strong> eine neue Location anlegen.</div>`;bindLocationEditors()}
     const locationPinMaps=new WeakMap();
 
@@ -71,7 +98,8 @@
       if(panel)panel.open=true;
     }
 
-    const LOCATION_CAPTURE_HINT='Kartensuche, Maps-Link oder <strong>📍</strong> — Adresse wird erkannt. Optional einen eigenen <strong>Anzeigenamen</strong> (z. B. „Grüner Hügel am Starnberger See“).';
+    const LOCATION_CAPTURE_HINT='Suchen, Maps-Link oder <strong>📍</strong>.';
+    const LOCATION_NAME_PLACEHOLDER='Ort suchen · Maps-Link · 📍';
     const MEETING_CAPTURE_HINT='Gleicher Ablauf wie oben — gilt nur für den <strong>Treffpunkt</strong>, die Location bleibt unverändert.';
 
     function isWeakLocationLabel(label){
@@ -156,9 +184,14 @@
       const address=meta?.address||meta?.display_name||'';
       const set=(name,val)=>{const el=form.elements[name];if(el!=null&&val!=null&&val!=='')el.value=val};
       if(isLibraryLocationForm(form)){
-        if(form.elements.address)form.elements.address.value=address||form.elements.address.value;
+        if(form.elements.address)form.elements.address.value=meta?.address||address||form.elements.address.value;
         if(opts?.clearMapsName&&form.elements.name&&looksLikeMapsLink(form.elements.name.value))form.elements.name.value='';
-        applySuggestedLocationName(form,meta,{forceWeak:!!opts?.forceWeakName});
+        const official=String(meta?.official_name||'').trim();
+        if(official&&(opts?.setOfficialName||opts?.forceWeakName||isWeakLocationLabel(form.elements.name?.value))){
+          form.elements.name.value=official;
+        }else if(!opts?.skipSuggestedName){
+          applySuggestedLocationName(form,meta,{forceWeak:!!opts?.forceWeakName});
+        }
         set('country',meta?.country);
         set('region',meta?.region);
         set('area',meta?.area);
@@ -206,7 +239,8 @@
         const result=await reverseGeocodeCoords({lat,lon});
         const meta=mapAddressToMeta(result.address||{},result.display_name||'');
         meta.display_name=result.display_name||'';
-        fillLocationFormFromMeta(form,meta,{lat,lon},{skipImageSuggest:true,forceWeakName:!!opts?.forceWeakName,clearMapsName:!!opts?.clearMapsName});
+        meta.official_name=osmOfficialName({name:result.name,display_name:result.display_name,address:result.address});
+        fillLocationFormFromMeta(form,meta,{lat,lon},{skipImageSuggest:true,forceWeakName:!!opts?.forceWeakName,clearMapsName:!!opts?.clearMapsName,setOfficialName:!!opts?.setOfficialName});
         scheduleLocationImageSuggestion(form,meta,result.extratags||null);
       }catch(error){
         console.error(error);
@@ -347,13 +381,6 @@
         if(requestId!==form._meetingOsmRequest)return;
         form._meetingOsmResults=results;
         panel.innerHTML=`<div class="location-picker-section-title">Kartentreffer · Treff</div>${renderOsmFinderResults(results)}`;
-        panel.querySelectorAll('[data-pick-osm]').forEach(btn=>{
-          btn.addEventListener('click',async()=>{
-            const hit=form._meetingOsmResults?.[Number(btn.dataset.pickOsm)];
-            if(!hit)return;
-            await applyOsmPickToMeetingForm(form,hit);
-          });
-        });
       }catch(error){
         if(requestId!==form._meetingOsmRequest)return;
         console.error(error);
@@ -433,6 +460,16 @@
         syncShootingMeetingLibraryState(form);
       };
       meetInput?.addEventListener('input',onMeetingInput);
+      form.querySelectorAll('[data-meeting-lib-osm],[data-shooting-meeting-osm]').forEach(panel=>{
+        if(panel.dataset.osmDelegated==='true')return;
+        panel.dataset.osmDelegated='true';
+        panel.addEventListener('click',async event=>{
+          const btn=event.target.closest('[data-pick-osm]');
+          if(!btn)return;
+          const hit=form._meetingOsmResults?.[Number(btn.dataset.pickOsm)];
+          if(hit)await applyOsmPickToMeetingForm(form,hit);
+        });
+      });
       meetingLinkField(form)?.addEventListener('input',()=>syncShootingMeetingLibraryState(form));
       meetingLinkField(form)?.addEventListener('change',()=>syncShootingMeetingLibraryState(form));
     }
@@ -591,17 +628,10 @@
       panel.classList.remove('hidden');
       panel.innerHTML='<div class="location-osm-loading">Suche auf der Karte…</div>';
       try{
-        const results=await searchAddressNominatim(q);
+        const results=dedupeOsmResults(await searchAddressNominatim(q));
         if(requestId!==form._libOsmRequest)return;
         form._libOsmResults=results;
         panel.innerHTML=`<div class="location-picker-section-title">Kartentreffer</div>${renderOsmFinderResults(results)}`;
-        panel.querySelectorAll('[data-pick-osm]').forEach(btn=>{
-          btn.addEventListener('click',async()=>{
-            const hit=form._libOsmResults?.[Number(btn.dataset.pickOsm)];
-            if(!hit)return;
-            await applyOsmPickToForm(form,hit);
-          });
-        });
       }catch(error){
         if(requestId!==form._libOsmRequest)return;
         console.error(error);
@@ -614,6 +644,16 @@
       form.dataset.libCaptureBound='true';
       bindLocationImageField(form);
       form.querySelector('[data-capture-gps]')?.addEventListener('click',()=>captureGpsToLocationForm(form));
+      const osmPanel=form.querySelector('[data-location-lib-osm]');
+      if(osmPanel&&!osmPanel.dataset.osmDelegated){
+        osmPanel.dataset.osmDelegated='true';
+        osmPanel.addEventListener('click',async event=>{
+          const btn=event.target.closest('[data-pick-osm]');
+          if(!btn)return;
+          const hit=form._libOsmResults?.[Number(btn.dataset.pickOsm)];
+          if(hit)await applyOsmPickToForm(form,hit);
+        });
+      }
       const nameInput=form.querySelector('[data-location-lib-name]');
       let osmTimer=null;
       let nameImageTimer=null;
@@ -648,7 +688,8 @@
       const lon=coords?.lon??'';
       const pinOpen=!!coords;
       const pinMeta=coords?`${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)} — Pin ziehen, wenn der Spot nicht exakt am GPS liegt`:'Noch kein Standort — 📍 oder Kartentreffer';
-      const displayName=l.name&&l.name!=='Neue Location'?l.name:'';
+      const officialName=l.name&&l.name!=='Neue Location'?l.name:'';
+      const customDisplay=String(l.display_name||'').trim();
       const separateMeet=locationUsesSeparateMeeting(l);
       const meetCoords=extractCoordsFromMapsLink(l.meeting_maps_link||'')||null;
       const meetLat=meetCoords?.lat??'';
@@ -657,17 +698,20 @@
       const imageVal=escapeHtml(l.image_url||'');
       return `<form data-location-form="${escapeHtml(l.id)}" ${l.__draft?'data-location-draft="true"':''} class="location-editor-form">
         <div class="section-title">Ort erfassen</div>
-        <p class="hint editor-block-hint">${LOCATION_CAPTURE_HINT}</p>
         <div class="field full">
-          <label>Anzeigename</label>
-          <p class="hint-inline location-name-hint">Optional — in Listen statt der Adresse. Leer lassen = erkannte Straße/Adresse.</p>
+          <label>Name</label>
           <div class="location-capture-row">
-            <input class="location-capture-name" name="name" type="text" value="${escapeHtml(displayName)}" placeholder="z. B. Grüner Hügel am Starnberger See — oder Kartensuche / Maps-Link" data-location-lib-name />
+            <input class="location-capture-name" name="name" type="text" value="${escapeHtml(officialName)}" placeholder="${LOCATION_NAME_PLACEHOLDER}" data-location-lib-name autocomplete="off" />
             <button type="button" class="btn location-gps-btn" data-capture-gps title="Aktuellen Standort übernehmen" aria-label="Aktuellen Standort">📍</button>
           </div>
           <input type="hidden" name="capture_lat" value="${lat}" data-capture-lat />
           <input type="hidden" name="capture_lon" value="${lon}" data-capture-lon />
           <div class="location-lib-osm address-search-panel hidden" data-location-lib-osm aria-live="polite"></div>
+        </div>
+        <div class="field full">
+          <label>Anzeigename</label>
+          <p class="hint-inline location-display-name-hint">Optional — eigener Name in Listen (z. B. „Grüner Hügel“). Leer = Name oben.</p>
+          <input name="display_name" type="text" value="${escapeHtml(customDisplay)}" placeholder="Nur wenn anders als der Name oben" />
         </div>
         <div class="location-essentials grid two">
           <div class="field"><label>Kategorie</label><input name="category" type="text" list="categorySuggestions" value="${escapeHtml(l.category||'')}" placeholder="z. B. Berge, See" /></div>
@@ -747,7 +791,7 @@
       const thumbFocus=String(l.image_focus||'50% 50%').replace(/"/g,'');
       const image=l.image_url?`style="background-image:url('${escapeHtml(l.image_url)}');background-position:${escapeHtml(thumbFocus)};"`:'';
       const tags=locationTagsForRecord(l);
-      const titleName=l.name&&l.name!=='Neue Location'?l.name:(l.__draft?'Neue Location':'Ohne Namen');
+      const titleName=locationDisplayName(l)||(l.__draft?'Neue Location':'Ohne Namen');
       return `<details class="spot-card location-card" data-location-id="${escapeHtml(l.id)}" ${l.__draft?'open':''}>
         <summary class="location-summary">
           <div class="location-thumb" ${image}></div>
@@ -900,12 +944,14 @@
       if(!meeting)meeting=address||null;
       else meeting=meeting||null;
       const customName=String(d.get('name')||'').trim();
+      const displayName=String(d.get('display_name')||'').trim();
       const region=String(d.get('region')||'').trim();
       const area=String(d.get('area')||'').trim();
       const country=String(d.get('country')||'').trim();
       const fallback=suggestLocationLabel({address,region,area,country});
       return{
         name:customName||fallback||'Neue Location',
+        display_name:displayName||null,
         country:country||null,
         region:region||null,
         area:area||null,
@@ -1016,6 +1062,12 @@
         result=isDraft?await db.from('locations').insert({...payload,id}).select('*').single():await db.from('locations').update(payload).eq('id',id);
         if(!result.error)showToast('Gespeichert — Treff-Maps-Link erst nach Migration (add_location_meeting_maps_link.sql)');
       }
+      if(result.error&&/display_name/i.test(formatError(result.error))){
+        const {display_name:_,...withoutDisplay}=payload;
+        payload=withoutDisplay;
+        result=isDraft?await db.from('locations').insert({...payload,id}).select('*').single():await db.from('locations').update(payload).eq('id',id);
+        if(!result.error)showToast('Gespeichert — Anzeigename erst nach Migration (add_location_display_name.sql)');
+      }
       if(result.error){showError('Location konnte nicht gespeichert werden: '+formatError(result.error));setStatus('Fehler beim Speichern');return}
       showToast(isDraft?'Location erstellt':'Location gespeichert');
       await loadLocations();
@@ -1040,7 +1092,7 @@
       showToast(`Tag „${tag}“ entfernt`);
     }
 
-    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;favoriteLocationsBtn.classList.remove('primary');favoriteLocationsBtn.textContent='☆ Favoriten';const id=newLocationId();const payload={id,name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');const card=locationsList.querySelector(`[data-location-id="${id}"]`);if(card){card.open=true;card.scrollIntoView({behavior:'smooth',block:'center'});const input=card.querySelector('input[name="name"]');if(input)setTimeout(()=>input.focus(),350)}}
+    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;favoriteLocationsBtn.classList.remove('primary');favoriteLocationsBtn.textContent='☆ Favoriten';const id=newLocationId();const payload={id,name:'',display_name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');const card=locationsList.querySelector(`[data-location-id="${id}"]`);if(card){card.open=true;requestAnimationFrame(()=>{const input=card.querySelector('[data-location-lib-name]');if(input){input.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>input.focus({preventScroll:true}),300)}})}}
     function cancelLocationEdit(e){const form=e.currentTarget.closest('form'),id=form?.dataset.locationForm;if(form?.dataset.locationDraft==='true'){locations=locations.filter(l=>l.id!==id);delete currentLocationsById[id]}renderLocations()}
     async function deleteLocation(e){const id=e.currentTarget.dataset.locationDelete,l=currentLocationsById[id];if(!l)return;if(l.__draft){if(!confirm('Diesen Location-Entwurf verwerfen?'))return;locations=locations.filter(x=>x.id!==id);delete currentLocationsById[id];renderLocations();showToast('Entwurf verworfen');return}if(!confirm(`Location wirklich löschen?\n\n${l.name}`))return;const {error}=await db.from('locations').delete().eq('id',id);if(error){showError('Location konnte nicht gelöscht werden: '+formatError(error));return}showToast('Location gelöscht');await loadLocations()}
     function normalizeLocationNeedle(value){
@@ -1064,7 +1116,7 @@
     function applyLibraryLocationToShootingForm(form,location){
       if(!form||!location)return;
       if(form.elements.location_id)form.elements.location_id.value=location.id;
-      if(form.elements.location_name)form.elements.location_name.value=location.name||'';
+      if(form.elements.location_name)form.elements.location_name.value=locationDisplayName(location)||location.name||'';
       const meetPlace=String(location.meeting_place||location.address||'').trim();
       const meetLink=String(location.meeting_maps_link||'').trim()||String(location.maps_link||'').trim();
       if(form.elements.meeting_place)form.elements.meeting_place.value=meetPlace;
@@ -1253,17 +1305,18 @@
           if(numberMatch){
             return `${street} ${numberMatch[1]}`;
           }
-          const trailingNumber=streetPart.match(/(.+?)\s+([0-9]+[a-zA-Z]?(?:\/[0-9]+[a-zA-Z]?)?)$/);
-          if(trailingNumber){
-            return streetPart;
-          }
+          if(/\d/.test(streetPart))return streetPart;
+        }
+        for(const part of parts.slice(1,5)){
+          if(part.toLowerCase().includes(street.toLowerCase())&&/\d/.test(part))return part;
+          if(/^[A-Za-zÀ-ÿÄÖÜäöüß.\- ]+\s+\d+[a-zA-Z]?/.test(part))return part;
         }
       }
 
       if(displayName){
-        const firstPart=String(displayName).split(',').map(part=>part.trim()).filter(Boolean)[0]||'';
-        if(firstPart && /\d/.test(firstPart)){
-          return firstPart;
+        const parts=String(displayName).split(',').map(part=>part.trim()).filter(Boolean);
+        for(const part of parts){
+          if(/\d/.test(part)&&(part.includes(street)||!street))return part;
         }
       }
 
@@ -1495,7 +1548,7 @@
       const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&extratags=1&q=${encodeURIComponent(q)}`;
       const response=await fetch(url,{headers:{'Accept':'application/json'}});
       if(!response.ok)throw new Error('Adresssuche fehlgeschlagen: '+response.status);
-      return await response.json();
+      return dedupeOsmResults(await response.json());
     }
 
     function shouldAutoSaveLocationToLibrary(payload,form){
@@ -1513,28 +1566,28 @@
 
     async function applyOsmPickToForm(form,hit){
       if(!form||!hit)return;
-      const displayAddr=String(hit.display_name||'').trim();
+      const meta=metaFromOsmHit(hit);
+      const coords=hit.lat!=null&&hit.lon!=null?{lat:Number(hit.lat),lon:Number(hit.lon)}:null;
       if(form.elements.location_id)form.elements.location_id.value='';
-      if(isLibraryLocationForm(form)){
-        if(form.elements.address)form.elements.address.value=displayAddr;
-        const nameField=form.elements.name;
-        if(nameField&&(isWeakLocationLabel(nameField.value)||!String(nameField.value||'').trim()))nameField.value='';
-      }else{
-        if(form.elements.meeting_place)form.elements.meeting_place.value=displayAddr;
+      if(!isLibraryLocationForm(form)){
+        if(form.elements.meeting_place)form.elements.meeting_place.value=meta.address||meta.display_name||'';
         const nameField=form.elements.location_name;
         if(nameField&&(isWeakLocationLabel(nameField.value)||!String(nameField.value||'').trim()))nameField.value='';
         const setup=form.querySelector('[data-location-setup]');
         if(setup)setup.open=true;
       }
-      if(hit.lat&&hit.lon){
-        await applyGeoToForm(form,Number(hit.lat),Number(hit.lon),{displayAddress:displayAddr,forceWeakName:true});
-      }else{
-        notePlaceAnchorChanged(form);
-        const meta=mapAddressToMeta(hit.address||{},displayAddr);
-        fillLocationFormFromMeta(form,meta,null,{skipImageSuggest:true,forceWeakName:true});
-        scheduleLocationImageSuggestion(form,meta,hit.extratags||null);
-        syncLocationGeoFieldsVisibility(form);
+      notePlaceAnchorChanged(form);
+      fillLocationFormFromMeta(form,meta,coords,{skipImageSuggest:true,setOfficialName:true,clearMapsName:true});
+      if(coords){
+        const link=mapsLinkFromCoords(coords.lat,coords.lon);
+        if(isLibraryLocationForm(form)&&form.elements.maps_link)form.elements.maps_link.value=link;
+        else if(form.elements.location_link)form.elements.location_link.value=link;
+        setFormCaptureCoords(form,coords.lat,coords.lon);
+        ensureLocationPinMap(form);
+        updateLocationPinMap(form,coords.lat,coords.lon);
       }
+      scheduleLocationImageSuggestion(form,meta,hit.extratags||null);
+      syncLocationGeoFieldsVisibility(form);
       if(!isLibraryLocationForm(form)){
         const finder=form.querySelector('[data-location-finder]');
         const osmSlot=finder?.querySelector('[data-osm-results]');
@@ -1661,6 +1714,7 @@
     window.syncLocationGeoFieldsVisibility=syncLocationGeoFieldsVisibility;
     window.fillLocationFormFromMeta=fillLocationFormFromMeta;
     window.LOCATION_CAPTURE_HINT=LOCATION_CAPTURE_HINT;
+    window.locationDisplayName=locationDisplayName;
 
     async function detectPlaceFromMaps(event){
       const kind=event.currentTarget.dataset.detectPlace||'location';

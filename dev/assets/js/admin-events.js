@@ -1,5 +1,6 @@
     function locationSearchHaystack(location){
-      return [location.name,location.country,location.region,location.area,location.category,location.address,location.meeting_place,...(location.tags||[]),...(location.seasons||[])].filter(Boolean).join(' ').toLowerCase();
+      const label=typeof locationDisplayName==='function'?locationDisplayName(location):location.name;
+      return [label,location.name,location.display_name,location.country,location.region,location.area,location.category,location.address,location.meeting_place,...(location.tags||[]),...(location.seasons||[])].filter(Boolean).join(' ').toLowerCase();
     }
 
     function locationFinderDisplayName(row){
@@ -172,7 +173,7 @@
         const image=location.image_url?`style="background-image:url('${escapeHtml(location.image_url)}');background-position:${escapeHtml(locFocus)};"`:'';
         return `<button class="location-option ${current===location.id?'active':''}" type="button" data-pick-location="${escapeHtml(location.id)}">
           <div class="location-option-thumb" ${image}></div>
-          <div><div class="location-option-title">${escapeHtml(location.name)}</div><div class="location-option-meta">${escapeHtml(meta||'Noch nicht kategorisiert')}</div></div>
+          <div><div class="location-option-title">${escapeHtml(typeof locationDisplayName==='function'?locationDisplayName(location):location.name)}</div><div class="location-option-meta">${escapeHtml(meta||'Noch nicht kategorisiert')}</div></div>
           <span class="location-option-star ${location.is_favorite?'active':''}" data-toggle-location-favorite="${escapeHtml(location.id)}" title="Favorit">★</span>
         </button>`;
       };
@@ -332,7 +333,7 @@
             const id=pick.dataset.pickLocation||'';
             if(form?.elements.location_id)form.elements.location_id.value=id;
             const location=currentLocationsById[id];
-            if(location&&form?.elements.location_name)form.elements.location_name.value=location.name||'';
+            if(location&&form?.elements.location_name)form.elements.location_name.value=(typeof locationDisplayName==='function'?locationDisplayName(location):location.name)||'';
             if(location){
               applyPickedLocationToForm(form,location);
               markLocationUsed(location.id);
