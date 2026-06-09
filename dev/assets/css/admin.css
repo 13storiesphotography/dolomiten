@@ -443,7 +443,6 @@
       gap:8px;
     }
     .location-toolbar-fav-icon{display:inline-flex;align-items:center;justify-content:center}
-    .location-toolbar-fav-label{display:none}
     .location-admin-star{
       width:38px;
       height:38px;
@@ -577,6 +576,10 @@
 
 /* Mobile: nesting depth flattening (Shooting > Event > Tag > Location-Picker) */
 @media(max-width:740px){
+  .view-tabs{
+    width:100%;
+    max-width:100%;
+  }
   .day-group{
     border-left:0;
     padding-left:0;
@@ -628,33 +631,40 @@
   .location-toolbar-sort{
     margin-top:18px;
     display:grid;
-    grid-template-columns:1fr;
-    gap:16px;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:10px 12px;
+    align-items:end;
   }
+  .location-toolbar-sort-item{min-width:0}
+  .location-toolbar-sort select{min-width:0;width:100%}
   .location-toolbar-fav{
     width:auto;
     min-width:var(--control-h);
     max-width:none;
+    height:var(--control-h);
     padding:0 14px;
     gap:8px;
     justify-content:center;
   }
   .location-toolbar-fav-label{
-    display:inline;
     font-size:.78rem;
     font-weight:850;
     color:rgba(247,241,232,.82);
+    white-space:nowrap;
   }
   .location-toolbar-fav.primary .location-toolbar-fav-label{color:var(--text)}
   .location-summary{
-    padding:12px 10px;
-    display:grid;
-    grid-template-columns:48px minmax(0,1fr) 40px;
-    gap:10px;
+    padding:12px 8px 12px 10px;
+    display:flex;
     align-items:center;
+    gap:10px;
     min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow:hidden;
   }
-  .location-summary>div:nth-child(2){min-width:0}
+  .location-summary>.location-thumb{flex:0 0 48px;width:48px;height:48px}
+  .location-summary>div:nth-child(2){flex:1 1 auto;min-width:0;overflow:hidden}
   .location-title{
     display:block;
     overflow:hidden;
@@ -663,11 +673,15 @@
   }
   .location-title-category-group{display:none}
   .location-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .location-admin-actions{flex-shrink:0;min-width:40px}
-  .location-admin-star{width:40px;height:40px;min-width:40px}
+  .location-admin-actions{flex:0 0 auto;flex-shrink:0}
+  .location-admin-star{width:36px;height:36px;min-width:36px;max-width:36px}
   .location-image-block{padding:10px}
   .location-geo-manual{padding:10px}
   .sticky-actions{margin-inline:-2px}
+}
+
+@media(min-width:741px){
+  .location-toolbar-fav-label{display:none}
 }
 
 /* Timeline Divider Sections */
