@@ -235,8 +235,14 @@
         grid.innerHTML=renderLocationFinderResults(input?.value||'',country?.value||'all',category?.value||'all',hidden?.value||'',row);
       }
       finder.dataset.locationMode=row.location_id?'library':String(row.location_name||'').trim()?'onetime':'';
+      const osmSlot=finder.querySelector('[data-osm-results]');
+      const term=String(input?.value||'').trim();
+      const libCount=countLibraryFinderMatches(term,country?.value||'all',category?.value||'all');
+      if(osmSlot&&(hidden?.value||libCount>0)){
+        osmSlot.innerHTML='';
+        finder._osmResults=[];
+      }
       if(typeof syncLocationSetupPanel==='function')syncLocationSetupPanel(form);
-      if(typeof refreshLocationFinderOsm==='function')refreshLocationFinderOsm(form);
     }
 
     window.countLibraryFinderMatches=countLibraryFinderMatches;

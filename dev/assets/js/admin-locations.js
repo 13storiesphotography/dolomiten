@@ -1,113 +1,14 @@
+    function newLocationId(){return crypto.randomUUID()}
+    function isValidLocationId(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value||''))}
+    function bumpOsmRequestId(holder,key){
+      const id=(Number(holder[key])||0)+1;
+      holder[key]=id;
+      return id;
+    }
     function parseCsv(value){if(Array.isArray(value))return value;return String(value||'').split(',').map(x=>x.trim()).filter(Boolean)}
     function csv(value){return Array.isArray(value)?value.join(', '):(value||'')}
     function locationMeta(l){return [l.country,l.region,l.area].filter(Boolean).join(' · ')}
 
-    function formatUsageTimestamp(value){
-      const d=value instanceof Date?value:new Date(value);
-      if(Number.isNaN(d.getTime()))return '';
-      return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
-    }
-
-    function shootingsLinkedToLocation(locationId){
-      const id=String(locationId||'').trim();
-      if(!id||!Array.isArray(rows))return [];
-      return rows.filter(r=>String(r.location_id||'')===id);
-    }
-
-    function sortShootingsNewestFirst(list){
-      return [...list].sort((a,b)=>{
-        const aDate=parseDateLabel(a.date_label);
-        const bDate=parseDateLabel(b.date_label);
-        if(aDate&&bDate){
-          const diff=bDate.getTime()-aDate.getTime();
-          if(diff)return diff;
-        }else if(aDate||bDate)return aDate?-1:1;
-        const aT=parseTimeValue(a.meeting_time)||0;
-        const bT=parseTimeValue(b.meeting_time)||0;
-        return bT-aT;
-      });
-    }
-
-    function locationUsageStats(location){
-      const linked=sortShootingsNewestFirst(shootingsLinkedToLocation(location?.id));
-      const byStatus={aktiv:0,abgeschlossen:0,archiviert:0};
-      linked.forEach(r=>{
-        const key=displayStatusKeyForRow(r);
-        if(Object.prototype.hasOwnProperty.call(byStatus,key))byStatus[key]++;
-      });
-      const projects=[...new Set(linked.map(r=>String(r.project_name||'').trim()).filter(Boolean))];
-      const last=linked[0]||null;
-      const storedCount=Number(location?.usage_count||0);
-      return{
-        linkedCount:linked.length,
-        storedCount,
-        byStatus,
-        projects,
-        linked,
-        lastShooting:last,
-        lastDate:last?.date_label||'',
-        lastTitle:last?.title||'',
-        lastUsedAt:location?.last_used_at||null,
-        fromShootings:Array.isArray(rows)&&rows.length>0
-      };
-    }
-
-    function locationRecordWasUpdated(location){
-      const created=location?.created_at?new Date(location.created_at).getTime():NaN;
-      const updated=location?.updated_at?new Date(location.updated_at).getTime():NaN;
-      if(Number.isNaN(created)||Number.isNaN(updated))return false;
-      return updated-created>60_000;
-    }
-
-    function locationRecordDatesText(location){
-      const created=location?.created_at?formatUsageTimestamp(location.created_at):'';
-      const updated=location?.updated_at?formatUsageTimestamp(location.updated_at):'';
-      if(!created&&!updated)return location?.__draft?'Entwurf':'Noch nicht in Shootings verknüpft';
-      const parts=[];
-      if(created)parts.push(`am ${created} gespeichert`);
-      else if(updated)parts.push(`am ${updated} gespeichert`);
-      if(locationRecordWasUpdated(location)){
-        const changed=updated||formatUsageTimestamp(location.updated_at);
-        if(changed)parts.push(`am ${changed} verändert`);
-      }
-      return parts.join(' · ');
-    }
-
-    function locationUsageSummaryText(location,stats){
-      const s=stats||locationUsageStats(location);
-      if(s.linkedCount>0){
-        const parts=[`${s.linkedCount}× in Shootings`];
-        if(s.byStatus.aktiv)parts.push(`${s.byStatus.aktiv} aktiv`);
-        if(s.byStatus.abgeschlossen)parts.push(`${s.byStatus.abgeschlossen} vergangen`);
-        if(s.byStatus.archiviert)parts.push(`${s.byStatus.archiviert} archiviert`);
-        if(s.projects.length)parts.push(`${s.projects.length} Event${s.projects.length===1?'':'s'}`);
-        if(s.lastDate)parts.push(`zuletzt ${s.lastDate}`);
-        return parts.join(' · ');
-      }
-      return locationRecordDatesText(location);
-    }
-
-    function renderLocationUsageList(stats){
-      if(!stats.linked.length)return '';
-      const items=stats.linked.slice(0,12).map(r=>{
-        const date=String(r.date_label||'').trim()||'—';
-        const time=[r.meeting_time,r.end_time?`– ${r.end_time}`:''].filter(Boolean).join(' ');
-        const title=String(r.title||'').trim()||'(ohne Titel)';
-        const project=String(r.project_name||'').trim();
-        const statusKey=displayStatusKeyForRow(r);
-        const statusLabel=displayStatusLabelForRow(r);
-        return `<li class="location-usage-item"><span class="location-usage-when">${escapeHtml(date)}${time?` · ${escapeHtml(time)}`:''}</span><span class="location-usage-title">${escapeHtml(title)}</span>${project?`<span class="location-usage-project">${escapeHtml(project)}</span>`:''}<span class="status-chip status-${escapeHtml(statusKey)}">${escapeHtml(statusLabel)}</span></li>`;
-      }).join('');
-      const more=stats.linked.length>12?`<li class="location-usage-more">+ ${stats.linked.length-12} weitere</li>`:'';
-      return `<details class="editor-subpanel location-usage-detail"><summary class="editor-subpanel-summary"><strong>Verknüpfte Shootings</strong><span>${stats.linked.length}</span></summary><div class="editor-subpanel-body"><ul class="location-usage-list">${items}${more}</ul></div></details>`;
-    }
-
-    function renderLocationUsageBlock(location){
-      const stats=locationUsageStats(location);
-      const summary=locationUsageSummaryText(location,stats);
-      const empty=stats.linkedCount===0&&!location?.created_at&&!location?.updated_at;
-      return `<div class="location-usage-block ${empty?'is-empty':''}"><p class="location-usage-summary">${escapeHtml(summary)}</p>${renderLocationUsageList(stats)}</div>`;
-    }
     function locationTagsForRecord(loc){
       const tags=Array.isArray(loc?.tags)?[...loc.tags]:parseLocationTags(loc?.tags);
       const seasons=Array.isArray(loc?.seasons)?[...loc.seasons]:parseLocationTags(loc?.seasons);
@@ -437,11 +338,13 @@
       const panel=meetingOsmPanel(form);
       if(!panel)return;
       const q=String(term||'').trim();
-      if(q.length<3){panel.classList.add('hidden');panel.innerHTML='';form._meetingOsmResults=[];return}
+      if(q.length<3){panel.classList.add('hidden');panel.innerHTML='';form._meetingOsmResults=[];form._meetingOsmRequest=0;return}
+      const requestId=bumpOsmRequestId(form,'_meetingOsmRequest');
       panel.classList.remove('hidden');
       panel.innerHTML='<div class="location-osm-loading">Suche Treffpunkt…</div>';
       try{
         const results=await searchAddressNominatim(q);
+        if(requestId!==form._meetingOsmRequest)return;
         form._meetingOsmResults=results;
         panel.innerHTML=`<div class="location-picker-section-title">Kartentreffer · Treff</div>${renderOsmFinderResults(results)}`;
         panel.querySelectorAll('[data-pick-osm]').forEach(btn=>{
@@ -452,6 +355,7 @@
           });
         });
       }catch(error){
+        if(requestId!==form._meetingOsmRequest)return;
         console.error(error);
         panel.innerHTML='<div class="address-search-empty">Kartensuche fehlgeschlagen</div>';
       }
@@ -682,11 +586,13 @@
       const panel=form.querySelector('[data-location-lib-osm]');
       if(!panel)return;
       const q=String(term||'').trim();
-      if(q.length<3){panel.classList.add('hidden');panel.innerHTML='';form._libOsmResults=[];return}
+      if(q.length<3){panel.classList.add('hidden');panel.innerHTML='';form._libOsmResults=[];form._libOsmRequest=0;return}
+      const requestId=bumpOsmRequestId(form,'_libOsmRequest');
       panel.classList.remove('hidden');
       panel.innerHTML='<div class="location-osm-loading">Suche auf der Karte…</div>';
       try{
         const results=await searchAddressNominatim(q);
+        if(requestId!==form._libOsmRequest)return;
         form._libOsmResults=results;
         panel.innerHTML=`<div class="location-picker-section-title">Kartentreffer</div>${renderOsmFinderResults(results)}`;
         panel.querySelectorAll('[data-pick-osm]').forEach(btn=>{
@@ -697,6 +603,7 @@
           });
         });
       }catch(error){
+        if(requestId!==form._libOsmRequest)return;
         console.error(error);
         panel.innerHTML='<div class="address-search-empty">Kartensuche fehlgeschlagen</div>';
       }
@@ -749,7 +656,6 @@
       const hasNotes=!!String(l.description||'').trim()||locationTagsForRecord(l).length>0;
       const imageVal=escapeHtml(l.image_url||'');
       return `<form data-location-form="${escapeHtml(l.id)}" ${l.__draft?'data-location-draft="true"':''} class="location-editor-form">
-        ${l.__draft?'':renderLocationUsageBlock(l)}
         <div class="section-title">Ort erfassen</div>
         <p class="hint editor-block-hint">${LOCATION_CAPTURE_HINT}</p>
         <div class="field full">
@@ -848,7 +754,6 @@
           <div>
             <div class="location-title">${escapeHtml(titleName)}${l.category?`<span class="location-title-separator">·</span><span class="location-title-category">${escapeHtml(l.category)}</span>`:''}</div>
             <div class="location-meta">${escapeHtml(locationMeta(l)||'Noch nicht kategorisiert')}</div>
-            <div class="location-usage">${escapeHtml(locationUsageSummaryText(l))}</div>
             ${tags.length?`<div class="tag-row">${tags.slice(0,6).map(t=>`<span class="tiny-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
           </div>
           <div class="location-admin-actions"><button class="location-admin-star ${l.is_favorite?'active':''}" type="button" data-admin-toggle-favorite="${escapeHtml(l.id)}" title="Favorit">★</button></div>
@@ -1090,7 +995,10 @@
     }
     async function saveLocationForm(e){
       e.preventDefault();clearError();
-      const form=e.currentTarget,id=form.dataset.locationForm,isDraft=form.dataset.locationDraft==='true';
+      const form=e.currentTarget;
+      let id=form.dataset.locationForm;
+      const isDraft=form.dataset.locationDraft==='true';
+      if(isDraft&&!isValidLocationId(id))id=newLocationId();
       if(!(await ensureLocationGeoReady(form)))return;
       let payload=collectLocationPayload(form);
       if(!validateImageBeforeSave(payload.image_url,'Bild URL'))return;
@@ -1132,7 +1040,7 @@
       showToast(`Tag „${tag}“ entfernt`);
     }
 
-    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;favoriteLocationsBtn.classList.remove('primary');favoriteLocationsBtn.textContent='☆ Favoriten';const id='location-'+Date.now();const payload={id,name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');const card=locationsList.querySelector(`[data-location-id="${id}"]`);if(card){card.open=true;card.scrollIntoView({behavior:'smooth',block:'center'});const input=card.querySelector('input[name="name"]');if(input)setTimeout(()=>input.focus(),350)}}
+    async function createNewLocation(){clearError();locationSearchInput.value='';countryFilter.value='all';regionFilter.value='all';categoryFilter.value='all';locationFavoritesOnly=false;favoriteLocationsBtn.classList.remove('primary');favoriteLocationsBtn.textContent='☆ Favoriten';const id=newLocationId();const payload={id,name:'',country:'',region:'',area:'',category:'',address:'',maps_link:'',meeting_place:'',meeting_maps_link:'',image_url:'',image_focus:'50% 50%',description:'',tags:[],active:true,updated_at:new Date().toISOString(),__draft:true};locations=[payload,...locations.filter(location=>location.id!==id)];currentLocationsById[id]=payload;renderLocations();showToast('Neue Location vorbereitet');const card=locationsList.querySelector(`[data-location-id="${id}"]`);if(card){card.open=true;card.scrollIntoView({behavior:'smooth',block:'center'});const input=card.querySelector('input[name="name"]');if(input)setTimeout(()=>input.focus(),350)}}
     function cancelLocationEdit(e){const form=e.currentTarget.closest('form'),id=form?.dataset.locationForm;if(form?.dataset.locationDraft==='true'){locations=locations.filter(l=>l.id!==id);delete currentLocationsById[id]}renderLocations()}
     async function deleteLocation(e){const id=e.currentTarget.dataset.locationDelete,l=currentLocationsById[id];if(!l)return;if(l.__draft){if(!confirm('Diesen Location-Entwurf verwerfen?'))return;locations=locations.filter(x=>x.id!==id);delete currentLocationsById[id];renderLocations();showToast('Entwurf verworfen');return}if(!confirm(`Location wirklich löschen?\n\n${l.name}`))return;const {error}=await db.from('locations').delete().eq('id',id);if(error){showError('Location konnte nicht gelöscht werden: '+formatError(error));return}showToast('Location gelöscht');await loadLocations()}
     function normalizeLocationNeedle(value){
@@ -1628,6 +1536,9 @@
         syncLocationGeoFieldsVisibility(form);
       }
       if(!isLibraryLocationForm(form)){
+        const finder=form.querySelector('[data-location-finder]');
+        const osmSlot=finder?.querySelector('[data-osm-results]');
+        if(osmSlot){osmSlot.innerHTML='';finder._osmResults=[]}
         refreshLivePreview(form);
         refreshFormDirtyState(form);
         if(typeof refreshLocationFinderUI==='function')refreshLocationFinderUI(form);
@@ -1702,6 +1613,7 @@
       if(hidden||term.length<3){
         slot.innerHTML='';
         finder._osmResults=[];
+        finder._osmRequest=0;
         return;
       }
       const country=finder.querySelector('[data-location-finder-country]')?.value||'all';
@@ -1712,15 +1624,19 @@
       if(libCount>0){
         slot.innerHTML='';
         finder._osmResults=[];
+        finder._osmRequest=0;
         return;
       }
+      const requestId=bumpOsmRequestId(finder,'_osmRequest');
       slot.innerHTML=`<div class="location-picker-section-title">Auf der Karte (OpenStreetMap)</div><div class="location-osm-loading">Suche…</div>`;
       try{
         const results=await searchAddressNominatim(term);
+        if(requestId!==finder._osmRequest)return;
         finder._osmResults=results;
         slot.innerHTML=`<div class="location-picker-section-title">Auf der Karte (OpenStreetMap)</div>${renderOsmFinderResults(results)}`;
         syncLocationSetupPanel(form);
       }catch(error){
+        if(requestId!==finder._osmRequest)return;
         console.error(error);
         slot.innerHTML=`<div class="location-picker-section-title">Auf der Karte</div><div class="location-picker-empty">Kartensuche fehlgeschlagen</div>`;
       }

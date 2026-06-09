@@ -34,64 +34,6 @@
           <button class="btn danger hidden" id="logoutBtn">Abmelden</button>
         </div>
       </div>
-      <div class="release-panel hidden" id="featurePanel">
-        <div class="release-panel-body">
-        <strong>Neuigkeiten · Admin</strong>
-        <p class="release-panel-intro">Stand <strong>5. Juni 2026</strong> — was sich für dich im Admin geändert hat. Nach Updates einmal <strong>Cmd+Shift+R</strong> (hart neu laden). Schließen: <strong>×</strong> oben rechts an der Ecke (Megafon in der Kopfzeile zum Öffnen).</p>
-        <div class="release-section">
-          <p class="release-section-title">Zuletzt</p>
-          <ul>
-            <li><strong>Ansicht bleibt erhalten:</strong> Nach Refresh landest du wieder im zuletzt geöffneten Tab (Liste, Kalender oder Locations).</li>
-            <li><strong>Shooting-Ort kompakter:</strong> Location ist einklappbar; Bibliotheksfilter sitzen direkt über den Treffern, neue Orte zeigen „Nur für dieses Shooting“ direkt im Maps/Bibliothek-Block.</li>
-            <li><strong>Anzeigename im Shooting:</strong> Bei Bibliothek-Locations kann der Name im Shooting abweichen, ohne die Bibliotheks-Verknüpfung zu lösen.</li>
-            <li><strong>Event &amp; Termin aufgeräumt:</strong> Event-Zuordnung als kompakter Einzel/Event-Chip, Archiv in eigener Klappe, Dauer rechnet ab Beginn/Treff das Ende.</li>
-            <li><strong>Locations überall gleich:</strong> Shooting, Kalender-Import und Tab Locations nutzen denselben Ablauf (Name, Karte, Maps, <strong>📍</strong>).</li>
-            <li><strong>Region &amp; Gebiet</strong> füllt das System aus GPS/Maps — du siehst die Felder nur, wenn ein Ort wirklich ohne Standort-Anker angelegt werden muss.</li>
-            <li><strong>Weniger Dubletten:</strong> gleiche Maps-Position verknüpft eine bestehende Bibliothek-Location statt eine zweite anzulegen.</li>
-            <li><strong>Abweichender Treff:</strong> wie Ort erfassen — Kartensuche, Maps-Link, <strong>📍</strong> (ändert die Location nicht).</li>
-            <li><strong>Bildauschnitt:</strong> In der Location-Vorschau ziehen (Doppelklick oder „Ausschnitt zentrieren“) — wird mitgespeichert (Spalte <code>image_focus</code>, Migration in <code>docs/migrations/</code>).</li>
-            <li><strong>Location-Editor:</strong> optionaler <strong>Anzeigename</strong> (z. B. „Grüner Hügel …“), Adresse separat; nach Maps/Karte kein „10“ mehr als Name. Land/Region/Gebiet nur im gelben Block ohne GPS.</li>
-            <li><strong>Location-Tags:</strong> dieselben Begriffe wie Shooting-Badges (Pillen im Editor); alte Jahreszeiten werden beim Laden in Tags übernommen.</li>
-            <li><strong>Bildvorschlag:</strong> Beim Anlegen einer Location (Shooting &amp; Bibliothek) wird nach GPS/Karte/Maps automatisch ein passendes Bild vorgeschlagen — URL im Block <strong>Bild</strong> jederzeit austauschbar.</li>
-            <li>Tab <strong>Locations</strong> aufgeräumt: Favoriten in der Filterzeile, neue Location nur noch über <strong>+</strong>; Tags als Pillen (<strong>+</strong> / <strong>×</strong>, Hinweis wenn ein Tag auch woanders genutzt wird); Jahreszeiten entfernt.</li>
-          </ul>
-        </div>
-        <div class="release-section">
-          <p class="release-section-title">Ort im Shooting</p>
-          <ul>
-            <li><strong>Location-Finder:</strong> Ein Feld — zuerst Bibliothek, sonst Kartensuche (OpenStreetMap).</li>
-            <li><strong>Maps-Link</strong> ins Namensfeld; <strong>📍</strong> für GPS (HTTPS, Browser-Zugriff).</li>
-            <li><strong>Bibliothek beim Speichern:</strong> Orte mit Adresse/Maps landen automatisch in der Bibliothek (Ausnahme: „Nicht in Bibliothek“; reines „Standesamt“ ohne Spot wird übersprungen).</li>
-            <li><strong>Treffpunkt &amp; Bild</strong> optional ausklappbar; leerer Treff = Location.</li>
-            <li>Wochentag aus Datum; neues Shooting ohne vorgefüllten Titel; schlankere Toolbar.</li>
-          </ul>
-        </div>
-        <div class="release-section">
-          <p class="release-section-title">Location-Bibliothek</p>
-          <ul>
-            <li><strong>Spot auf Karte:</strong> Pin verschieben, wenn der sichtbare Ort nicht exakt am GPS liegt.</li>
-            <li>Adresse, Maps, Kategorie, Beschreibung und Tags in übersichtlichen Blöcken; Treffpunkt und Bild wie im Shooting (Bildvorschlag nach Ortserfassung).</li>
-          </ul>
-        </div>
-        <div class="release-section">
-          <p class="release-section-title">Kalender &amp; Import</p>
-          <ul>
-            <li><strong>.ics-Import</strong> mit Vorschau (Zukünftig/Alle/Vergangen) — nur Kalender oder <strong>Shooting-Entwürfe</strong> in der Liste.</li>
-            <li>Import mit Ort aus dem Kalender; optional in die Bibliothek übernehmen.</li>
-            <li>Kalender stabiler auf schmalen Screens.</li>
-          </ul>
-        </div>
-        <div class="release-section">
-          <p class="release-section-title">Planung &amp; Übersicht</p>
-          <ul>
-            <li><strong>Shooting-Status</strong> (Angefragt, Fix, …) für Shootings ohne Event — Filter in der Toolbar.</li>
-            <li>Tabs <strong>Liste · Kalender · Locations</strong>; Events als Gruppen.</li>
-            <li><strong>+</strong> für Event, Shooting oder Location; Entwürfe bleiben erhalten.</li>
-            <li>Termin mit optionalem <strong>Ende</strong> und Dauer in Minuten.</li>
-          </ul>
-        </div>
-        </div>
-      </div>
       <div class="view-tabs hidden" id="viewTabs">
         <button class="view-tab active" id="timelineTab" type="button">Liste</button>
         <button class="view-tab" id="calendarTab" type="button">Kalender</button>
@@ -256,6 +198,170 @@
       <div class="field"><label for="eventNameInput">Name</label><input id="eventNameInput" type="text" autocomplete="off" placeholder="Eventname" required /></div>
       <div class="event-dialog-actions"><button class="btn" type="button" id="eventNameCancel">Abbrechen</button><button class="btn primary" type="submit">Erstellen</button></div>
     </form>
+  </div>
+  <div class="release-panel hidden" id="featurePanel">
+    <div class="release-panel-body">
+      <p class="release-panel-heading">Neuigkeiten</p>
+
+      <section class="release-day">
+        <h2 class="release-day-date">8. Juni 2026</h2>
+        <div class="release-group">
+          <h3 class="release-group-title">Locations</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">Neue Locations speichern</span>
+              <p class="release-item-desc">Im Tab Locations kannst du Orte wieder normal anlegen und speichern.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Kartensuche</span>
+              <p class="release-item-desc">Treffer von der Karte erscheinen nur einmal. Nach der Auswahl verschwindet die Liste.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Schlankere Liste</span>
+              <p class="release-item-desc">Die Anzeige, wie oft ein Ort in Shootings vorkommt, ist vorerst ausgeblendet.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="release-group">
+          <h3 class="release-group-title">Sonstiges</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">Neuigkeiten-Fenster</span>
+              <p class="release-item-desc">Das Fenster hat im Browser eine feste, gut lesbare Breite.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="release-day">
+        <h2 class="release-day-date">5. Juni 2026</h2>
+        <div class="release-group">
+          <h3 class="release-group-title">Übersicht</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">Letzter Tab bleibt aktiv</span>
+              <p class="release-item-desc">Nach dem Neuladen der Seite landest du wieder in Liste, Kalender oder Locations.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Drei Ansichten</span>
+              <p class="release-item-desc">Liste, Kalender und Locations als Tabs. Shootings sind nach Events gruppiert.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Alles über + anlegen</span>
+              <p class="release-item-desc">Event, Shooting oder Location. Entwürfe bleiben beim Wechsel erhalten.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Planungsstatus</span>
+              <p class="release-item-desc">Für Shootings ohne Event: Angefragt, Fix usw. — filterbar in der Toolbar.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="release-group">
+          <h3 class="release-group-title">Events &amp; Termine</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">Event-Zuordnung</span>
+              <p class="release-item-desc">Kompakter Chip zeigt, ob ein Shooting allein oder an ein Event gehört. Archiv in eigener Klappe.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Termin mit Ende</span>
+              <p class="release-item-desc">Optionales Endzeit-Feld. Die Dauer wird aus Beginn oder Treff berechnet.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Wochentag &amp; Titel</span>
+              <p class="release-item-desc">Wochentag kommt aus dem Datum. Neues Shooting startet ohne vorgefüllten Titel.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="release-group">
+          <h3 class="release-group-title">Ort im Shooting</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">Ein Feld für alles</span>
+              <p class="release-item-desc">Zuerst die Bibliothek durchsuchen, sonst auf der Karte suchen. Maps-Link oder 📍-Button möglich.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Kompakter Bereich</span>
+              <p class="release-item-desc">Location-Bereich ist einklappbar. Filter direkt über den Treffern.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Eigener Anzeigename</span>
+              <p class="release-item-desc">Name im Shooting kann von der Bibliothek abweichen, ohne die Verknüpfung zu lösen.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Automatisch in Bibliothek</span>
+              <p class="release-item-desc">Beim Speichern landen neue Orte mit Adresse oder Maps-Link in der Bibliothek — außer du wählst „Nicht in Bibliothek“.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Treff &amp; Bild</span>
+              <p class="release-item-desc">Optional ausklappbar. Leerer Treffpunkt = Location-Adresse gilt als Treff.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Abweichender Treffpunkt</span>
+              <p class="release-item-desc">Eigener Treff wie ein normaler Ort: Kartensuche, Maps-Link oder 📍. Die Location selbst bleibt unverändert.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="release-group">
+          <h3 class="release-group-title">Location-Bibliothek</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">Gleicher Ablauf überall</span>
+              <p class="release-item-desc">Shooting, Kalender-Import und Tab Locations: Name, Karte, Maps-Link oder 📍.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Tab Locations</span>
+              <p class="release-item-desc">Favoriten in der Filterzeile. Neue Location nur über +. Tags als Pillen.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Anzeigename &amp; Adresse</span>
+              <p class="release-item-desc">Optionaler schöner Name (z. B. „Grüner Hügel“), Adresse getrennt. Kein „10“ mehr als Name nach Maps.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Region nur wenn nötig</span>
+              <p class="release-item-desc">Land, Region und Gebiet füllt das System aus GPS oder Maps. Gelbe Felder nur ohne Standort.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Keine Dubletten</span>
+              <p class="release-item-desc">Gleiche Maps-Position verknüpft eine bestehende Location statt eine zweite anzulegen.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Bildvorschlag</span>
+              <p class="release-item-desc">Nach GPS, Karte oder Maps wird ein passendes Bild vorgeschlagen. URL jederzeit austauschbar.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Bildauschnitt</span>
+              <p class="release-item-desc">In der Vorschau ziehen oder doppelklicken zum Zentrieren. Wird mitgespeichert.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Spot auf Karte</span>
+              <p class="release-item-desc">Pin verschieben, wenn der sichtbare Ort nicht exakt am GPS liegt.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Tags</span>
+              <p class="release-item-desc">Gleiche Pillen wie bei Shooting-Badges. Alte Jahreszeiten werden zu Tags.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="release-group">
+          <h3 class="release-group-title">Kalender &amp; Import</h3>
+          <ul class="release-items">
+            <li class="release-item">
+              <span class="release-item-label">.ics-Import</span>
+              <p class="release-item-desc">Vorschau mit Filter Zukünftig, Alle oder Vergangen. Nur Kalender oder als Shooting-Entwürfe.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Ort aus Kalender</span>
+              <p class="release-item-desc">Import mit Location-Hinweis. Optional direkt in die Bibliothek übernehmen.</p>
+            </li>
+            <li class="release-item">
+              <span class="release-item-label">Kalender auf dem Handy</span>
+              <p class="release-item-desc">Ansicht stabiler auf schmalen Bildschirmen.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
   </div>
   <div class="toast" id="toast">Gespeichert</div>
   <datalist id="countrySuggestions"><option value="Deutschland"></option><option value="Italien"></option><option value="Österreich"></option><option value="Schweiz"></option></datalist>
