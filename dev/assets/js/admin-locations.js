@@ -390,7 +390,12 @@
     }
     function parseCsv(value){if(Array.isArray(value))return value;return String(value||'').split(',').map(x=>x.trim()).filter(Boolean)}
     function csv(value){return Array.isArray(value)?value.join(', '):(value||'')}
-    function locationMeta(l){return [l.country,l.region,l.area].filter(Boolean).join(' · ')}
+    function locationMeta(l){
+      const geo=[l.country,l.region,l.area].filter(Boolean).join(' · ');
+      const category=String(l.category||'').trim();
+      if(category&&geo)return `${category} · ${geo}`;
+      return category||geo||'';
+    }
 
     function locationTagsForRecord(loc){
       const tags=Array.isArray(loc?.tags)?[...loc.tags]:parseLocationTags(loc?.tags);
@@ -744,7 +749,7 @@
       if(!favoriteLocationsBtn)return;
       favoriteLocationsBtn.classList.toggle('primary',locationFavoritesOnly);
       favoriteLocationsBtn.setAttribute('aria-pressed',locationFavoritesOnly?'true':'false');
-      favoriteLocationsBtn.innerHTML=renderFavoriteStarIcon(locationFavoritesOnly);
+      favoriteLocationsBtn.innerHTML=`<span class="location-toolbar-fav-icon" aria-hidden="true">${renderFavoriteStarIcon(locationFavoritesOnly)}</span><span class="location-toolbar-fav-label">Favoriten</span>`;
     }
     function filteredLocations(){const search=locationSearchInput.value.trim().toLowerCase();return locations.filter(l=>{if(l.__draft)return true;const okCountry=countryFilter.value==='all'||l.country===countryFilter.value,okRegion=regionFilter.value==='all'||l.region===regionFilter.value,okCategory=categoryFilter.value==='all'||l.category===categoryFilter.value;const haystack=[l.name,l.display_name,l.country,l.region,l.area,l.category,l.address,l.meeting_place,l.description,...locationTagsForRecord(l)].filter(Boolean).join(' ').toLowerCase();const okFavorite=!locationFavoritesOnly||l.is_favorite;return okCountry&&okRegion&&okCategory&&okFavorite&&(!search||haystack.includes(search))})}
     function renderLocations(){
@@ -1371,7 +1376,7 @@
       const meetCoords=extractCoordsFromMapsLink(l.meeting_maps_link||'')||null;
       const meetLat=meetCoords?.lat??'';
       const meetLon=meetCoords?.lon??'';
-      const hasNotes=!!String(l.description||'').trim()||locationTagsForRecord(l).length>0;
+      const hasNotes=!!String(l.description||'').trim();
       const imageVal=escapeHtml(l.image_url||'');
       return `<form data-location-form="${escapeHtml(l.id)}" ${l.__draft?'data-location-draft="true"':''} class="location-editor-form" novalidate>
         <div class="section-title">Ort erfassen</div>
@@ -1488,7 +1493,7 @@
       const summary=isDraft?'':`<summary class="location-summary">
           <div class="location-thumb" data-location-thumb="${escapeHtml(l.id)}"></div>
           <div>
-            <div class="location-title">${escapeHtml(titleName)}${archived?'<span class="location-title-separator">·</span><span class="location-archived-badge">Archiv</span>':''}${l.category?`<span class="location-title-separator">·</span><span class="location-title-category">${escapeHtml(l.category)}</span>`:''}</div>
+            <div class="location-title">${escapeHtml(titleName)}${archived?'<span class="location-title-separator">·</span><span class="location-archived-badge">Archiv</span>':''}${l.category?`<span class="location-title-category-group"><span class="location-title-separator">·</span><span class="location-title-category">${escapeHtml(l.category)}</span></span>`:''}</div>
             <div class="location-meta">${escapeHtml(locationMeta(l)||'Noch nicht kategorisiert')}</div>
           </div>
           <div class="location-admin-actions"><button class="location-admin-star ${l.is_favorite?'active':''}" type="button" data-admin-toggle-favorite="${escapeHtml(l.id)}" title="Favorit" aria-label="Favorit">${renderFavoriteStarIcon(!!l.is_favorite)}</button></div>
@@ -1497,9 +1502,10 @@
       const cardAttrs=isDraft
         ?`class="spot-card location-card location-card-draft" data-location-id="${escapeHtml(l.id)}" data-location-draft="true"`
         :`class="spot-card location-card" data-location-id="${escapeHtml(l.id)}"`;
+      const editorHidden=isDraft?'':' hidden';
       return `<${cardShell} ${cardAttrs}>
         ${summary}
-        <div class="location-editor">${renderLocationEditorForm(l)}</div>
+        <div class="location-editor"${editorHidden}>${renderLocationEditorForm(l)}</div>
       </${cardShell}>`;
     }
 
@@ -1763,9 +1769,12 @@
       locationsList.querySelectorAll('[data-location-cancel]').forEach(b=>b.addEventListener('click',cancelLocationEdit));
       locationsList.querySelectorAll('[data-admin-toggle-favorite]').forEach(b=>b.addEventListener('click',toggleLocationFavoriteFromAdmin));
       locationsList.querySelectorAll('details.location-card').forEach(card=>{
+        const editor=card.querySelector(':scope>.location-editor');
+        if(editor)editor.hidden=!card.open;
         if(card.dataset.thumbToggleBound==='true')return;
         card.dataset.thumbToggleBound='true';
         card.addEventListener('toggle',()=>{
+          if(editor)editor.hidden=!card.open;
           if(!card.open)return;
           requestAnimationFrame(()=>reapplyAllLocationThumbs());
         });
