@@ -54,6 +54,18 @@ Verknüpfung zur App: `shootings.project_name` entspricht meist `events.name` (l
 | workflow_status | text | YES — Planungsstatus für Shootings **ohne** `project_name` (z. B. angefragt, fix); `NULL` wenn an Event gebunden |
 | updated_at | timestamptz | YES |
 
+### `profiles`
+
+| Spalte | Typ | Nullable |
+|--------|-----|----------|
+| id | uuid | NO → `auth.users.id` |
+| display_name | text | YES |
+| studio_name | text | YES |
+| role | text | YES (Default `admin`) |
+| created_at, updated_at | timestamptz | YES |
+
+Migration: `docs/migrations/add_profiles.sql` (angewendet via Supabase MCP).
+
 Vollständiger Export: `docs/supabase-schema-export.csv`
 
 ---
@@ -93,6 +105,14 @@ Vollständiger Export: `docs/supabase-schema-export.csv`
 
 **Anon hat keinen Zugriff** (Events bleiben intern). Migration: `events_rls_policies_for_authenticated`.
 
+### `profiles`
+
+| Policy | Rollen | Befehl | Bedeutung |
+|--------|--------|--------|-----------|
+| profiles_select_own | `authenticated` | SELECT | Nur eigenes Profil |
+| profiles_insert_own | `authenticated` | INSERT | Nur eigenes Profil anlegen |
+| profiles_update_own | `authenticated` | UPDATE | Nur eigenes Profil ändern |
+
 ---
 
 ## Konsequenzen für die Produkt-Roadmap
@@ -102,6 +122,29 @@ Vollständiger Export: `docs/supabase-schema-export.csv`
 | Eine DB, alle Shootings öffentlich lesbar | `organization_id` / `event_id` + SELECT nur für Share-Token oder Event-Slug |
 | Ein Admin-Login (Supabase User) | Fotograf-Accounts, RLS pro Mandant |
 | `project_name` als Event-Name | FK `event_id`, öffentliche URL filtert darauf |
+
+---
+
+## Auth — Passwort zurücksetzen (Redirect-URLs)
+
+**Einmalig im Dashboard** (nicht per SQL/MCP):  
+[Authentication → URL Configuration](https://supabase.com/dashboard/project/hidqxungaqlzyzsxjfqb/auth/url-configuration)
+
+| Feld | Wert (Stand Projekt) |
+|------|----------------------|
+| **Site URL** | `https://13storiesphotography.github.io/dolomiten/dev/admin` |
+| **Redirect URLs** | `https://13storiesphotography.github.io/dolomiten/dev/admin` |
+| | `https://13storiesphotography.github.io/dolomiten/dev/admin.html` |
+| | `https://13storiesphotography.github.io/**` |
+| | `http://localhost:8080/dev/admin.html` |
+| | `http://127.0.0.1:8080/**` |
+| | `http://192.168.*.*:8080/**` (iPhone im WLAN) |
+
+Die App sendet beim Reset `redirectTo` = aktuelle Seiten-URL (Live) bzw. die GitHub-Pages-URL, wenn du lokal per `file://` öffnest — **`file://` geht in Supabase nicht** als Redirect.
+
+Lokal testen: `python -m http.server 8080` im Ordner `dev/` → `http://localhost:8080/admin.html`
+
+Ohne Eintrag landet der Link aus der E-Mail nicht in der App.
 
 ---
 

@@ -12,13 +12,18 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <link rel="stylesheet" href="assets/css/admin.css?v=20260608f" />
+  <link rel="stylesheet" href="assets/css/admin.css?v=20260610c" />
 </head>
 <body>
   <main class="wrap">
     <section class="top">
       <div class="top-row">
-        <div class="top-brand"><h1 class="visually-hidden">Shooting Planer</h1><div class="eyebrow">13 Stories Photography</div></div>
+        <div class="top-brand">
+          <h1 class="visually-hidden">Shooting Planer</h1>
+          <button class="top-studio-btn hidden" id="profileBtn" type="button" aria-label="Profil öffnen" title="Profil">
+            <span class="eyebrow" id="topStudioName">Shooting Planer</span>
+          </button>
+        </div>
         <div class="top-actions">
           <button class="btn news-toggle hidden" id="whatsNewBtn" type="button" aria-expanded="false" aria-label="Neuigkeiten öffnen" title="Neuigkeiten">
             <span class="news-glyph-stack" aria-hidden="true">
@@ -31,7 +36,7 @@
               <span class="news-glyph-close"><span></span><span></span></span>
             </span>
           </button>
-          <button class="btn danger hidden" id="logoutBtn">Abmelden</button>
+          <button class="btn danger hidden" id="logoutBtn" type="button">Abmelden</button>
         </div>
         <div class="status top-status" id="status">Initialisiere…</div>
       </div>
@@ -54,12 +59,31 @@
     </section>
 
     <section class="login" id="loginBox">
-      <div class="grid">
-        <div class="field"><label for="email">E-Mail</label><input id="email" type="email" autocomplete="email" inputmode="email" /></div>
-        <div class="field"><label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" /></div>
-        <button class="btn primary" id="loginBtn">Einloggen</button>
-        <div class="hint">Für Änderungen unterwegs optimiert: große Felder, schnelle Karten, direkte Speicherung in Supabase.</div>
-        <div class="error-box hidden" id="errorBox"></div>
+      <div class="login-panel">
+        <header class="login-brand">
+          <h1 class="login-title" id="loginWorkTitle">Shooting Planer</h1>
+          <p class="login-subtitle" id="loginStudioSubtitle" hidden></p>
+        </header>
+        <div class="login-message hidden" id="loginMessageBox" role="status"></div>
+        <div class="login-form" id="loginFormView">
+          <div class="field"><label for="email">E-Mail</label><input id="email" type="email" autocomplete="email" inputmode="email" /></div>
+          <div class="field"><label for="password">Passwort</label><input id="password" type="password" autocomplete="current-password" /></div>
+          <button class="btn primary login-submit" id="loginBtn" type="button">Einloggen</button>
+          <button class="login-link" id="forgotPasswordLink" type="button">Passwort vergessen?</button>
+          <div class="error-box hidden" id="errorBox"></div>
+        </div>
+        <div class="login-form hidden" id="forgotPasswordView">
+          <p class="hint login-panel-hint">Wir senden dir einen Link zum Zurücksetzen des Passworts.</p>
+          <div class="field"><label for="forgotEmail">E-Mail</label><input id="forgotEmail" type="email" autocomplete="email" inputmode="email" /></div>
+          <button class="btn primary login-submit" id="forgotPasswordSendBtn" type="button">Link senden</button>
+          <button class="login-link" id="forgotPasswordBackBtn" type="button">Zurück zum Login</button>
+        </div>
+        <div class="login-form hidden" id="recoveryPasswordView">
+          <p class="hint login-panel-hint">Neues Passwort für dein Konto festlegen.</p>
+          <div class="field"><label for="recoveryPassword">Neues Passwort</label><input id="recoveryPassword" type="password" autocomplete="new-password" /></div>
+          <div class="field"><label for="recoveryPasswordConfirm">Passwort wiederholen</label><input id="recoveryPasswordConfirm" type="password" autocomplete="new-password" /></div>
+          <button class="btn primary login-submit" id="recoveryPasswordBtn" type="button">Passwort speichern</button>
+        </div>
       </div>
     </section>
 
@@ -209,6 +233,28 @@
       <div class="field"><label for="eventNameInput">Name</label><input id="eventNameInput" type="text" autocomplete="off" placeholder="Eventname" required /></div>
       <div class="event-dialog-actions"><button class="btn" type="button" id="eventNameCancel">Abbrechen</button><button class="btn primary" type="submit">Erstellen</button></div>
     </form>
+  </div>
+  <div class="event-dialog hidden" id="profileDialog" aria-hidden="true">
+    <div class="event-dialog-box profile-dialog-box">
+      <div class="event-dialog-title">Profil</div>
+      <dl class="profile-meta">
+        <div class="profile-meta-row"><dt>Name</dt><dd id="profileDisplayName">—</dd></div>
+        <div class="profile-meta-row"><dt>Studio</dt><dd id="profileStudioName">—</dd></div>
+        <div class="profile-meta-row"><dt>E-Mail</dt><dd id="profileEmail">—</dd></div>
+        <div class="profile-meta-row"><dt>Rolle</dt><dd id="profileRole">—</dd></div>
+      </dl>
+      <div class="profile-password-block">
+        <p class="profile-section-title">Passwort ändern</p>
+        <div class="field"><label for="profileNewPassword">Neues Passwort</label><input id="profileNewPassword" type="password" autocomplete="new-password" /></div>
+        <div class="field"><label for="profileNewPasswordConfirm">Wiederholen</label><input id="profileNewPasswordConfirm" type="password" autocomplete="new-password" /></div>
+        <p class="hint profile-password-message hidden" id="profilePasswordMessage"></p>
+        <button class="btn" id="profilePasswordSaveBtn" type="button">Passwort speichern</button>
+      </div>
+      <div class="event-dialog-actions profile-dialog-actions">
+        <button class="btn danger" id="profileLogoutBtn" type="button">Abmelden</button>
+        <button class="btn" id="profileCloseBtn" type="button">Schließen</button>
+      </div>
+    </div>
   </div>
   <div class="event-dialog hidden" id="categoryDeleteDialog" aria-hidden="true">
     <div class="event-dialog-box" role="alertdialog" aria-modal="true" aria-labelledby="categoryDeleteTitle" aria-describedby="categoryDeleteBody">
@@ -452,13 +498,14 @@
   <datalist id="countrySuggestions"><option value="Deutschland"></option><option value="Italien"></option><option value="Österreich"></option><option value="Schweiz"></option></datalist>
   <div class="unsaved-bar" id="unsavedBar"><span id="unsavedText">Ungespeicherte Änderungen</span><button class="btn primary" id="saveOpenBtn" type="button">Speichern</button><button class="btn" id="discardOpenBtn" type="button">Verwerfen</button></div>
 
-  <script src="assets/js/admin-core.js?v=20260608f"></script>
+  <script src="assets/js/admin-core.js?v=20260610"></script>
   <script src="assets/js/admin-icons.js?v=20260608f"></script>
   <script src="assets/js/admin-events.js?v=20260608f"></script>
   <script src="assets/js/admin-locations.js?v=20260608f"></script>
   <script src="assets/js/admin-ics.js?v=20260608f"></script>
   <script src="assets/js/admin-calendar-import.js?v=20260608f"></script>
   <script src="assets/js/admin-calendar.js?v=20260608f"></script>
-  <script src="assets/js/admin-ui.js?v=20260608f"></script>
+  <script src="assets/js/admin-auth.js?v=20260611"></script>
+  <script src="assets/js/admin-ui.js?v=20260610c"></script>
 </body>
 </html>
