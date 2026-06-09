@@ -1758,6 +1758,10 @@
       locationsList.querySelectorAll('[data-location-reactivate]').forEach(b=>b.addEventListener('click',reactivateLocation));
       locationsList.querySelectorAll('[data-location-cancel]').forEach(b=>b.addEventListener('click',cancelLocationEdit));
       locationsList.querySelectorAll('[data-admin-toggle-favorite]').forEach(b=>b.addEventListener('click',toggleLocationFavoriteFromAdmin));
+      locationsList.querySelectorAll('.location-card-draft').forEach(card=>{
+        const editor=card.querySelector(':scope>.location-editor');
+        if(editor)editor.hidden=false;
+      });
       locationsList.querySelectorAll('details.location-card').forEach(card=>{
         const editor=card.querySelector(':scope>.location-editor');
         if(editor)editor.hidden=!card.open;
