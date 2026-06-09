@@ -168,14 +168,6 @@
         thumb.style.setProperty('--thumb-position',aimPos);
       }
     }
-    function syncLocationRecordThumb(form,url,focus){
-      const id=String(form?.dataset?.locationForm||'').trim();
-      if(!id)return;
-      const loc=currentLocationsById[id];
-      if(!loc)return;
-      if(url!=null)loc.image_url=String(url||'').trim()||'';
-      if(focus!=null)loc.image_focus=String(focus||'').trim()||'50% 50%';
-    }
     function refreshLocationSummaryThumb(form,focus){
       const thumb=findLocationThumbForForm(form);
       if(!thumb)return;
@@ -188,7 +180,6 @@
       }else{
         paint();
       }
-      syncLocationRecordThumb(form,url,pos);
     }
     function reapplyAllLocationThumbs(){
       locationsList?.querySelectorAll('[data-location-id]').forEach(card=>{
@@ -202,7 +193,6 @@
           const url=String(form.elements.image_url.value||'').trim()||String(loc.image_url||'').trim();
           const pos=String(form.elements.image_focus?.value||'').trim()||resolveLocationImageFocus(loc);
           applyLocationThumbFromPreviewCrop(thumb,url,pos);
-          syncLocationRecordThumb(form,url,pos);
           return;
         }
         const url=String(loc.image_url||'').trim();
@@ -2358,7 +2348,6 @@
         delete form.dataset.imageSuggested;
         delete form.dataset.imageFromLibrary;
         delete form.dataset.lastPreviewImageUrl;
-        writeImageFocusCache(form.dataset.locationForm||form.dataset.id,null);
         refreshFormImagePreview(form);
         showToast('Bild entfernt');
       });
