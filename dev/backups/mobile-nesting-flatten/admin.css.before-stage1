@@ -1,4 +1,4 @@
-    :root{--bg:#0f0f0d;--panel:rgba(255,255,255,.07);--panel2:rgba(255,255,255,.105);--text:#f7f1e8;--muted:rgba(247,241,232,.66);--line:rgba(247,241,232,.16);--accent:#d8b16a;--accent-soft:rgba(216,177,106,.14);--danger:#d96c6c;--success:#8fb5a1;--radius:24px;--shadow:0 18px 55px rgba(0,0,0,.32);--control-h:46px;--field-gap:12px}
+﻿    :root{--bg:#0f0f0d;--panel:rgba(255,255,255,.07);--panel2:rgba(255,255,255,.105);--text:#f7f1e8;--muted:rgba(247,241,232,.66);--line:rgba(247,241,232,.16);--accent:#d8b16a;--accent-soft:rgba(216,177,106,.14);--danger:#d96c6c;--success:#8fb5a1;--radius:24px;--shadow:0 18px 55px rgba(0,0,0,.32);--control-h:46px;--field-gap:12px}
     *{box-sizing:border-box}html{background:#101010;overflow-x:hidden}body{margin:0;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 18% 0%,rgba(216,177,106,.18),transparent 32%),radial-gradient(circle at 90% 10%,rgba(143,181,161,.14),transparent 30%),linear-gradient(180deg,#151411,#090907);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
     .wrap{width:min(1040px,100%);margin:0 auto;padding:max(22px,env(safe-area-inset-top)) clamp(14px,4vw,30px) max(42px,env(safe-area-inset-bottom))}
     .top{position:sticky;top:0;z-index:20;margin:calc(max(22px,env(safe-area-inset-top))*-1) calc(clamp(14px,4vw,30px)*-1) 18px;padding:max(22px,env(safe-area-inset-top)) clamp(14px,4vw,30px) 14px;background:linear-gradient(180deg,rgba(15,15,13,.94),rgba(15,15,13,.72));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid rgba(247,241,232,.08)}body.news-panel-open .top{z-index:101}
@@ -565,63 +565,8 @@
     .location-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     @media(max-width:740px){.location-mini-grid{grid-template-columns:1fr}}
 
-    @media(max-width:740px){.wrap{padding-left:12px;padding-right:12px}.top{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}.grid.two,.grid.three,.link-preview,.location-toolbar{grid-template-columns:1fr}summary{grid-template-columns:48px minmax(0,1fr) auto}.summary-day{grid-column:auto;text-align:right}.thumb{width:48px;height:48px;border-radius:16px}.drag-handle{width:34px;height:38px}.btnbar .btn{flex:1 1 100%}.sticky-actions{grid-template-columns:1fr 1fr}.project-days{padding:8px 6px 10px}}
+    @media(max-width:740px){.wrap{padding-left:12px;padding-right:12px}.top{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}.grid.two,.grid.three,.link-preview,.location-toolbar{grid-template-columns:1fr}summary{grid-template-columns:48px minmax(0,1fr) auto}.summary-day{grid-column:auto;text-align:right}.thumb{width:48px;height:48px;border-radius:16px}.drag-handle{width:34px;height:38px}.btnbar .btn{flex:1 1 100%}.sticky-actions{grid-template-columns:1fr 1fr}.project-days{padding:12px}}
 
-/* Mobile: nesting depth flattening (Shooting > Event > Tag > Location-Picker) */
-@media(max-width:740px){
-  .day-group{
-    border-left:0;
-    padding-left:0;
-    margin-left:0;
-    gap:10px;
-  }
-  .day-heading{
-    padding-top:8px;
-    border-top:1px solid rgba(247,241,232,.1);
-    margin-top:2px;
-  }
-  .day-group:first-child .day-heading{
-    border-top:0;
-    padding-top:0;
-    margin-top:0;
-  }
-  .project-summary{padding:12px 10px}
-  .spot-card>.editor{padding:0 8px 12px}
-  .editor-subpanel-summary{padding:10px 10px}
-  .editor-subpanel-body{padding:0 8px 10px}
-  .editor-subpanel[open] .editor-subpanel-summary{margin-bottom:8px}
-  .editor-subpanel-body .location-finder,
-  .location-picker-block .location-finder{
-    border:0;
-    background:transparent;
-    padding:0;
-    border-radius:0;
-    gap:8px;
-  }
-  .location-finder .location-setup-panel.editor-subpanel{
-    border:0;
-    background:transparent;
-    border-radius:0;
-    margin-top:4px;
-  }
-  .location-finder .location-setup-panel .editor-subpanel-summary{
-    padding:8px 0;
-  }
-  .location-finder .location-setup-panel[open] .editor-subpanel-summary{
-    margin-bottom:6px;
-  }
-  .location-finder .location-setup-panel .editor-subpanel-body{
-    padding:0 0 6px;
-  }
-  .location-finder-hint-block{padding:4px 0 0}
-  .location-group-items{padding:8px 4px 10px}
-  .location-group-summary{padding:10px 12px}
-  .location-editor{padding:0 6px 12px}
-  .location-summary{padding:12px 10px}
-  .location-image-block{padding:10px}
-  .location-geo-manual{padding:10px}
-  .sticky-actions{margin-inline:-2px}
-}
 
 /* Timeline Divider Sections */
 

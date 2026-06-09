@@ -10,9 +10,14 @@
       return raw||'';
     }
 
-    function countLibraryFinderMatches(search='',country='all',category='all'){
+    function pickerLocationVisible(location,allowId=''){
+      return typeof locationVisibleInPicker==='function'?locationVisibleInPicker(location,allowId):location?.active!==false;
+    }
+
+    function countLibraryFinderMatches(search='',country='all',category='all',allowId=''){
       const term=String(search||'').trim().toLowerCase();
       return locations.filter(location=>{
+        if(!pickerLocationVisible(location,allowId))return false;
         const okCountry=country==='all'||location.country===country;
         const okCategory=category==='all'||location.category===category;
         const okSearch=!term||locationSearchHaystack(location).includes(term);
@@ -31,7 +36,8 @@
       if(linked){
         const display=String(row.location_name||'').trim();
         const differs=display&&display!==String(linked.name||'').trim();
-        return `<span class="location-finder-badge is-library">Bibliothek · ${escapeHtml(linked.name)}</span>${differs?`<span class="location-finder-hint">Anzeigename: ${escapeHtml(display)}</span>`:''}`;
+        const archived=typeof locationIsActive==='function'?!locationIsActive(linked):linked.active===false;
+        return `<span class="location-finder-badge is-library">Bibliothek · ${escapeHtml(linked.name)}${archived?' · Archiv':''}</span>${differs?`<span class="location-finder-hint">Anzeigename: ${escapeHtml(display)}</span>`:''}${archived?'<span class="location-finder-hint">Archiviert — nur in diesem Shooting, nicht neu auswählbar.</span>':''}`;
       }
       const name=String(row.location_name||'').trim();
       if(name){
@@ -119,8 +125,8 @@
     function renderLocationFinder(row){
       const current=row.location_id||'';
       const displayName=locationFinderDisplayName(row);
-      const countryOptions=[...new Set(locations.map(l=>l.country).filter(Boolean))].sort();
-      const categoryOptions=[...new Set(locations.map(l=>l.category).filter(Boolean))].sort();
+      const countryOptions=[...new Set(locations.filter(l=>pickerLocationVisible(l,current)).map(l=>l.country).filter(Boolean))].sort();
+      const categoryOptions=[...new Set(locations.filter(l=>pickerLocationVisible(l,current)).map(l=>l.category).filter(Boolean))].sort();
       const mode=current?'library':displayName?'onetime':'';
       const captureHint=typeof LOCATION_CAPTURE_HINT!=='undefined'?LOCATION_CAPTURE_HINT:'Name tippen (Kartensuche), Maps-Link einfügen oder <strong>📍</strong> am aktuellen Spot.';
       return `<div class="field full location-finder-field">
@@ -129,7 +135,7 @@
         <input type="hidden" name="location_id" value="${escapeHtml(current)}" data-location-hidden>
         <div class="location-finder is-open" data-location-finder data-location-mode="${escapeHtml(mode)}">
           <div class="location-finder-main-with-gps">
-            <input class="location-finder-input" name="location_name" type="text" value="${escapeHtml(displayName)}" placeholder="Anzeigename, Kartensuche oder Maps-Link" data-location-finder-input autocomplete="off" />
+            <input class="location-finder-input" name="location_name" type="text" value="${escapeHtml(displayName)}" placeholder="Ort suchen oder Link einfügen" data-location-finder-input autocomplete="off" />
             <button type="button" class="btn location-gps-btn" data-capture-gps-shooting title="Aktuellen Standort" aria-label="Aktuellen Standort">📍</button>
           </div>
           <div class="location-finder-status" data-location-finder-status>${renderLocationFinderStatus(row)}</div>
@@ -153,6 +159,7 @@
       const hasSearch=term.length>0||country!=='all'||category!=='all';
 
       const base=locations.filter(location=>{
+        if(!pickerLocationVisible(location,current))return false;
         const okCountry=country==='all'||location.country===country;
         const okCategory=category==='all'||location.category===category;
         const okSearch=!term||locationSearchHaystack(location).includes(term);
@@ -169,12 +176,12 @@
 
       const renderOption=location=>{
         const meta=[location.country,location.region,location.area,location.category].filter(Boolean).join(' · ');
-        const locFocus=String(location.image_focus||'50% 50%').replace(/"/g,'');
-        const image=location.image_url?`style="background-image:url('${escapeHtml(location.image_url)}');background-position:${escapeHtml(locFocus)};"`:'';
+        const locFocus=String((typeof resolveLocationImageFocus==='function'?resolveLocationImageFocus(location):location.image_focus)||'50% 50%').replace(/"/g,'');
+        const image=location.image_url?`style="--thumb-image:url('${escapeHtml(location.image_url)}');--thumb-position:${escapeHtml(locFocus)};"`:'';
         return `<button class="location-option ${current===location.id?'active':''}" type="button" data-pick-location="${escapeHtml(location.id)}">
           <div class="location-option-thumb" ${image}></div>
           <div><div class="location-option-title">${escapeHtml(typeof locationDisplayName==='function'?locationDisplayName(location):location.name)}</div><div class="location-option-meta">${escapeHtml(meta||'Noch nicht kategorisiert')}</div></div>
-          <span class="location-option-star ${location.is_favorite?'active':''}" data-toggle-location-favorite="${escapeHtml(location.id)}" title="Favorit">★</span>
+          <span class="location-option-star ${location.is_favorite?'active':''}" data-toggle-location-favorite="${escapeHtml(location.id)}" title="Favorit" aria-hidden="true">${renderFavoriteStarIcon(!!location.is_favorite)}</span>
         </button>`;
       };
 
@@ -191,16 +198,16 @@
         return output+`<div class="location-picker-section-title">Bibliothek (${base.length})</div>`+results.map(renderOption).join('');
       }
 
-      const favorites=[...locations].filter(l=>l.is_favorite).sort(bySmartScore).slice(0,6);
-      const recent=[...locations].filter(l=>l.last_used_at&&!favorites.some(f=>f.id===l.id)).sort(bySmartScore).slice(0,6);
-      const frequent=[...locations].filter(l=>Number(l.usage_count||0)>0&&!favorites.some(f=>f.id===l.id)&&!recent.some(r=>r.id===l.id)).sort(bySmartScore).slice(0,6);
+      const favorites=[...locations].filter(l=>pickerLocationVisible(l,current)&&l.is_favorite).sort(bySmartScore).slice(0,6);
+      const recent=[...locations].filter(l=>pickerLocationVisible(l,current)&&l.last_used_at&&!favorites.some(f=>f.id===l.id)).sort(bySmartScore).slice(0,6);
+      const frequent=[...locations].filter(l=>pickerLocationVisible(l,current)&&Number(l.usage_count||0)>0&&!favorites.some(f=>f.id===l.id)&&!recent.some(r=>r.id===l.id)).sort(bySmartScore).slice(0,6);
 
       if(favorites.length)output+=`<div class="location-picker-section-title">⭐ Favoriten</div>`+favorites.map(renderOption).join('');
       if(recent.length)output+=`<div class="location-picker-section-title">🕒 Zuletzt verwendet</div>`+recent.map(renderOption).join('');
       if(frequent.length)output+=`<div class="location-picker-section-title">Häufig verwendet</div>`+frequent.map(renderOption).join('');
 
       if(!favorites.length&&!recent.length&&!frequent.length){
-        const starter=[...locations].sort(bySmartScore).slice(0,10);
+        const starter=[...locations].filter(l=>pickerLocationVisible(l,current)).sort(bySmartScore).slice(0,10);
         output+=`<div class="location-picker-section-title">Bibliothek</div>`+starter.map(renderOption).join('');
       }
 
@@ -238,7 +245,7 @@
       finder.dataset.locationMode=row.location_id?'library':String(row.location_name||'').trim()?'onetime':'';
       const osmSlot=finder.querySelector('[data-osm-results]');
       const term=String(input?.value||'').trim();
-      const libCount=countLibraryFinderMatches(term,country?.value||'all',category?.value||'all');
+      const libCount=countLibraryFinderMatches(term,country?.value||'all',category?.value||'all',hidden?.value||'');
       if(osmSlot&&(hidden?.value||libCount>0)){
         osmSlot.innerHTML='';
         finder._osmResults=[];
@@ -277,16 +284,6 @@
         const country=finder.querySelector('[data-location-finder-country]');
         const category=finder.querySelector('[data-location-finder-category]');
         let osmTimer=null;
-        let imageSuggestTimer=null;
-        const maybeScheduleImageSuggest=()=>{
-          clearTimeout(imageSuggestTimer);
-          imageSuggestTimer=setTimeout(()=>{
-            if(typeof canAutoReplaceLocationImage!=='function'||typeof scheduleLocationImageSuggestion!=='function')return;
-            if(!canAutoReplaceLocationImage(form))return;
-            const meta=typeof readFormRegionArea==='function'?readFormRegionArea(form):{};
-            scheduleLocationImageSuggestion(form,meta,null);
-          },900);
-        };
 
         const refresh=()=>{
           maybeUnlinkLibraryOnNameEdit(form);
@@ -299,7 +296,6 @@
         const refreshWithOsm=()=>{
           const term=String(input?.value||'').trim();
           refresh();
-          maybeScheduleImageSuggest();
           clearTimeout(osmTimer);
           if(typeof looksLikeMapsLink==='function'&&looksLikeMapsLink(term)){
             osmTimer=setTimeout(()=>{
@@ -523,17 +519,17 @@
         <input type="hidden" name="day_label" value="${escapeHtml(dayAuto)}" data-day-label-hidden />
         <div class="grid two schedule-grid">
           ${renderField(row,['date_label','Datum','date'])}
-          ${renderField(row,['meeting_time','Beginn / Treff','time'])}
+          ${renderField(row,['meeting_time','Beginn / Treffpunkt','time'])}
           <div class="field schedule-duration-field">
             <label>Dauer ab Beginn (Min.)</label>
             <input name="duration_minutes" type="number" min="15" step="15" placeholder="z. B. 120" value="${escapeHtml(duration)}" data-duration-minutes />
-            <span class="hint-inline">Setzt das <strong>Ende</strong> automatisch ab Beginn/Treff.</span>
+            <span class="hint-inline">Setzt das <strong>Ende</strong> automatisch ab Beginn/Treffpunkt.</span>
           </div>
           ${renderField(row,['end_time','Ende','time'])}
           ${renderField(row,['shooting_time','Shooting ab','time'])}
         </div>
         <p class="hint-inline schedule-day-hint" data-day-label-hint>${dayAuto?`Wochentag: <strong>${escapeHtml(dayAuto)}</strong> (automatisch aus Datum)`:'Wochentag wird automatisch aus dem Datum gesetzt.'}</p>
-        <p class="hint editor-block-hint">„Beginn / Treff“ ist die Basis fuer die Dauer. „Shooting ab“ bleibt optional fuer die Kundenansicht.</p>
+        <p class="hint editor-block-hint">„Beginn / Treffpunkt“ ist die Basis fuer die Dauer. „Shooting ab“ bleibt optional fuer die Kundenansicht.</p>
       </section>`;
     }
 
@@ -581,16 +577,16 @@
       const linkVal=escapeHtml(valueForInput(row,'meeting_link','url'));
       const meetHint=typeof MEETING_CAPTURE_HINT!=='undefined'?MEETING_CAPTURE_HINT:'Name, Kartensuche, Maps-Link oder GPS.';
       const libHint=hasLib
-        ?'Aus der Location-Bibliothek — hier nur für <strong>dieses Shooting</strong> änderbar. Geänderten Treff unten in die Bibliothek zurückspeichern.'
-        :'Eigener Treffpunkt — leer = die Location-Adresse oben gilt als Treff.';
+        ?'Aus der Location-Bibliothek — hier nur für <strong>dieses Shooting</strong> änderbar. Geänderten Treffpunkt unten in die Bibliothek zurückspeichern.'
+        :'Eigener Treffpunkt für dieses Shooting.';
       return `<div class="shooting-meeting-panel" data-shooting-meeting-body>
         <p class="hint editor-block-hint">${libHint}</p>
         <p class="hint-inline">${meetHint}</p>
         <div class="field full">
           <label>Treffpunkt</label>
           <div class="location-capture-row">
-            <input class="location-capture-name" name="meeting_place" type="text" value="${placeVal}" placeholder="Treff suchen, Name oder Google-Maps-Link" data-meeting-lib-name data-place-address="shared" autocomplete="off" />
-            <button type="button" class="btn location-gps-btn" data-capture-gps-meeting title="Aktuellen Standort als Treff" aria-label="GPS Treffpunkt">📍</button>
+            <input class="location-capture-name" name="meeting_place" type="text" value="${placeVal}" placeholder="Treffpunkt suchen, Name oder Google-Maps-Link" data-meeting-lib-name data-place-address="shared" autocomplete="off" />
+            <button type="button" class="btn location-gps-btn" data-capture-gps-meeting title="Aktuellen Standort als Treffpunkt" aria-label="GPS Treffpunkt">📍</button>
           </div>
           <input type="hidden" name="meeting_capture_lat" value="" data-meeting-capture-lat />
           <input type="hidden" name="meeting_capture_lon" value="" data-meeting-capture-lon />
@@ -604,7 +600,7 @@
           <button class="btn" type="button" data-detect-meeting-from-maps>Aus Maps-Link erkennen</button>
           <span class="maps-status" data-maps-status="meeting"></span>
         </div>
-        <button type="button" class="btn hidden" data-save-meeting-to-library>Treff in Location speichern</button>
+        <button type="button" class="btn hidden" data-save-meeting-to-library>Treffpunkt in Location speichern</button>
       </div>`;
     }
 
@@ -687,9 +683,9 @@
       const groups=[];
       const lookup=new Map();
       rows.forEach(row=>{
-        const day=String(row.day_label||'').trim();
         const date=String(row.date_label||'').trim();
-        const key=`${day}||${date}`;
+        const day=dayLabelForRow(row)||'Unbekannter Tag';
+        const key=date||`__nodate__:${day}`;
         if(!lookup.has(key)){
           lookup.set(key,{day,date,rows:[]});
           groups.push(lookup.get(key));
@@ -700,7 +696,7 @@
         const aDate=parseDateLabel(a.date)?.getTime()||Infinity;
         const bDate=parseDateLabel(b.date)?.getTime()||Infinity;
         if(aDate!==bDate)return aDate-bDate;
-        const order={Freitag:1,Samstag:2,Sonntag:3};
+        const order={Montag:1,Dienstag:2,Mittwoch:3,Donnerstag:4,Freitag:5,Samstag:6,Sonntag:7};
         return (order[a.day]||99)-(order[b.day]||99);
       });
     }
@@ -901,7 +897,7 @@
       if(typeof renderWorkflowFilterButtons==='function')renderWorkflowFilterButtons();
       renderAll();
       if(locations.length&&typeof renderLocations==='function')renderLocations();
-      setStatus(rows.length+' Einträge geladen');
+      if(typeof refreshAppStatus==='function')refreshAppStatus();
       if(!skipRestore)await restoreAdminDrafts();
       return true;
     }
@@ -1235,7 +1231,7 @@
     window.formatImageFocus=formatImageFocus;
     window.applyImageFocusToPreview=applyImageFocusToPreview;
 
-    function validateImageBeforeSave(imageUrl,label='Bild URL'){
+    window.validateImageBeforeSave=function validateImageBeforeSave(imageUrl,label='Bild URL'){
       const url=String(imageUrl||'').trim();
       if(!url)return true;
       const result=classifyImageUrl(url);

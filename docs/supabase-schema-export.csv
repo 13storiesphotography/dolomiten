@@ -6,6 +6,7 @@ events,created_at,timestamp with time zone,YES
 events,updated_at,timestamp with time zone,YES
 locations,id,uuid,NO
 locations,name,text,NO
+locations,display_name,text,YES
 locations,country,text,YES
 locations,region,text,YES
 locations,area,text,YES
@@ -13,7 +14,9 @@ locations,category,text,YES
 locations,address,text,YES
 locations,maps_link,text,YES
 locations,meeting_place,text,YES
+locations,meeting_maps_link,text,YES
 locations,image_url,text,YES
+locations,image_focus,text,YES
 locations,description,text,YES
 locations,tags,ARRAY,YES
 locations,seasons,ARRAY,YES

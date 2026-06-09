@@ -3,7 +3,7 @@
     const MAPS_RESOLVER_URL='https://maps-resolveryournameworkersdev.florian-e6d.workers.dev';
 
     const $=id=>document.getElementById(id);
-    const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),calendarBox=$('calendarBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),addBtn=$('addBtn'),addMenu=$('addMenu'),eventNameDialog=$('eventNameDialog'),eventNameForm=$('eventNameForm'),eventNameInput=$('eventNameInput'),eventNameCancel=$('eventNameCancel'),toast=$('toast'),searchInput=$('searchInput'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),refreshDataBtn=$('refreshDataBtn'),whatsNewBtn=$('whatsNewBtn'),featurePanel=$('featurePanel'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn'),discardOpenBtn=$('discardOpenBtn'),viewTabs=$('viewTabs'),timelineTab=$('timelineTab'),calendarTab=$('calendarTab'),locationsTab=$('locationsTab'),locationsBox=$('locationsBox'),locationsList=$('locationsList'),favoriteLocationsBtn=$('favoriteLocationsBtn'),locationSearchInput=$('locationSearchInput'),countryFilter=$('countryFilter'),regionFilter=$('regionFilter'),categoryFilter=$('categoryFilter'),projectFilter=$('projectFilter');
+    const statusEl=$('status'),errorBox=$('errorBox'),loginBox=$('loginBox'),adminBox=$('adminBox'),calendarBox=$('calendarBox'),toolbar=$('toolbar'),shootingsEl=$('shootings'),loginBtn=$('loginBtn'),logoutBtn=$('logoutBtn'),addBtn=$('addBtn'),addMenu=$('addMenu'),eventNameDialog=$('eventNameDialog'),eventNameForm=$('eventNameForm'),eventNameInput=$('eventNameInput'),eventNameCancel=$('eventNameCancel'),toast=$('toast'),searchInput=$('searchInput'),statUpdated=$('statUpdated'),saveOrderBtn=$('saveOrderBtn'),refreshDataBtn=$('refreshDataBtn'),whatsNewBtn=$('whatsNewBtn'),featurePanel=$('featurePanel'),unsavedBar=$('unsavedBar'),unsavedText=$('unsavedText'),saveOpenBtn=$('saveOpenBtn'),discardOpenBtn=$('discardOpenBtn'),viewTabs=$('viewTabs'),timelineTab=$('timelineTab'),calendarTab=$('calendarTab'),locationsTab=$('locationsTab'),locationsBox=$('locationsBox'),locationsList=$('locationsList'),favoriteLocationsBtn=$('favoriteLocationsBtn'),locationSearchInput=$('locationSearchInput'),countryFilter=$('countryFilter'),regionFilter=$('regionFilter'),categoryFilter=$('categoryFilter'),locationSortSelect=$('locationSortSelect'),locationGroupSelect=$('locationGroupSelect'),projectFilter=$('projectFilter');
     const ADMIN_VIEW_STORAGE_KEY='dolomiten.admin.current-view.v1';
 
     function normalizeAdminView(view){
@@ -23,6 +23,7 @@
 
     const badgePresets=['Goldene Stunde','Picknick','Sonnenaufgang','Farben','Paar-Momente','Kreativ','Aussicht','Gitarre','Goldenes Licht','Spaziergang','Ruhe','Portraits','Perspektiven','Gemeinsame Bilder','Dolomiten','Natur','Abenteuer'];
     const locationOnlyTagPresets=['Parkplatz'];
+    const locationCategoryPresets=['Berge','See','Wald','Wiese','Stadt','Altstadt','Dorf','Indoor','Hotel','Roadtrip','Aussichtspunkt','Passstraße','Dolomiten'];
     const projectStatusLabels={aktiv:'Aktiv',abgeschlossen:'Abgeschlossen',archiviert:'Archiv'};
     const workflowStatusPresets=['Angefragt','Option','Fix','Geplant','Bestätigt','Abgesagt'];
     const WORKFLOW_STATUS_STORAGE_KEY='dolomiten.shooting.workflow-statuses.v1';
@@ -38,13 +39,37 @@
 
     const basicsFields=[['title','Titel','text'],['subtitle','Untertitel / Mood','text']];
     const projectFields=[['project_name','Event / Projekt','event-select']];
-    const scheduleFields=[['date_label','Datum','date'],['meeting_time','Beginn / Treff','time'],['shooting_time','Shooting ab','time'],['end_time','Ende','time']];
+    const scheduleFields=[['date_label','Datum','date'],['meeting_time','Beginn / Treffpunkt','time'],['shooting_time','Shooting ab','time'],['end_time','Ende','time']];
     const placeFields=[];
     const locationQuickFields=[['location_link','Maps-Link (Location)','url'],['image_url','Bild URL','url']];
-    const meetingFields=[['meeting_place','Treffpunkt / Adresse','text'],['meeting_link','Maps-Link (Treff)','url']];
+    const meetingFields=[['meeting_place','Treffpunkt / Adresse','text'],['meeting_link','Maps-Link (Treffpunkt)','url']];
     const allFieldGroups=[...basicsFields,...projectFields,...scheduleFields,...placeFields,...locationQuickFields,...meetingFields];
 
     function setStatus(m){statusEl.textContent=m}
+
+    function pluralDe(count,one,many){return count===1?one:many}
+
+    function refreshAppStatus(){
+      const view=normalizeAdminView(currentView);
+      if(view==='locations'){
+        const saved=locations.filter(loc=>!loc.__draft);
+        const active=saved.filter(loc=>(typeof locationIsActive==='function'?locationIsActive(loc):loc.active!==false)).length;
+        const archived=saved.length-active;
+        let detail=`${saved.length} ${pluralDe(saved.length,'Location','Locations')}`;
+        if(archived)detail+=` · ${archived} archiviert`;
+        const suffix=typeof locationListViewSuffix==='function'?locationListViewSuffix():'';
+        setStatus(`Locations · ${detail}${suffix?` · ${suffix}`:''}`);
+        return;
+      }
+      const count=rows.length;
+      const shootings=`${count} ${pluralDe(count,'Shooting','Shootings')}`;
+      if(view==='calendar'){
+        setStatus(`Kalender · ${shootings}`);
+        return;
+      }
+      setStatus(`Liste · ${shootings}`);
+    }
+    window.refreshAppStatus=refreshAppStatus;
     function showError(m){errorBox.textContent=m;errorBox.classList.remove('hidden')}
     function clearError(){errorBox.textContent='';errorBox.classList.add('hidden')}
     function showToast(m='Gespeichert'){toast.textContent=m;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1800)}
@@ -145,6 +170,12 @@
       return d.toLocaleDateString('de-DE',{weekday:'long'});
     }
 
+    function dayLabelForRow(row){
+      const fromDate=dayLabelFromDateLabel(row?.date_label);
+      if(fromDate)return fromDate;
+      return String(row?.day_label||'').trim();
+    }
+
     function parseDateLabel(dateLabel){
       const parts=String(dateLabel||'').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
       if(!parts)return null;
@@ -224,7 +255,8 @@
       const archived=String(row.project_status||'')==='archiviert';
       const project_status=archived?'archiviert':autoStatusForRow(row);
       const workflow_status=bound?null:(row.workflow_status?workflowSlug(row.workflow_status):'angefragt');
-      return {...row,project_status,workflow_status};
+      const day_label=dayLabelForRow(row)||null;
+      return {...row,project_status,workflow_status,day_label};
     }
 
     function projectStatusForRows(projectRows){
@@ -285,9 +317,9 @@
         } else if(aTime!==null||bTime!==null){
           return aTime!==null? -1 : 1;
         }
-        const dayOrder={Freitag:1,Samstag:2,Sonntag:3};
-        const aDay=dayOrder[a.day_label]||99;
-        const bDay=dayOrder[b.day_label]||99;
+        const dayOrder={Montag:1,Dienstag:2,Mittwoch:3,Donnerstag:4,Freitag:5,Samstag:6,Sonntag:7};
+        const aDay=dayOrder[dayLabelForRow(a)]||99;
+        const bDay=dayOrder[dayLabelForRow(b)]||99;
         if(aDay!==bDay)return aDay-bDay;
         return (Number(a.sort_order||0) - Number(b.sort_order||0)) || String(a.title||'').localeCompare(String(b.title||''), 'de', {sensitivity:'base'});
       });

@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#101010" />
   <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Shooting Admin" />
+  <meta name="apple-mobile-web-app-title" content="Shooting Planer" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Admin · Events</title>
+  <title>Shooting Planer</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -18,7 +18,7 @@
   <main class="wrap">
     <section class="top">
       <div class="top-row">
-        <div><div class="eyebrow">13 Stories Photography</div><h1>Admin</h1><div class="status" id="status">Initialisiere…</div></div>
+        <div class="top-brand"><h1 class="visually-hidden">Shooting Planer</h1><div class="eyebrow">13 Stories Photography</div><div class="status" id="status">Initialisiere…</div></div>
         <div class="top-actions">
           <button class="btn news-toggle hidden" id="whatsNewBtn" type="button" aria-expanded="false" aria-label="Neuigkeiten öffnen" title="Neuigkeiten">
             <span class="news-glyph-stack" aria-hidden="true">
@@ -105,7 +105,17 @@
           <select id="countryFilter"><option value="all">Alle Länder</option></select>
           <select id="regionFilter"><option value="all">Alle Regionen</option></select>
           <select id="categoryFilter"><option value="all">Alle Kategorien</option></select>
-          <button class="btn location-toolbar-fav" id="favoriteLocationsBtn" type="button">☆ Favoriten</button>
+          <button class="btn location-toolbar-fav" id="favoriteLocationsBtn" type="button" aria-label="Nur Favoriten" aria-pressed="false" title="Nur Favoriten"></button>
+        </div>
+        <div class="location-toolbar-sort">
+          <div class="location-toolbar-sort-item">
+            <label class="location-sort-label" for="locationSortSelect" title="Favoriten erscheinen immer zuerst">Sortieren</label>
+            <select id="locationSortSelect" aria-label="Locations sortieren (Favoriten immer zuerst)"></select>
+          </div>
+          <div class="location-toolbar-sort-item">
+            <label class="location-sort-label" for="locationGroupSelect">Gruppieren</label>
+            <select id="locationGroupSelect" aria-label="Locations gruppieren"></select>
+          </div>
         </div>
       </div>
       <div class="shootings" id="locationsList"></div>
@@ -273,7 +283,7 @@
             </li>
             <li class="release-item">
               <span class="release-item-label">Termin mit Ende</span>
-              <p class="release-item-desc">Optionales Endzeit-Feld. Die Dauer wird aus Beginn oder Treff berechnet.</p>
+              <p class="release-item-desc">Optionales Endzeit-Feld. Die Dauer wird aus Beginn oder Treffpunkt berechnet.</p>
             </li>
             <li class="release-item">
               <span class="release-item-label">Wochentag &amp; Titel</span>
@@ -301,12 +311,12 @@
               <p class="release-item-desc">Beim Speichern landen neue Orte mit Adresse oder Maps-Link in der Bibliothek — außer du wählst „Nicht in Bibliothek“.</p>
             </li>
             <li class="release-item">
-              <span class="release-item-label">Treff &amp; Bild</span>
-              <p class="release-item-desc">Optional ausklappbar. Leerer Treffpunkt = Location-Adresse gilt als Treff.</p>
+              <span class="release-item-label">Treffpunkt &amp; Bild</span>
+              <p class="release-item-desc">Optional ausklappbar.</p>
             </li>
             <li class="release-item">
               <span class="release-item-label">Abweichender Treffpunkt</span>
-              <p class="release-item-desc">Eigener Treff wie ein normaler Ort: Kartensuche, Maps-Link oder 📍. Die Location selbst bleibt unverändert.</p>
+              <p class="release-item-desc">Eigener Treffpunkt wie ein normaler Ort: Kartensuche, Maps-Link oder 📍. Die Location selbst bleibt unverändert.</p>
             </li>
           </ul>
         </div>
@@ -373,10 +383,10 @@
   </div>
   <div class="toast" id="toast">Gespeichert</div>
   <datalist id="countrySuggestions"><option value="Deutschland"></option><option value="Italien"></option><option value="Österreich"></option><option value="Schweiz"></option></datalist>
-  <datalist id="categorySuggestions"><option value="Berge"></option><option value="See"></option><option value="Wald"></option><option value="Wiese"></option><option value="Stadt"></option><option value="Altstadt"></option><option value="Dorf"></option><option value="Indoor"></option><option value="Hotel"></option><option value="Roadtrip"></option><option value="Aussichtspunkt"></option><option value="Passstraße"></option></datalist>
   <div class="unsaved-bar" id="unsavedBar"><span id="unsavedText">Ungespeicherte Änderungen</span><button class="btn primary" id="saveOpenBtn" type="button">Speichern</button><button class="btn" id="discardOpenBtn" type="button">Verwerfen</button></div>
 
   <script src="assets/js/admin-core.js"></script>
+  <script src="assets/js/admin-icons.js"></script>
   <script src="assets/js/admin-events.js"></script>
   <script src="assets/js/admin-locations.js"></script>
   <script src="assets/js/admin-ics.js"></script>
